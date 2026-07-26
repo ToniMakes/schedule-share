@@ -1,6 +1,5 @@
 import { updateParticipantAvailabilityRequestSchema } from "@schedule-share/api-client";
 
-import { getDatabase } from "@/server/db";
 import { withApiErrorHandling } from "@/server/errors";
 import { parseJsonRequest } from "@/server/request-json";
 import {
@@ -9,7 +8,7 @@ import {
   type ParticipantRouteContext
 } from "@/server/route-inputs";
 import { getParticipantAvailabilityView } from "@/server/schedules/get-participant-availability";
-import { DrizzleScheduleRepository } from "@/server/schedules/repository";
+import { createScheduleRepository } from "@/server/schedules/repository-factory";
 import { updateParticipantAvailabilityRecord } from "@/server/schedules/update-participant-availability";
 
 export const runtime = "nodejs";
@@ -18,7 +17,7 @@ export async function GET(request: Request, context: ParticipantRouteContext): P
   return withApiErrorHandling(async () => {
     const { publicId, participantId } = await readParticipantRouteParams(context);
     const editKey = readAccessKey(request);
-    const repository = new DrizzleScheduleRepository(getDatabase());
+    const repository = createScheduleRepository();
     const response = await getParticipantAvailabilityView(publicId, participantId, editKey, {
       repository
     });
@@ -36,7 +35,7 @@ export async function PUT(request: Request, context: ParticipantRouteContext): P
 
   return withApiErrorHandling(async () => {
     const { publicId, participantId } = await readParticipantRouteParams(context);
-    const repository = new DrizzleScheduleRepository(getDatabase());
+    const repository = createScheduleRepository();
     const response = await updateParticipantAvailabilityRecord(
       publicId,
       participantId,

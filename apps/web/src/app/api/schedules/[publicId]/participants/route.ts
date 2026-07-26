@@ -1,11 +1,10 @@
 import { createParticipantAvailabilityRequestSchema } from "@schedule-share/api-client";
 
-import { getDatabase } from "@/server/db";
 import { withApiErrorHandling } from "@/server/errors";
 import { parseJsonRequest } from "@/server/request-json";
 import { readScheduleRouteParams, type ScheduleRouteContext } from "@/server/route-inputs";
 import { createParticipantAvailabilityRecord } from "@/server/schedules/create-participant-availability";
-import { DrizzleScheduleRepository } from "@/server/schedules/repository";
+import { createScheduleRepository } from "@/server/schedules/repository-factory";
 import { getRequestBaseUrl } from "@/server/urls";
 
 export const runtime = "nodejs";
@@ -19,7 +18,7 @@ export async function POST(request: Request, context: ScheduleRouteContext): Pro
 
   return withApiErrorHandling(async () => {
     const { publicId } = await readScheduleRouteParams(context);
-    const repository = new DrizzleScheduleRepository(getDatabase());
+    const repository = createScheduleRepository();
     const response = await createParticipantAvailabilityRecord(publicId, parsed.data, {
       baseUrl: getRequestBaseUrl(request),
       repository
