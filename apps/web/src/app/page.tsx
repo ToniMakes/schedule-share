@@ -41,6 +41,10 @@ export default function HomePage() {
             </article>
           ))}
         </section>
+
+        <footer className={styles.footer}>
+          <a href="/privacy">隐私与数据保留说明</a>
+        </footer>
       </div>
     </main>
   );

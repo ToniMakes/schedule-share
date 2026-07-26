@@ -28,6 +28,7 @@
 - 部署验证编排：`corepack pnpm verify:deployment`。
 - 环境变量模板和配置说明：`.env.example`、`docs/environment.md`。
 - 命令行脚本自动读取本地 `.env.local` / `.env`。
+- 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`。
 - GitHub Actions CI：format、lint、typecheck、test、build。
 
 ## 代码结构
@@ -70,7 +71,7 @@ corepack pnpm build
 - 尚未接入真实 Postgres，因此真实创建、提交、编辑、锁定、导出、归档链路还未在数据库上跑通。
 - 尚未部署到公开 URL。
 - 尚未配置生产日志、监控、告警和备份演练。
-- 尚未写隐私政策、数据保留说明和用户反馈入口。
+- 隐私与数据保留说明仍需正式法律审阅，用户反馈或删除请求入口尚未实现。
 - 尚未做微信小程序版。
 - 尚未做广告、商业化或支付能力。
 

@@ -26,8 +26,9 @@
 5. 对生产数据库执行初始化：`corepack pnpm db:setup`。它会运行 migration，并在结束后执行 `db:check`。
 6. 部署 Web 应用。
 7. 访问 `/api/health`，确认返回 `200` 和 `database: "ok"`。
-8. 设置 `SMOKE_BASE_URL` 后，对生产地址运行 API 烟雾测试：`corepack pnpm smoke:api`。
-9. 或在 `DATABASE_URL` 和 `SMOKE_BASE_URL` 都已设置后运行完整部署验证：`corepack pnpm verify:deployment`。
+8. 访问 `/privacy`，确认隐私与数据保留说明可打开。
+9. 设置 `SMOKE_BASE_URL` 后，对生产地址运行 API 烟雾测试：`corepack pnpm smoke:api`。
+10. 或在 `DATABASE_URL` 和 `SMOKE_BASE_URL` 都已设置后运行完整部署验证：`corepack pnpm verify:deployment`。
 
 ## 健康检查
 
