@@ -46,6 +46,7 @@
 - `docs/environment.md`：环境变量、本地配置和生产配置说明。
 - `docs/deployment.md`：部署流程、健康检查和运维注意事项。
 - `docs/privacy.md`：隐私与数据保留说明草案。
+- `docs/feedback.md`：反馈、归档和删除请求说明。
 - `docs/project-status.md`：当前项目基线、完成项、缺口和下一步。
 - `docs/internal-test-checklist.md`：真实内测前后的检查清单。
 - `docs/adr/`：架构决策记录。

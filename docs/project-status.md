@@ -29,6 +29,7 @@
 - 环境变量模板和配置说明：`.env.example`、`docs/environment.md`。
 - 命令行脚本自动读取本地 `.env.local` / `.env`。
 - 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`。
+- 反馈与删除请求说明：`docs/feedback.md`、`/feedback`。
 - GitHub Actions CI：format、lint、typecheck、test、build。
 
 ## 代码结构
@@ -71,7 +72,7 @@ corepack pnpm build
 - 尚未接入真实 Postgres，因此真实创建、提交、编辑、锁定、导出、归档链路还未在数据库上跑通。
 - 尚未部署到公开 URL。
 - 尚未配置生产日志、监控、告警和备份演练。
-- 隐私与数据保留说明仍需正式法律审阅，用户反馈或删除请求入口尚未实现。
+- 隐私与数据保留说明仍需正式法律审阅，正式反馈联系渠道和删除请求处理时限尚未确定。
 - 尚未做微信小程序版。
 - 尚未做广告、商业化或支付能力。
 

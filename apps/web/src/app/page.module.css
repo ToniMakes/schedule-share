@@ -104,6 +104,9 @@
 
 .footer {
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
   margin-top: 44px;
   padding-top: 20px;
 }

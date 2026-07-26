@@ -44,6 +44,7 @@ export default function HomePage() {
 
         <footer className={styles.footer}>
           <a href="/privacy">隐私与数据保留说明</a>
+          <a href="/feedback">反馈与删除请求</a>
         </footer>
       </div>
     </main>
