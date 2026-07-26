@@ -21,6 +21,7 @@
 - API route 错误边界统一封装。
 - API route 动态参数和访问密钥读取统一封装。
 - API route 数据库仓库创建统一封装。
+- API client JSON 请求、错误映射和响应解析统一封装。
 - 可选 `APP_BASE_URL`，用于生产环境生成稳定分享、管理和编辑链接。
 - 参与者提交可用时间。
 - 参与者使用编辑密钥查看和修改自己的提交。
@@ -67,7 +68,7 @@ corepack pnpm test
 corepack pnpm build
 ```
 
-当前测试总数：113。
+当前测试总数：119。
 
 浏览器预览验证：
 

@@ -1,4 +1,3 @@
-import { apiErrorResponseSchema } from "../contracts/errors";
 import {
   createParticipantAvailabilityRequestSchema,
   createParticipantAvailabilityResponseSchema,
@@ -25,50 +24,33 @@ import {
   type UpdateParticipantAvailabilityRequest,
   type UpdateParticipantAvailabilityResponse
 } from "../contracts/schedules";
-import { ApiClientError } from "./errors";
+import { requestJson, type ApiClientOptions } from "./request";
 
-export interface ApiClientOptions {
-  readonly baseUrl?: string;
-  readonly fetch?: typeof fetch;
-}
+export type { ApiClientOptions } from "./request";
 
 export async function createSchedule(
   input: CreateScheduleRequest,
   options: ApiClientOptions = {}
 ): Promise<CreateScheduleResponse> {
   const request = createScheduleRequestSchema.parse(input);
-  const fetchImpl = options.fetch ?? fetch;
-  const response = await fetchImpl(resolveApiUrl("/api/schedules", options.baseUrl), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json"
-    },
-    body: JSON.stringify(request)
+
+  return requestJson({
+    init: jsonRequestInit("POST", request),
+    options,
+    path: "/api/schedules",
+    responseSchema: createScheduleResponseSchema
   });
-  const payload = await readJson(response);
-
-  if (!response.ok) {
-    throw parseApiClientError(response.status, payload);
-  }
-
-  return createScheduleResponseSchema.parse(payload);
 }
 
 export async function getSchedule(
   publicId: string,
   options: ApiClientOptions = {}
 ): Promise<GetScheduleResponse> {
-  const fetchImpl = options.fetch ?? fetch;
-  const response = await fetchImpl(
-    resolveApiUrl(`/api/schedules/${encodeURIComponent(publicId)}`, options.baseUrl)
-  );
-  const payload = await readJson(response);
-
-  if (!response.ok) {
-    throw parseApiClientError(response.status, payload);
-  }
-
-  return getScheduleResponseSchema.parse(payload);
+  return requestJson({
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}`,
+    responseSchema: getScheduleResponseSchema
+  });
 }
 
 export async function createParticipantAvailability(
@@ -77,24 +59,13 @@ export async function createParticipantAvailability(
   options: ApiClientOptions = {}
 ): Promise<CreateParticipantAvailabilityResponse> {
   const request = createParticipantAvailabilityRequestSchema.parse(input);
-  const fetchImpl = options.fetch ?? fetch;
-  const response = await fetchImpl(
-    resolveApiUrl(`/api/schedules/${encodeURIComponent(publicId)}/participants`, options.baseUrl),
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(request)
-    }
-  );
-  const payload = await readJson(response);
 
-  if (!response.ok) {
-    throw parseApiClientError(response.status, payload);
-  }
-
-  return createParticipantAvailabilityResponseSchema.parse(payload);
+  return requestJson({
+    init: jsonRequestInit("POST", request),
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/participants`,
+    responseSchema: createParticipantAvailabilityResponseSchema
+  });
 }
 
 export async function getParticipantAvailability(
@@ -103,25 +74,17 @@ export async function getParticipantAvailability(
   editKey: string,
   options: ApiClientOptions = {}
 ): Promise<GetParticipantAvailabilityResponse> {
-  const fetchImpl = options.fetch ?? fetch;
   const query = new URLSearchParams({
     key: editKey
   });
-  const response = await fetchImpl(
-    resolveApiUrl(
-      `/api/schedules/${encodeURIComponent(publicId)}/participants/${encodeURIComponent(
-        participantId
-      )}?${query.toString()}`,
-      options.baseUrl
-    )
-  );
-  const payload = await readJson(response);
 
-  if (!response.ok) {
-    throw parseApiClientError(response.status, payload);
-  }
-
-  return getParticipantAvailabilityResponseSchema.parse(payload);
+  return requestJson({
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/participants/${encodeURIComponent(
+      participantId
+    )}?${query.toString()}`,
+    responseSchema: getParticipantAvailabilityResponseSchema
+  });
 }
 
 export async function updateParticipantAvailability(
@@ -131,29 +94,15 @@ export async function updateParticipantAvailability(
   options: ApiClientOptions = {}
 ): Promise<UpdateParticipantAvailabilityResponse> {
   const request = updateParticipantAvailabilityRequestSchema.parse(input);
-  const fetchImpl = options.fetch ?? fetch;
-  const response = await fetchImpl(
-    resolveApiUrl(
-      `/api/schedules/${encodeURIComponent(publicId)}/participants/${encodeURIComponent(
-        participantId
-      )}`,
-      options.baseUrl
-    ),
-    {
-      method: "PUT",
-      headers: {
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(request)
-    }
-  );
-  const payload = await readJson(response);
 
-  if (!response.ok) {
-    throw parseApiClientError(response.status, payload);
-  }
-
-  return updateParticipantAvailabilityResponseSchema.parse(payload);
+  return requestJson({
+    init: jsonRequestInit("PUT", request),
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/participants/${encodeURIComponent(
+      participantId
+    )}`,
+    responseSchema: updateParticipantAvailabilityResponseSchema
+  });
 }
 
 export async function lockSchedule(
@@ -162,24 +111,13 @@ export async function lockSchedule(
   options: ApiClientOptions = {}
 ): Promise<LockScheduleResponse> {
   const request = lockScheduleRequestSchema.parse(input);
-  const fetchImpl = options.fetch ?? fetch;
-  const response = await fetchImpl(
-    resolveApiUrl(`/api/schedules/${encodeURIComponent(publicId)}/lock`, options.baseUrl),
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(request)
-    }
-  );
-  const payload = await readJson(response);
 
-  if (!response.ok) {
-    throw parseApiClientError(response.status, payload);
-  }
-
-  return lockScheduleResponseSchema.parse(payload);
+  return requestJson({
+    init: jsonRequestInit("POST", request),
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/lock`,
+    responseSchema: lockScheduleResponseSchema
+  });
 }
 
 export async function archiveSchedule(
@@ -188,53 +126,21 @@ export async function archiveSchedule(
   options: ApiClientOptions = {}
 ): Promise<ArchiveScheduleResponse> {
   const request = archiveScheduleRequestSchema.parse(input);
-  const fetchImpl = options.fetch ?? fetch;
-  const response = await fetchImpl(
-    resolveApiUrl(`/api/schedules/${encodeURIComponent(publicId)}/archive`, options.baseUrl),
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(request)
-    }
-  );
-  const payload = await readJson(response);
 
-  if (!response.ok) {
-    throw parseApiClientError(response.status, payload);
-  }
-
-  return archiveScheduleResponseSchema.parse(payload);
+  return requestJson({
+    init: jsonRequestInit("POST", request),
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/archive`,
+    responseSchema: archiveScheduleResponseSchema
+  });
 }
 
-function parseApiClientError(status: number, payload: unknown): ApiClientError {
-  const parsedError = apiErrorResponseSchema.safeParse(payload);
-
-  if (parsedError.success) {
-    return new ApiClientError(
-      status,
-      parsedError.data.error.code,
-      parsedError.data.error.message,
-      parsedError.data.error.details
-    );
-  }
-
-  return new ApiClientError(status, "INTERNAL_ERROR", "Unexpected API error.");
-}
-
-function resolveApiUrl(path: string, baseUrl?: string): string {
-  if (baseUrl === undefined || baseUrl.trim().length === 0) {
-    return path;
-  }
-
-  return new URL(path, baseUrl).toString();
-}
-
-async function readJson(response: Response): Promise<unknown> {
-  try {
-    return await response.json();
-  } catch {
-    return undefined;
-  }
+function jsonRequestInit(method: "POST" | "PUT", body: unknown): RequestInit {
+  return {
+    method,
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
+  };
 }
