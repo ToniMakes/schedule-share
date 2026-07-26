@@ -7,6 +7,15 @@
 - 环境变量：生产环境至少需要设置 `DATABASE_URL`。
 - 域名：先使用托管平台分配的临时域名验证流程，再绑定正式域名。
 
+## 环境变量
+
+完整变量说明见 `docs/environment.md`。
+
+- 生产 Web 运行时必须设置 `DATABASE_URL`。
+- 本地或部署验证终端需要设置 `DATABASE_URL`，用于 `db:check`、migration 和 `verify:deployment`。
+- `SMOKE_BASE_URL` 只用于本地验证脚本，指向要测试的站点地址；不需要作为 Web 应用的生产运行时变量。
+- 不要把真实 `DATABASE_URL`、`ownerUrl` 或 `editUrl` 写进公开日志、截图或文档。
+
 ## 上线流程
 
 1. 确认 CI 通过：`format`、`lint`、`typecheck`、`test`、`build`。
@@ -17,8 +26,8 @@
 6. 再次执行 `corepack pnpm db:check`，确认扩展、枚举和核心表存在。
 7. 部署 Web 应用。
 8. 访问 `/api/health`，确认返回 `200` 和 `database: "ok"`。
-9. 对生产地址运行 API 烟雾测试：`SMOKE_BASE_URL=https://your-domain.example corepack pnpm smoke:api`。
-10. 或运行完整部署验证：`SMOKE_BASE_URL=https://your-domain.example corepack pnpm verify:deployment`。
+9. 设置 `SMOKE_BASE_URL` 后，对生产地址运行 API 烟雾测试：`corepack pnpm smoke:api`。
+10. 或在 `DATABASE_URL` 和 `SMOKE_BASE_URL` 都已设置后运行完整部署验证：`corepack pnpm verify:deployment`。
 
 ## 健康检查
 

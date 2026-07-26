@@ -6,6 +6,8 @@
 
 ## 内测前技术检查
 
+环境变量说明见 `docs/environment.md`。
+
 1. 设置数据库连接：
 
 ```powershell
@@ -44,6 +46,8 @@ corepack pnpm dev
 corepack pnpm smoke:api
 ```
 
+如果测试目标不是 `http://localhost:3000`，先设置 `SMOKE_BASE_URL`。
+
 ## 组织者手动检查
 
 - 打开首页。
@@ -61,7 +65,7 @@ corepack pnpm smoke:api
 - 用公开分享链接打开日程。
 - 输入昵称。
 - 选择多个可用时间。
-- 提交后复制或保存编辑链接。
+- 提交后确认页面明确提示“保存编辑链接”，并复制或保存该链接。
 - 用编辑链接重新打开。
 - 修改昵称或可用时间。
 - 提交修改。

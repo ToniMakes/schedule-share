@@ -26,12 +26,14 @@ type SubmitState =
   | { readonly status: "success"; readonly result: CreateParticipantAvailabilityResponse }
   | { readonly status: "error"; readonly message: string };
 
+type CopyState = "idle" | "copied" | "failed";
+
 export function AvailabilityForm({ publicId, scheduleStatus, slots }: AvailabilityFormProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [selectedSlotKeys, setSelectedSlotKeys] = useState<Set<string>>(() => new Set());
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<CopyState>("idle");
   const slotGroups = useMemo(() => groupSlotsByDate(slots), [slots]);
   const isClosed = scheduleStatus !== "open";
   const isSubmitting = submitState.status === "submitting";
@@ -44,7 +46,7 @@ export function AvailabilityForm({ publicId, scheduleStatus, slots }: Availabili
     }
 
     setSubmitState({ status: "submitting" });
-    setCopied(false);
+    setCopyState("idle");
 
     try {
       const result = await createParticipantAvailability(publicId, {
@@ -86,8 +88,12 @@ export function AvailabilityForm({ publicId, scheduleStatus, slots }: Availabili
   }
 
   async function copyEditLink(value: string) {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
   }
 
   if (isClosed) {
@@ -176,18 +182,22 @@ export function AvailabilityForm({ publicId, scheduleStatus, slots }: Availabili
 
         {submitState.status === "success" ? (
           <div className={styles.success} aria-live="polite">
-            <strong>已提交</strong>
+            <strong>已提交，请保存编辑链接</strong>
+            <p>之后修改可用时间需要这个链接；离开页面后无法再次显示。</p>
             <div className={styles.copyLinkRow}>
-              <input readOnly value={submitState.result.editUrl} />
+              <input aria-label="编辑链接" readOnly value={submitState.result.editUrl} />
               <button
                 className={styles.copyButton}
                 onClick={() => copyEditLink(submitState.result.editUrl)}
                 type="button"
               >
                 <Clipboard aria-hidden="true" size={17} />
-                {copied ? "已复制" : "复制"}
+                {copyState === "copied" ? "已复制" : "复制"}
               </button>
             </div>
+            {copyState === "failed" ? (
+              <p className={styles.inlineWarning}>无法自动复制，可以手动选中链接。</p>
+            ) : null}
           </div>
         ) : null}
       </form>

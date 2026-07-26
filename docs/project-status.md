@@ -26,6 +26,7 @@
 - Postgres schema、初始 migration 和数据库自检：`corepack pnpm db:check`。
 - API smoke test：`corepack pnpm smoke:api`。
 - 部署验证编排：`corepack pnpm verify:deployment`。
+- 环境变量模板和配置说明：`.env.example`、`docs/environment.md`。
 - GitHub Actions CI：format、lint、typecheck、test、build。
 
 ## 代码结构
@@ -74,28 +75,17 @@ corepack pnpm build
 
 ## 下一步建议
 
-1. 准备托管 Postgres 连接串。
+1. 按 `docs/environment.md` 准备托管 Postgres 连接串。
 2. 运行 `db:check -> db:migrate -> db:check`。
 3. 启动带 `DATABASE_URL` 的 Web 服务。
 4. 运行 `smoke:api`。
 5. 找 3 到 5 个朋友按内测清单试用。
 6. 整理反馈后再决定是否进入公开部署。
 
-## Git 基线建议
+## Git 基线
 
-当前项目文件尚未做首个提交。建议在真实数据库接入前先创建一个基线提交，提交信息可使用：
+当前已经有首个基线提交：
 
-```text
-feat: scaffold schedule share MVP
-```
+- `ae9d215 feat: scaffold schedule share MVP`
 
-提交前建议先确认：
-
-```powershell
-corepack pnpm format
-corepack pnpm lint
-corepack pnpm typecheck
-corepack pnpm test
-corepack pnpm build
-git status --short
-```
+后续功能建议继续保持小步提交：每轮改动先跑相关验证，再提交清晰的功能或文档变更。

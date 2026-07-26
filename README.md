@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-项目处于架构骨架和核心领域逻辑阶段。第一阶段目标是构建移动优先的海外网页版 MVP，验证核心流程：
+项目处于“海外网页版 MVP 主链路已实现，等待真实 Postgres 跑通内测链路”的阶段。第一阶段目标是构建移动优先的海外网页版 MVP，验证核心流程：
 
 1. 创建日程。
 2. 分享链接。
@@ -43,6 +43,7 @@
 - `docs/domain-model.md`：核心实体、时间规则和权限规则。
 - `docs/architecture.md`：推荐技术栈、目录结构和模块边界。
 - `docs/api.md`：API 草案。
+- `docs/environment.md`：环境变量、本地配置和生产配置说明。
 - `docs/deployment.md`：部署流程、健康检查和运维注意事项。
 - `docs/project-status.md`：当前项目基线、完成项、缺口和下一步。
 - `docs/internal-test-checklist.md`：真实内测前后的检查清单。
@@ -127,5 +128,6 @@ docs/
 ## 下一步
 
 - 选择海外 Web MVP 的托管平台和生产 Postgres。
+- 按 `docs/environment.md` 配置本地或托管数据库连接。
 - 在真实部署环境跑通 `db:check`、migration 和 `verify:deployment`。
 - 接真实 Postgres，跑通可保存、可分享的内测链路。

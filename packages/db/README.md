@@ -21,13 +21,15 @@
 
 - `corepack pnpm --filter @schedule-share/db db:generate`
 - `corepack pnpm --filter @schedule-share/db db:migrate`
+- `corepack pnpm --filter @schedule-share/db db:check`
 - `corepack pnpm --filter @schedule-share/db db:studio`
 
-这些命令需要 `DATABASE_URL`。
+这些命令需要 `DATABASE_URL`。环境变量说明见 `docs/environment.md`。
 
 项目根目录提供本地 Docker Postgres 辅助命令：
 
 - `corepack pnpm db:up`
+- `corepack pnpm db:check`
 - `corepack pnpm db:migrate:local`
 - `corepack pnpm db:down`
 

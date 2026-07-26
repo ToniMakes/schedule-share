@@ -164,7 +164,8 @@ export function EditAvailabilityForm({
 
         {submitState.status === "success" ? (
           <div className={styles.success} aria-live="polite">
-            <strong>已保存</strong>
+            <strong>已保存修改</strong>
+            <p>这条编辑链接仍然有效，可以继续用于调整可用时间。</p>
           </div>
         ) : null}
 
