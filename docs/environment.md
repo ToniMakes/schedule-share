@@ -14,6 +14,16 @@
 | `DATABASE_URL`   | 是   | Web API、Drizzle migration、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。  |
 | `SMOKE_BASE_URL` | 否   | `smoke:api`、`verify:deployment`                                         | `https://your-domain.example`               | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`。 |
 
+## 检查配置状态
+
+运行：
+
+```powershell
+corepack pnpm env:status
+```
+
+这个命令只读取配置，不连接数据库。它会打码显示 `DATABASE_URL`，并在连接串仍然指向默认本地数据库时返回警告。
+
 ## 本地开发
 
 如果本机有 Docker：
@@ -36,6 +46,7 @@ corepack pnpm smoke:api
 ```powershell
 corepack pnpm env:init
 # 修改 .env.local 里的 DATABASE_URL 后再执行：
+corepack pnpm env:status
 corepack pnpm db:check
 corepack pnpm db:migrate
 corepack pnpm db:check

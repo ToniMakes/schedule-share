@@ -24,6 +24,7 @@ $env:DATABASE_URL="postgres://..."
 2. 检查数据库连接：
 
 ```powershell
+corepack pnpm env:status
 corepack pnpm db:check
 ```
 
