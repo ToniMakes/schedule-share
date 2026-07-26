@@ -25,7 +25,7 @@
 - 健康检查 API：`GET /api/health`。
 - Postgres schema、初始 migration 和数据库自检：`corepack pnpm db:setup`、`corepack pnpm db:check`。
 - API smoke test：`corepack pnpm smoke:api`。
-- 部署验证编排：`corepack pnpm verify:deployment`。
+- 部署验证编排：`corepack pnpm verify:deployment`，包含数据库检查、健康检查、公开说明页和 API smoke test。
 - 环境变量模板和配置说明：`.env.example`、`docs/environment.md`。
 - 命令行脚本自动读取本地 `.env.local` / `.env`。
 - 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`。

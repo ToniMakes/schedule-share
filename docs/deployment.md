@@ -52,7 +52,8 @@
 
 1. `corepack pnpm db:check`
 2. 请求 `SMOKE_BASE_URL` 对应站点的 `/api/health`
-3. 执行 `corepack pnpm smoke:api`
+3. 请求 `/privacy` 和 `/feedback`，确认公开说明页可以访问
+4. 执行 `corepack pnpm smoke:api`
 
 运行前需要设置：
 
@@ -61,7 +62,8 @@ $env:DATABASE_URL="postgres://..."
 $env:SMOKE_BASE_URL="https://your-domain.example"
 ```
 
-这个命令会创建一条归档的 smoke-test 日程，用于验证创建、提交、编辑、锁定、锁定后拒绝修改和归档的完整 API 链路。
+这个命令会确认数据库 schema、健康检查、公开说明页和核心 API 链路。它会创建一条归档的 smoke-test
+日程，用于验证创建、提交、编辑、锁定、锁定后拒绝修改和归档。
 
 如果缺少 `DATABASE_URL` 或数据库查询失败，会返回 `503`：
 

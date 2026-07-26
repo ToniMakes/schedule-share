@@ -105,7 +105,8 @@ $env:SMOKE_BASE_URL="https://your-domain.example"
 corepack pnpm smoke:api
 ```
 
-也可以运行完整部署验证。它会执行 `db:check`、检查 `/api/health`，并创建一条归档的 smoke-test 日程：
+也可以运行完整部署验证。它会执行 `db:check`，检查 `/api/health`、`/privacy` 和 `/feedback`，并创建一条归档的
+smoke-test 日程：
 
 ```powershell
 $env:DATABASE_URL="postgres://..."

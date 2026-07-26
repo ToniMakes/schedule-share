@@ -7,6 +7,16 @@ loadRootEnv();
 
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const databaseUrl = process.env.DATABASE_URL;
+const publicPages = [
+  {
+    expectedText: "隐私与数据保留说明",
+    path: "/privacy"
+  },
+  {
+    expectedText: "反馈与删除请求",
+    path: "/feedback"
+  }
+];
 
 if (databaseUrl === undefined || databaseUrl.trim().length === 0) {
   fail("DATABASE_URL is required before running deployment verification.");
@@ -20,6 +30,7 @@ async function main() {
 
   await run("corepack", ["pnpm", "db:check"]);
   await checkHealth();
+  await checkPublicPages();
   await run("corepack", ["pnpm", "smoke:api"], {
     env: {
       ...process.env,
@@ -50,6 +61,29 @@ async function checkHealth() {
   }
 
   log("Health check passed.");
+}
+
+async function checkPublicPages() {
+  for (const page of publicPages) {
+    await checkPublicPage(page);
+  }
+}
+
+async function checkPublicPage(page) {
+  log(`Checking ${page.path}`);
+
+  const response = await fetch(new URL(page.path, baseUrl));
+  const body = await response.text();
+
+  if (response.status !== 200) {
+    throw new Error(`${page.path} expected 200, got ${response.status}.`);
+  }
+
+  if (!body.includes(page.expectedText)) {
+    throw new Error(`${page.path} did not include expected text: ${page.expectedText}`);
+  }
+
+  log(`${page.path} check passed.`);
 }
 
 function run(rawCommand, args, options = {}) {
