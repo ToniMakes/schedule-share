@@ -11,6 +11,13 @@
 1. 设置数据库连接：
 
 ```powershell
+Copy-Item .env.example .env.local
+# 修改 .env.local 里的 DATABASE_URL 后继续
+```
+
+也可以在当前 PowerShell 会话中设置：
+
+```powershell
 $env:DATABASE_URL="postgres://..."
 ```
 

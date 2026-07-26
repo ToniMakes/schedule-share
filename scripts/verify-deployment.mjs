@@ -2,6 +2,10 @@
 
 import { spawn } from "node:child_process";
 
+import { loadRootEnv } from "./load-env.mjs";
+
+loadRootEnv();
+
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const databaseUrl = process.env.DATABASE_URL;
 

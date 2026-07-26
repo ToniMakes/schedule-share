@@ -24,7 +24,7 @@
 - `corepack pnpm --filter @schedule-share/db db:check`
 - `corepack pnpm --filter @schedule-share/db db:studio`
 
-这些命令需要 `DATABASE_URL`。环境变量说明见 `docs/environment.md`。
+这些命令需要 `DATABASE_URL`。脚本会自动读取项目根目录的 `.env.local` 和 `.env`，环境变量说明见 `docs/environment.md`。
 
 项目根目录提供本地 Docker Postgres 辅助命令：
 

@@ -1,3 +1,7 @@
+import { loadRootEnv } from "./load-env.mjs";
+
+loadRootEnv();
+
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 
 const runId = new Date()

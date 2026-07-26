@@ -27,6 +27,7 @@
 - API smoke test：`corepack pnpm smoke:api`。
 - 部署验证编排：`corepack pnpm verify:deployment`。
 - 环境变量模板和配置说明：`.env.example`、`docs/environment.md`。
+- 命令行脚本自动读取本地 `.env.local` / `.env`。
 - GitHub Actions CI：format、lint、typecheck、test、build。
 
 ## 代码结构

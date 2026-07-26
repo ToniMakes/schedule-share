@@ -2,6 +2,10 @@
 
 import postgres from "postgres";
 
+import { loadRootEnv } from "../../../scripts/load-env.mjs";
+
+loadRootEnv();
+
 const requiredExtensions = ["pgcrypto"];
 const requiredTables = ["availability_slots", "participants", "schedules"];
 const requiredTypes = ["schedule_status"];

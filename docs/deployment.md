@@ -13,6 +13,7 @@
 
 - 生产 Web 运行时必须设置 `DATABASE_URL`。
 - 本地或部署验证终端需要设置 `DATABASE_URL`，用于 `db:check`、migration 和 `verify:deployment`。
+- 命令行脚本会自动读取项目根目录的 `.env.local` 和 `.env`；当前 shell 中已设置的变量优先级最高。
 - `SMOKE_BASE_URL` 只用于本地验证脚本，指向要测试的站点地址；不需要作为 Web 应用的生产运行时变量。
 - 不要把真实 `DATABASE_URL`、`ownerUrl` 或 `editUrl` 写进公开日志、截图或文档。
 
