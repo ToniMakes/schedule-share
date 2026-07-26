@@ -1,8 +1,8 @@
 import { archiveScheduleRequestSchema } from "@schedule-share/api-client";
 
 import { getDatabase } from "@/server/db";
-import { apiErrorResponse, unknownErrorResponse } from "@/server/errors";
-import { readJson } from "@/server/request-json";
+import { unknownErrorResponse } from "@/server/errors";
+import { parseJsonRequest } from "@/server/request-json";
 import { archiveScheduleRecord } from "@/server/schedules/archive-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
@@ -15,21 +15,10 @@ interface RouteContext {
 }
 
 export async function POST(request: Request, context: RouteContext): Promise<Response> {
-  const body = await readJson(request);
-
-  if (!body.success) {
-    return apiErrorResponse(400, "VALIDATION_ERROR", "Request body must be valid JSON.");
-  }
-
-  const parsed = archiveScheduleRequestSchema.safeParse(body.value);
+  const parsed = await parseJsonRequest(request, archiveScheduleRequestSchema);
 
   if (!parsed.success) {
-    return apiErrorResponse(
-      400,
-      "VALIDATION_ERROR",
-      "Invalid request body.",
-      parsed.error.flatten()
-    );
+    return parsed.response;
   }
 
   try {

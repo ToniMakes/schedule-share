@@ -1,8 +1,8 @@
 import { updateParticipantAvailabilityRequestSchema } from "@schedule-share/api-client";
 
 import { getDatabase } from "@/server/db";
-import { apiErrorResponse, unknownErrorResponse } from "@/server/errors";
-import { readJson } from "@/server/request-json";
+import { unknownErrorResponse } from "@/server/errors";
+import { parseJsonRequest } from "@/server/request-json";
 import { getParticipantAvailabilityView } from "@/server/schedules/get-participant-availability";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 import { updateParticipantAvailabilityRecord } from "@/server/schedules/update-participant-availability";
@@ -32,21 +32,10 @@ export async function GET(request: Request, context: RouteContext): Promise<Resp
 }
 
 export async function PUT(request: Request, context: RouteContext): Promise<Response> {
-  const body = await readJson(request);
-
-  if (!body.success) {
-    return apiErrorResponse(400, "VALIDATION_ERROR", "Request body must be valid JSON.");
-  }
-
-  const parsed = updateParticipantAvailabilityRequestSchema.safeParse(body.value);
+  const parsed = await parseJsonRequest(request, updateParticipantAvailabilityRequestSchema);
 
   if (!parsed.success) {
-    return apiErrorResponse(
-      400,
-      "VALIDATION_ERROR",
-      "Invalid request body.",
-      parsed.error.flatten()
-    );
+    return parsed.response;
   }
 
   try {

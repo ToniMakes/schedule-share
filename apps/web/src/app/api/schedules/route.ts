@@ -1,8 +1,8 @@
 import { createScheduleRequestSchema } from "@schedule-share/api-client";
 
 import { getDatabase } from "@/server/db";
-import { apiErrorResponse, unknownErrorResponse } from "@/server/errors";
-import { readJson } from "@/server/request-json";
+import { unknownErrorResponse } from "@/server/errors";
+import { parseJsonRequest } from "@/server/request-json";
 import { createScheduleRecord } from "@/server/schedules/create-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 import { getRequestBaseUrl } from "@/server/urls";
@@ -10,21 +10,10 @@ import { getRequestBaseUrl } from "@/server/urls";
 export const runtime = "nodejs";
 
 export async function POST(request: Request): Promise<Response> {
-  const body = await readJson(request);
-
-  if (!body.success) {
-    return apiErrorResponse(400, "VALIDATION_ERROR", "Request body must be valid JSON.");
-  }
-
-  const parsed = createScheduleRequestSchema.safeParse(body.value);
+  const parsed = await parseJsonRequest(request, createScheduleRequestSchema);
 
   if (!parsed.success) {
-    return apiErrorResponse(
-      400,
-      "VALIDATION_ERROR",
-      "Invalid request body.",
-      parsed.error.flatten()
-    );
+    return parsed.response;
   }
 
   try {
