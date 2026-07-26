@@ -1,7 +1,7 @@
 import { createScheduleRequestSchema } from "@schedule-share/api-client";
 
 import { getDatabase } from "@/server/db";
-import { unknownErrorResponse } from "@/server/errors";
+import { withApiErrorHandling } from "@/server/errors";
 import { parseJsonRequest } from "@/server/request-json";
 import { createScheduleRecord } from "@/server/schedules/create-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
@@ -16,7 +16,7 @@ export async function POST(request: Request): Promise<Response> {
     return parsed.response;
   }
 
-  try {
+  return withApiErrorHandling(async () => {
     const repository = new DrizzleScheduleRepository(getDatabase());
     const response = await createScheduleRecord(parsed.data, {
       baseUrl: getRequestBaseUrl(request),
@@ -24,7 +24,5 @@ export async function POST(request: Request): Promise<Response> {
     });
 
     return Response.json(response, { status: 201 });
-  } catch (error) {
-    return unknownErrorResponse(error);
-  }
+  });
 }

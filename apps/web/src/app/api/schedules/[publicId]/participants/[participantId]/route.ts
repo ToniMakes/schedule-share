@@ -1,7 +1,7 @@
 import { updateParticipantAvailabilityRequestSchema } from "@schedule-share/api-client";
 
 import { getDatabase } from "@/server/db";
-import { unknownErrorResponse } from "@/server/errors";
+import { withApiErrorHandling } from "@/server/errors";
 import { parseJsonRequest } from "@/server/request-json";
 import { getParticipantAvailabilityView } from "@/server/schedules/get-participant-availability";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
@@ -17,7 +17,7 @@ interface RouteContext {
 }
 
 export async function GET(request: Request, context: RouteContext): Promise<Response> {
-  try {
+  return withApiErrorHandling(async () => {
     const { publicId, participantId } = await context.params;
     const editKey = new URL(request.url).searchParams.get("key") ?? "";
     const repository = new DrizzleScheduleRepository(getDatabase());
@@ -26,9 +26,7 @@ export async function GET(request: Request, context: RouteContext): Promise<Resp
     });
 
     return Response.json(response);
-  } catch (error) {
-    return unknownErrorResponse(error);
-  }
+  });
 }
 
 export async function PUT(request: Request, context: RouteContext): Promise<Response> {
@@ -38,7 +36,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Resp
     return parsed.response;
   }
 
-  try {
+  return withApiErrorHandling(async () => {
     const { publicId, participantId } = await context.params;
     const repository = new DrizzleScheduleRepository(getDatabase());
     const response = await updateParticipantAvailabilityRecord(
@@ -51,7 +49,5 @@ export async function PUT(request: Request, context: RouteContext): Promise<Resp
     );
 
     return Response.json(response);
-  } catch (error) {
-    return unknownErrorResponse(error);
-  }
+  });
 }

@@ -39,3 +39,11 @@ export function unknownErrorResponse(error: unknown): Response {
   console.error(error);
   return apiErrorResponse(500, "INTERNAL_ERROR", "Unexpected server error.");
 }
+
+export async function withApiErrorHandling(handler: () => Promise<Response>): Promise<Response> {
+  try {
+    return await handler();
+  } catch (error) {
+    return unknownErrorResponse(error);
+  }
+}

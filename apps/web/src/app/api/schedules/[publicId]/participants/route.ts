@@ -1,7 +1,7 @@
 import { createParticipantAvailabilityRequestSchema } from "@schedule-share/api-client";
 
 import { getDatabase } from "@/server/db";
-import { unknownErrorResponse } from "@/server/errors";
+import { withApiErrorHandling } from "@/server/errors";
 import { parseJsonRequest } from "@/server/request-json";
 import { createParticipantAvailabilityRecord } from "@/server/schedules/create-participant-availability";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
@@ -22,7 +22,7 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
     return parsed.response;
   }
 
-  try {
+  return withApiErrorHandling(async () => {
     const { publicId } = await context.params;
     const repository = new DrizzleScheduleRepository(getDatabase());
     const response = await createParticipantAvailabilityRecord(publicId, parsed.data, {
@@ -31,7 +31,5 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
     });
 
     return Response.json(response, { status: 201 });
-  } catch (error) {
-    return unknownErrorResponse(error);
-  }
+  });
 }
