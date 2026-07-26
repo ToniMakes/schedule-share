@@ -13,6 +13,7 @@ import {
 } from "@schedule-share/core";
 
 import { HttpError } from "../errors";
+import { assertSchedulePublicId } from "./path-validation";
 import type {
   AvailabilitySlotRecord,
   OwnerScheduleWithAvailabilityRecord,
@@ -30,9 +31,7 @@ export async function getScheduleView(
   publicId: string,
   dependencies: GetScheduleDependencies
 ): Promise<GetScheduleResponse> {
-  if (publicId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Schedule public id is required.");
-  }
+  assertSchedulePublicId(publicId);
 
   const record = await dependencies.repository.getScheduleByPublicId(publicId);
 

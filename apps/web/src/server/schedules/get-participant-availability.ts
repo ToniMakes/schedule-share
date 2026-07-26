@@ -6,6 +6,7 @@ import { CoreError, generateTimeSlots } from "@schedule-share/core";
 
 import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
+import { assertScheduleParticipantPath } from "./path-validation";
 import type {
   ParticipantAvailabilityWithScheduleRecord,
   ReadParticipantAvailabilityRepository
@@ -23,7 +24,7 @@ export async function getParticipantAvailabilityView(
   editKey: string,
   dependencies: GetParticipantAvailabilityDependencies
 ): Promise<GetParticipantAvailabilityResponse> {
-  validatePathInputs(publicId, participantId);
+  assertScheduleParticipantPath(publicId, participantId);
 
   if (editKey.length === 0) {
     throw new HttpError(403, "INVALID_EDIT_KEY", "Participant edit key is invalid.");
@@ -77,14 +78,4 @@ function toAvailabilitySlotInput(slot: {
     startUtc: slot.slotStartUtc.toISOString(),
     endUtc: slot.slotEndUtc.toISOString()
   };
-}
-
-function validatePathInputs(publicId: string, participantId: string): void {
-  if (publicId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Schedule public id is required.");
-  }
-
-  if (participantId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Participant id is required.");
-  }
 }

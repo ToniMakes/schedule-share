@@ -4,6 +4,7 @@ import { CoreError } from "@schedule-share/core";
 import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
 import { toScheduleResponse } from "./get-schedule";
+import { assertSchedulePublicId } from "./path-validation";
 import type { ReadOwnerScheduleRepository } from "./repository";
 
 export interface GetOwnerScheduleDependencies {
@@ -15,9 +16,7 @@ export async function getOwnerScheduleView(
   ownerKey: string,
   dependencies: GetOwnerScheduleDependencies
 ): Promise<GetScheduleResponse> {
-  if (publicId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Schedule public id is required.");
-  }
+  assertSchedulePublicId(publicId);
 
   if (ownerKey.length === 0) {
     throw new HttpError(403, "INVALID_OWNER_KEY", "Owner key is invalid.");

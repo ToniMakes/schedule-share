@@ -2,6 +2,7 @@ import type { ArchiveScheduleRequest, ArchiveScheduleResponse } from "@schedule-
 
 import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
+import { assertSchedulePublicId } from "./path-validation";
 import type { ArchiveScheduleRepository } from "./repository";
 
 export interface ArchiveScheduleDependencies {
@@ -13,9 +14,7 @@ export async function archiveScheduleRecord(
   input: ArchiveScheduleRequest,
   dependencies: ArchiveScheduleDependencies
 ): Promise<ArchiveScheduleResponse> {
-  if (publicId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Schedule public id is required.");
-  }
+  assertSchedulePublicId(publicId);
 
   const record = await dependencies.repository.getOwnerScheduleByPublicId(publicId);
 

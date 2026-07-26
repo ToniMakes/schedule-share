@@ -2,6 +2,7 @@ import type { LockScheduleRequest, LockScheduleResponse } from "@schedule-share/
 
 import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
+import { assertSchedulePublicId } from "./path-validation";
 import type { LockScheduleRepository } from "./repository";
 
 export interface LockScheduleDependencies {
@@ -13,9 +14,7 @@ export async function lockScheduleRecord(
   input: LockScheduleRequest,
   dependencies: LockScheduleDependencies
 ): Promise<LockScheduleResponse> {
-  if (publicId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Schedule public id is required.");
-  }
+  assertSchedulePublicId(publicId);
 
   const record = await dependencies.repository.getOwnerScheduleByPublicId(publicId);
 

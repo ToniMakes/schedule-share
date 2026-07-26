@@ -6,6 +6,7 @@ import type {
 import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
 import { validateAvailabilitySlotsForSchedule } from "./availability-validation";
+import { assertScheduleParticipantPath } from "./path-validation";
 import type { UpdateParticipantAvailabilityRepository } from "./repository";
 
 export interface UpdateParticipantAvailabilityDependencies {
@@ -18,7 +19,7 @@ export async function updateParticipantAvailabilityRecord(
   input: UpdateParticipantAvailabilityRequest,
   dependencies: UpdateParticipantAvailabilityDependencies
 ): Promise<UpdateParticipantAvailabilityResponse> {
-  validatePathInputs(publicId, participantId);
+  assertScheduleParticipantPath(publicId, participantId);
 
   const record = await dependencies.repository.getParticipantAvailabilityByPublicId(
     publicId,
@@ -56,14 +57,4 @@ export async function updateParticipantAvailabilityRecord(
   return {
     participant
   };
-}
-
-function validatePathInputs(publicId: string, participantId: string): void {
-  if (publicId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Schedule public id is required.");
-  }
-
-  if (participantId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Participant id is required.");
-  }
 }

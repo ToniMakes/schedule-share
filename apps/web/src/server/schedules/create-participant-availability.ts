@@ -7,6 +7,7 @@ import { hashKey, randomToken } from "../credentials";
 import { HttpError } from "../errors";
 import { buildAbsoluteUrl } from "../urls";
 import { validateAvailabilitySlotsForSchedule } from "./availability-validation";
+import { assertSchedulePublicId } from "./path-validation";
 import type { CreateParticipantAvailabilityRepository } from "./repository";
 
 export interface CreateParticipantAvailabilityDependencies {
@@ -20,9 +21,7 @@ export async function createParticipantAvailabilityRecord(
   input: CreateParticipantAvailabilityRequest,
   dependencies: CreateParticipantAvailabilityDependencies
 ): Promise<CreateParticipantAvailabilityResponse> {
-  if (publicId.trim().length === 0) {
-    throw new HttpError(400, "VALIDATION_ERROR", "Schedule public id is required.");
-  }
+  assertSchedulePublicId(publicId);
 
   const record = await dependencies.repository.getScheduleByPublicId(publicId);
 
