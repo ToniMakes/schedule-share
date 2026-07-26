@@ -18,6 +18,7 @@ export {
   archiveScheduleRequestSchema,
   archiveScheduleResponseSchema,
   apiErrorCodeSchema,
+  apiErrorCodes,
   apiErrorResponseSchema,
   createParticipantAvailabilityRequestSchema,
   createParticipantAvailabilityResponseSchema,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const apiErrorCodeSchema = z.enum([
+export const apiErrorCodes = [
   "DATABASE_UNAVAILABLE",
   "INTERNAL_ERROR",
   "INVALID_EDIT_KEY",
@@ -11,7 +11,9 @@ export const apiErrorCodeSchema = z.enum([
   "SLOT_OUT_OF_RANGE",
   "UNSUPPORTED_SLOT_MINUTES",
   "VALIDATION_ERROR"
-]);
+] as const;
+
+export const apiErrorCodeSchema = z.enum(apiErrorCodes);
 
 export const apiErrorResponseSchema = z
   .object({

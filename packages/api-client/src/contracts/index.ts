@@ -1,4 +1,4 @@
-export { apiErrorCodeSchema, apiErrorResponseSchema } from "./errors";
+export { apiErrorCodeSchema, apiErrorCodes, apiErrorResponseSchema } from "./errors";
 export type { ApiErrorCode, ApiErrorResponse } from "./errors";
 export { healthStatusResponseSchema } from "./health";
 export type { HealthStatusResponse } from "./health";
