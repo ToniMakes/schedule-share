@@ -26,6 +26,7 @@
 - Postgres schema、初始 migration 和数据库自检：`corepack pnpm db:setup`、`corepack pnpm db:check`。
 - API smoke test：`corepack pnpm smoke:api`。
 - 部署配置预检：`corepack pnpm deployment:config`。
+- 部署配置检查逻辑测试：`corepack pnpm test:scripts`。
 - 部署验证编排：`corepack pnpm verify:deployment`，包含数据库检查、健康检查、公开说明页和 API smoke test。
 - 环境变量模板和配置说明：`.env.example`、`docs/environment.md`。
 - 命令行脚本自动读取本地 `.env.local` / `.env`。
@@ -59,7 +60,7 @@ corepack pnpm test
 corepack pnpm build
 ```
 
-当前测试总数：73。
+当前测试总数：86。
 
 浏览器预览验证：
 

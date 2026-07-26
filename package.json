@@ -21,7 +21,8 @@
     "format:write": "prettier --write .",
     "lint": "corepack pnpm -r lint",
     "smoke:api": "node scripts/smoke-api.mjs",
-    "test": "corepack pnpm -r test",
+    "test": "corepack pnpm test:scripts && corepack pnpm -r test",
+    "test:scripts": "node --test scripts/config-checks.test.mjs",
     "typecheck": "corepack pnpm -r typecheck",
     "verify:deployment": "node scripts/verify-deployment.mjs"
   },
