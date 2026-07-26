@@ -63,7 +63,7 @@ try {
 
   log("Database check passed.");
 } catch (error) {
-  console.error(`[db:check] ${error instanceof Error ? error.message : "Database check failed."}`);
+  console.error(`[db:check] ${describeError(error)}`);
   exitCode = 1;
 } finally {
   await sql.end({ timeout: 5 });
@@ -92,6 +92,57 @@ async function assertPresent(kind, requiredNames, actualNames) {
 
 function log(message) {
   console.log(`[db:check] ${message}`);
+}
+
+function describeError(error) {
+  if (!(error instanceof Error)) {
+    return "Database check failed.";
+  }
+
+  const details = [];
+  const message = error.message.trim();
+  const code = readStringProperty(error, "code");
+  const nestedErrors = Array.isArray(error.errors)
+    ? error.errors.map(describeNestedError).filter((nestedError) => nestedError.length > 0)
+    : [];
+
+  if (message.length > 0) {
+    details.push(message);
+  }
+
+  if (code !== undefined) {
+    details.push(`code ${code}`);
+  }
+
+  if (nestedErrors.length > 0) {
+    details.push(`causes: ${nestedErrors.join("; ")}`);
+  }
+
+  return details.length > 0 ? details.join(" ") : `${error.name} while checking database.`;
+}
+
+function describeNestedError(error) {
+  if (!(error instanceof Error)) {
+    return "";
+  }
+
+  const message = error.message.trim();
+  const code = readStringProperty(error, "code");
+
+  if (message.length > 0) {
+    return message;
+  }
+
+  return code === undefined ? error.name : `${error.name} ${code}`;
+}
+
+function readStringProperty(value, key) {
+  if (typeof value !== "object" || value === null || !(key in value)) {
+    return undefined;
+  }
+
+  const property = value[key];
+  return typeof property === "string" && property.length > 0 ? property : undefined;
 }
 
 function fail(message) {
