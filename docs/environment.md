@@ -9,10 +9,10 @@
 
 ## 变量清单
 
-| 变量             | 必填 | 使用位置                                                                 | 示例                                        | 说明                                                                      |
-| ---------------- | ---- | ------------------------------------------------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------- |
-| `DATABASE_URL`   | 是   | Web API、Drizzle migration、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。  |
-| `SMOKE_BASE_URL` | 否   | `smoke:api`、`verify:deployment`                                         | `https://your-domain.example`               | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`。 |
+| 变量             | 必填 | 使用位置                                                                 | 示例                                        | 说明                                                                                                      |
+| ---------------- | ---- | ------------------------------------------------------------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`   | 是   | Web API、Drizzle migration、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。                                  |
+| `SMOKE_BASE_URL` | 否   | `smoke:api`、`deployment:config`、`verify:deployment`                    | `https://your-domain.example`               | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。 |
 
 ## 检查配置状态
 
@@ -23,6 +23,15 @@ corepack pnpm env:status
 ```
 
 这个命令只读取配置，不连接数据库。它会打码显示 `DATABASE_URL`，并在连接串仍然指向默认本地数据库时返回警告。
+
+部署前还可以运行更严格的检查：
+
+```powershell
+corepack pnpm deployment:config
+```
+
+这个命令同样只读取配置，不连接数据库。它要求 `DATABASE_URL` 指向托管 Postgres，且 `SMOKE_BASE_URL`
+指向远程部署站点；如果仍然是本地默认值，会直接失败。
 
 ## 本地开发
 
@@ -74,6 +83,7 @@ DATABASE_URL=postgres://...
 # 可以写进 .env.local，也可以在当前 shell 设置：
 $env:DATABASE_URL="postgres://..."
 $env:SMOKE_BASE_URL="https://your-domain.example"
+corepack pnpm deployment:config
 corepack pnpm verify:deployment
 ```
 

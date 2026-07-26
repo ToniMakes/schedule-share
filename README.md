@@ -111,6 +111,7 @@ smoke-test 日程：
 ```powershell
 $env:DATABASE_URL="postgres://..."
 $env:SMOKE_BASE_URL="https://your-domain.example"
+corepack pnpm deployment:config
 corepack pnpm verify:deployment
 ```
 

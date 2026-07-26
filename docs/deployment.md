@@ -15,6 +15,7 @@
 - 本地或部署验证终端需要设置 `DATABASE_URL`，用于 `db:check`、migration 和 `verify:deployment`。
 - 命令行脚本会自动读取项目根目录的 `.env.local` 和 `.env`；当前 shell 中已设置的变量优先级最高。
 - `SMOKE_BASE_URL` 只用于本地验证脚本，指向要测试的站点地址；不需要作为 Web 应用的生产运行时变量。
+- `corepack pnpm deployment:config` 会拒绝本地默认数据库和本地 `SMOKE_BASE_URL`，用于生产部署前预检。
 - 不要把真实 `DATABASE_URL`、`ownerUrl` 或 `editUrl` 写进公开日志、截图或文档。
 
 ## 上线流程
@@ -28,8 +29,9 @@
 7. 访问 `/api/health`，确认返回 `200` 和 `database: "ok"`。
 8. 访问 `/privacy`，确认隐私与数据保留说明可打开。
 9. 访问 `/feedback`，确认反馈与删除请求说明可打开。
-10. 设置 `SMOKE_BASE_URL` 后，对生产地址运行 API 烟雾测试：`corepack pnpm smoke:api`。
-11. 或在 `DATABASE_URL` 和 `SMOKE_BASE_URL` 都已设置后运行完整部署验证：`corepack pnpm verify:deployment`。
+10. 设置 `SMOKE_BASE_URL` 后，运行 `corepack pnpm deployment:config`，确认部署配置不是本地默认值。
+11. 对生产地址运行 API 烟雾测试：`corepack pnpm smoke:api`。
+12. 或在 `DATABASE_URL` 和 `SMOKE_BASE_URL` 都已设置后运行完整部署验证：`corepack pnpm verify:deployment`。
 
 ## 健康检查
 
@@ -50,16 +52,19 @@
 
 `corepack pnpm verify:deployment` 会按顺序执行：
 
-1. `corepack pnpm db:check`
-2. 请求 `SMOKE_BASE_URL` 对应站点的 `/api/health`
-3. 请求 `/privacy` 和 `/feedback`，确认公开说明页可以访问
-4. 执行 `corepack pnpm smoke:api`
+1. `corepack pnpm deployment:config`
+2. `corepack pnpm db:check`
+3. 请求 `SMOKE_BASE_URL` 对应站点的 `/api/health`
+4. 请求 `/privacy` 和 `/feedback`，确认公开说明页可以访问
+5. 执行 `corepack pnpm smoke:api`
 
 运行前需要设置：
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
 $env:SMOKE_BASE_URL="https://your-domain.example"
+corepack pnpm deployment:config
+corepack pnpm verify:deployment
 ```
 
 这个命令会确认数据库 schema、健康检查、公开说明页和核心 API 链路。它会创建一条归档的 smoke-test

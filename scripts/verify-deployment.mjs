@@ -5,8 +5,6 @@ import { runCommand } from "./run-command.mjs";
 
 loadRootEnv();
 
-const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
-const databaseUrl = process.env.DATABASE_URL;
 const publicPages = [
   {
     expectedText: "隐私与数据保留说明",
@@ -18,19 +16,19 @@ const publicPages = [
   }
 ];
 
-if (databaseUrl === undefined || databaseUrl.trim().length === 0) {
-  fail("DATABASE_URL is required before running deployment verification.");
-}
-
 await main();
 
 async function main() {
+  await run("corepack", ["pnpm", "deployment:config"]);
+
+  const baseUrl = readRequiredEnv("SMOKE_BASE_URL");
+
   log(`Verifying deployment target ${baseUrl}`);
   log("This will run one API smoke test and create one archived smoke-test schedule.");
 
   await run("corepack", ["pnpm", "db:check"]);
-  await checkHealth();
-  await checkPublicPages();
+  await checkHealth(baseUrl);
+  await checkPublicPages(baseUrl);
   await run("corepack", ["pnpm", "smoke:api"], {
     env: {
       ...process.env,
@@ -41,7 +39,7 @@ async function main() {
   log("Deployment verification passed.");
 }
 
-async function checkHealth() {
+async function checkHealth(baseUrl) {
   log("Checking /api/health");
 
   const response = await fetch(new URL("/api/health", baseUrl));
@@ -63,13 +61,13 @@ async function checkHealth() {
   log("Health check passed.");
 }
 
-async function checkPublicPages() {
+async function checkPublicPages(baseUrl) {
   for (const page of publicPages) {
-    await checkPublicPage(page);
+    await checkPublicPage(baseUrl, page);
   }
 }
 
-async function checkPublicPage(page) {
+async function checkPublicPage(baseUrl, page) {
   log(`Checking ${page.path}`);
 
   const response = await fetch(new URL(page.path, baseUrl));
@@ -84,6 +82,16 @@ async function checkPublicPage(page) {
   }
 
   log(`${page.path} check passed.`);
+}
+
+function readRequiredEnv(key) {
+  const value = process.env[key]?.trim();
+
+  if (value === undefined || value.length === 0) {
+    fail(`${key} is required before running deployment verification.`);
+  }
+
+  return value;
 }
 
 function run(rawCommand, args, options = {}) {
