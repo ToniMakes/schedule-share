@@ -1,19 +1,14 @@
 import { getDatabase } from "@/server/db";
 import { withApiErrorHandling } from "@/server/errors";
+import { readScheduleRouteParams, type ScheduleRouteContext } from "@/server/route-inputs";
 import { getScheduleView } from "@/server/schedules/get-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 export const runtime = "nodejs";
 
-interface RouteContext {
-  readonly params: Promise<{
-    readonly publicId: string;
-  }>;
-}
-
-export async function GET(_request: Request, context: RouteContext): Promise<Response> {
+export async function GET(_request: Request, context: ScheduleRouteContext): Promise<Response> {
   return withApiErrorHandling(async () => {
-    const { publicId } = await context.params;
+    const { publicId } = await readScheduleRouteParams(context);
     const repository = new DrizzleScheduleRepository(getDatabase());
     const response = await getScheduleView(publicId, { repository });
 

@@ -1,20 +1,19 @@
 import { getDatabase } from "@/server/db";
 import { withApiErrorHandling } from "@/server/errors";
+import {
+  readAccessKey,
+  readScheduleRouteParams,
+  type ScheduleRouteContext
+} from "@/server/route-inputs";
 import { exportOwnerScheduleCsv } from "@/server/schedules/export-owner-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 export const runtime = "nodejs";
 
-interface RouteContext {
-  readonly params: Promise<{
-    readonly publicId: string;
-  }>;
-}
-
-export async function GET(request: Request, context: RouteContext): Promise<Response> {
+export async function GET(request: Request, context: ScheduleRouteContext): Promise<Response> {
   return withApiErrorHandling(async () => {
-    const { publicId } = await context.params;
-    const ownerKey = new URL(request.url).searchParams.get("key") ?? "";
+    const { publicId } = await readScheduleRouteParams(context);
+    const ownerKey = readAccessKey(request);
     const repository = new DrizzleScheduleRepository(getDatabase());
     const exported = await exportOwnerScheduleCsv(publicId, ownerKey, { repository });
 
