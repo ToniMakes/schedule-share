@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { checkDatabaseUrl, checkSmokeBaseUrl, hasCheckLevel, redactUrl } from "./config-checks.mjs";
+import {
+  checkAppBaseUrl,
+  checkDatabaseUrl,
+  checkSmokeBaseUrl,
+  hasCheckLevel,
+  redactUrl
+} from "./config-checks.mjs";
 
 describe("redactUrl", () => {
   it("redacts postgres usernames and passwords", () => {
@@ -94,6 +100,45 @@ describe("checkSmokeBaseUrl", () => {
 
     assert.equal(check.level, "ok");
     assert.equal(check.status, "remote");
+  });
+});
+
+describe("checkAppBaseUrl", () => {
+  it("allows missing APP_BASE_URL", () => {
+    const check = checkAppBaseUrl(undefined);
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "request-host");
+  });
+
+  it("warns for invalid APP_BASE_URL values during local status checks", () => {
+    const check = checkAppBaseUrl("not a url");
+
+    assert.equal(check.level, "warn");
+    assert.equal(check.status, "invalid");
+  });
+
+  it("allows local APP_BASE_URL values for local development", () => {
+    const check = checkAppBaseUrl("http://localhost:3000");
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "local");
+    assert.equal(check.value, "http://localhost:3000");
+  });
+
+  it("rejects local APP_BASE_URL values during deployment preflight", () => {
+    const check = checkAppBaseUrl("http://localhost:3000", { requireRemote: true });
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "local");
+  });
+
+  it("accepts remote APP_BASE_URL values", () => {
+    const check = checkAppBaseUrl("https://schedule-share.example", { requireRemote: true });
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "remote");
+    assert.equal(check.value, "https://schedule-share.example");
   });
 });
 

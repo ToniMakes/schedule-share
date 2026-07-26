@@ -103,6 +103,55 @@ export function checkSmokeBaseUrl(rawValue, options = {}) {
   };
 }
 
+export function checkAppBaseUrl(rawValue, options = {}) {
+  const requireRemote = options.requireRemote ?? false;
+  const value = rawValue?.trim() ?? "";
+
+  if (value.length === 0) {
+    return {
+      detail:
+        "APP_BASE_URL is optional. Generated links will use the incoming request host when it is missing.",
+      level: "ok",
+      name: "APP_BASE_URL",
+      status: "request-host"
+    };
+  }
+
+  const parsed = parseUrl(value);
+
+  if (parsed === undefined || !["http:", "https:"].includes(parsed.protocol)) {
+    return {
+      detail: "APP_BASE_URL must be an http:// or https:// URL.",
+      level: requireRemote ? "error" : "warn",
+      name: "APP_BASE_URL",
+      status: "invalid",
+      value
+    };
+  }
+
+  const isLocal = isLocalHostname(parsed.hostname);
+
+  if (requireRemote && isLocal) {
+    return {
+      detail: "APP_BASE_URL points to a local server. Use the deployed site URL in production.",
+      level: "error",
+      name: "APP_BASE_URL",
+      status: "local",
+      value: parsed.origin
+    };
+  }
+
+  return {
+    detail: isLocal
+      ? "Generated links will use a local app URL."
+      : "Generated links will use the configured remote app URL.",
+    level: "ok",
+    name: "APP_BASE_URL",
+    status: isLocal ? "local" : "remote",
+    value: parsed.origin
+  };
+}
+
 export function hasCheckLevel(checks, level) {
   return checks.some((check) => check.level === level);
 }

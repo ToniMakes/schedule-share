@@ -4,7 +4,7 @@
 
 - Web 应用：运行 `apps/web` 的 Next.js 服务。
 - Postgres 数据库：保存日程、参与者和可用时间。
-- 环境变量：生产环境至少需要设置 `DATABASE_URL`。
+- 环境变量：生产环境至少需要设置 `DATABASE_URL`，建议设置 `APP_BASE_URL`。
 - 域名：先使用托管平台分配的临时域名验证流程，再绑定正式域名。
 
 ## 环境变量
@@ -12,6 +12,7 @@
 完整变量说明见 `docs/environment.md`。
 
 - 生产 Web 运行时必须设置 `DATABASE_URL`。
+- 生产 Web 运行时建议设置 `APP_BASE_URL`，用于生成稳定的分享、管理和编辑链接；不设置时会按请求 Host 推断。
 - 本地或部署验证终端需要设置 `DATABASE_URL`，用于 `db:check`、migration 和 `verify:deployment`。
 - 命令行脚本会自动读取项目根目录的 `.env.local` 和 `.env`；当前 shell 中已设置的变量优先级最高。
 - `SMOKE_BASE_URL` 只用于本地验证脚本，指向要测试的站点地址；不需要作为 Web 应用的生产运行时变量。
@@ -22,7 +23,7 @@
 
 1. 确认 CI 通过：`format`、`lint`、`typecheck`、`test`、`build`。
 2. 创建生产 Postgres 数据库，并配置备份策略。
-3. 在部署平台设置 `DATABASE_URL`。
+3. 在部署平台设置 `DATABASE_URL`，建议同时设置 `APP_BASE_URL` 为正式站点地址。
 4. 在本地终端运行 `corepack pnpm env:status`，确认连接串指向目标数据库且输出已打码。
 5. 对生产数据库执行初始化：`corepack pnpm db:setup`。它会运行 migration，并在结束后执行 `db:check`。
 6. 部署 Web 应用。

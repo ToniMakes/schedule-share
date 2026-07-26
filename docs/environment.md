@@ -12,6 +12,7 @@
 | 变量             | 必填 | 使用位置                                                                 | 示例                                        | 说明                                                                                                      |
 | ---------------- | ---- | ------------------------------------------------------------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`   | 是   | Web API、Drizzle migration、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。                                  |
+| `APP_BASE_URL`   | 否   | Web API、`deployment:config`                                             | `https://your-domain.example`               | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                 |
 | `SMOKE_BASE_URL` | 否   | `smoke:api`、`deployment:config`、`verify:deployment`                    | `https://your-domain.example`               | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。 |
 
 ## 检查配置状态
@@ -31,7 +32,7 @@ corepack pnpm deployment:config
 ```
 
 这个命令同样只读取配置，不连接数据库。它要求 `DATABASE_URL` 指向托管 Postgres，且 `SMOKE_BASE_URL`
-指向远程部署站点；如果仍然是本地默认值，会直接失败。
+指向远程部署站点；如果设置了 `APP_BASE_URL`，也必须是远程 `http://` 或 `https://` 站点。如果仍然是本地默认值，会直接失败。
 
 ## 本地开发
 
@@ -75,6 +76,7 @@ corepack pnpm dev
 
 ```text
 DATABASE_URL=postgres://...
+APP_BASE_URL=https://your-domain.example
 ```
 
 部署后验证生产站点：
