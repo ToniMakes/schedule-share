@@ -1,0 +1,293 @@
+.page {
+  min-height: 100vh;
+  padding: 36px 20px 64px;
+}
+
+.shell {
+  width: min(100%, 920px);
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 28px;
+}
+
+.backLink {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  border-bottom-color: currentColor;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.title {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.08;
+  letter-spacing: 0;
+  text-align: right;
+}
+
+.form {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.notice,
+.error {
+  margin: 24px 0 0;
+  border-left: 4px solid;
+  padding: 14px 16px;
+  line-height: 1.5;
+}
+
+.notice {
+  border-left-color: #d97706;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.error {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.notice h2,
+.error h2 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.notice p,
+.error p {
+  margin: 6px 0 0;
+}
+
+.section {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionTitle {
+  margin: 0 0 18px;
+  color: var(--foreground);
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.field span {
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--foreground);
+  outline: none;
+}
+
+.field input {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.field textarea {
+  resize: vertical;
+  padding: 12px;
+  line-height: 1.5;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 14%);
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.dayGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(44px, 1fr));
+  gap: 10px;
+}
+
+.dayToggle,
+.segment {
+  position: relative;
+  min-width: 0;
+}
+
+.dayToggle input,
+.segment input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dayToggle span,
+.segment span {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.dayToggle input:checked + span,
+.segment input:checked + span {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.dayToggle input:focus-visible + span,
+.segment input:focus-visible + span {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 14%);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 24px;
+}
+
+.primaryButton,
+.copyButton {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.primaryButton {
+  min-width: 144px;
+  padding: 0 18px;
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.primaryButton:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.copyButton {
+  align-self: end;
+  border: 1px solid var(--border);
+  padding: 0 14px;
+  background: #ffffff;
+  color: var(--foreground);
+}
+
+.result {
+  margin-top: 28px;
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+}
+
+.linkRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.spinIcon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .header {
+    display: grid;
+  }
+
+  .eyebrow,
+  .title {
+    text-align: left;
+  }
+
+  .grid,
+  .segmented,
+  .linkRow {
+    grid-template-columns: 1fr;
+  }
+
+  .dayGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .primaryButton,
+  .copyButton {
+    width: 100%;
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@schedule-share/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "format": "prettier --check .",
+    "lint": "eslint .",
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@schedule-share/api-client": "workspace:*",
+    "@schedule-share/core": "workspace:*",
+    "@schedule-share/db": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "lucide-react": "^1.26.0",
+    "next": "^15.4.5",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "eslint-config-next": "^15.5.21"
+  }
+}
