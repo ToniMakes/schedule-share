@@ -26,6 +26,8 @@
 
 这些命令需要 `DATABASE_URL`。脚本会自动读取项目根目录的 `.env.local` 和 `.env`，环境变量说明见 `docs/environment.md`。
 
+项目根目录还提供 `corepack pnpm db:setup`，用于按顺序运行环境检查、migration 和 schema 自检。
+
 项目根目录提供本地 Docker Postgres 辅助命令：
 
 - `corepack pnpm db:up`

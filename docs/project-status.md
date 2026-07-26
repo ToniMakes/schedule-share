@@ -23,7 +23,7 @@
 - 组织者归档日程。
 - 组织者导出 CSV。
 - 健康检查 API：`GET /api/health`。
-- Postgres schema、初始 migration 和数据库自检：`corepack pnpm db:check`。
+- Postgres schema、初始 migration 和数据库自检：`corepack pnpm db:setup`、`corepack pnpm db:check`。
 - API smoke test：`corepack pnpm smoke:api`。
 - 部署验证编排：`corepack pnpm verify:deployment`。
 - 环境变量模板和配置说明：`.env.example`、`docs/environment.md`。
@@ -77,7 +77,7 @@ corepack pnpm build
 ## 下一步建议
 
 1. 按 `docs/environment.md` 准备托管 Postgres 连接串。
-2. 运行 `db:check -> db:migrate -> db:check`。
+2. 运行 `env:status -> db:setup`。
 3. 启动带 `DATABASE_URL` 的 Web 服务。
 4. 运行 `smoke:api`。
 5. 找 3 到 5 个朋友按内测清单试用。

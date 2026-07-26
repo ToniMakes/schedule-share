@@ -47,9 +47,7 @@ corepack pnpm smoke:api
 corepack pnpm env:init
 # 修改 .env.local 里的 DATABASE_URL 后再执行：
 corepack pnpm env:status
-corepack pnpm db:check
-corepack pnpm db:migrate
-corepack pnpm db:check
+corepack pnpm db:setup
 corepack pnpm dev
 ```
 
@@ -57,9 +55,8 @@ corepack pnpm dev
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
-corepack pnpm db:check
-corepack pnpm db:migrate
-corepack pnpm db:check
+corepack pnpm env:status
+corepack pnpm db:setup
 corepack pnpm dev
 ```
 

@@ -92,9 +92,8 @@ corepack pnpm smoke:api
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
-corepack pnpm db:check
-corepack pnpm db:migrate
-corepack pnpm db:check
+corepack pnpm env:status
+corepack pnpm db:setup
 ```
 
 部署后可针对真实站点运行烟雾测试：
@@ -130,5 +129,5 @@ docs/
 - 选择海外 Web MVP 的托管平台和生产 Postgres。
 - 按 `docs/environment.md` 配置本地或托管数据库连接。
 - 运行 `corepack pnpm env:status`，确认 `DATABASE_URL` 已经指向目标数据库。
-- 在真实部署环境跑通 `db:check`、migration 和 `verify:deployment`。
+- 在真实部署环境跑通 `db:setup` 和 `verify:deployment`。
 - 接真实 Postgres，跑通可保存、可分享的内测链路。

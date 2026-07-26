@@ -22,13 +22,12 @@
 1. 确认 CI 通过：`format`、`lint`、`typecheck`、`test`、`build`。
 2. 创建生产 Postgres 数据库，并配置备份策略。
 3. 在部署平台设置 `DATABASE_URL`。
-4. 对生产数据库做连接自检：`corepack pnpm db:check`。第一次可能提示缺少表，这是 migration 前的正常状态。
-5. 对生产数据库执行 migration：`corepack pnpm db:migrate`。
-6. 再次执行 `corepack pnpm db:check`，确认扩展、枚举和核心表存在。
-7. 部署 Web 应用。
-8. 访问 `/api/health`，确认返回 `200` 和 `database: "ok"`。
-9. 设置 `SMOKE_BASE_URL` 后，对生产地址运行 API 烟雾测试：`corepack pnpm smoke:api`。
-10. 或在 `DATABASE_URL` 和 `SMOKE_BASE_URL` 都已设置后运行完整部署验证：`corepack pnpm verify:deployment`。
+4. 在本地终端运行 `corepack pnpm env:status`，确认连接串指向目标数据库且输出已打码。
+5. 对生产数据库执行初始化：`corepack pnpm db:setup`。它会运行 migration，并在结束后执行 `db:check`。
+6. 部署 Web 应用。
+7. 访问 `/api/health`，确认返回 `200` 和 `database: "ok"`。
+8. 设置 `SMOKE_BASE_URL` 后，对生产地址运行 API 烟雾测试：`corepack pnpm smoke:api`。
+9. 或在 `DATABASE_URL` 和 `SMOKE_BASE_URL` 都已设置后运行完整部署验证：`corepack pnpm verify:deployment`。
 
 ## 健康检查
 

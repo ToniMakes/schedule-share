@@ -10,6 +10,7 @@
     "db:down": "docker compose down",
     "db:migrate": "corepack pnpm --filter @schedule-share/db db:migrate",
     "db:migrate:local": "node scripts/run-with-local-db.mjs corepack pnpm --filter @schedule-share/db db:migrate",
+    "db:setup": "node scripts/setup-database.mjs",
     "db:up": "docker compose up -d postgres",
     "dev": "corepack pnpm --filter @schedule-share/web dev",
     "dev:local": "node scripts/run-with-local-db.mjs corepack pnpm --filter @schedule-share/web dev",

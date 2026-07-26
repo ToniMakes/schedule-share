@@ -1,8 +1,7 @@
 /* global console, fetch, process */
 
-import { spawn } from "node:child_process";
-
 import { loadRootEnv } from "./load-env.mjs";
+import { runCommand } from "./run-command.mjs";
 
 loadRootEnv();
 
@@ -54,31 +53,7 @@ async function checkHealth() {
 }
 
 function run(rawCommand, args, options = {}) {
-  const command =
-    process.platform === "win32" && rawCommand === "corepack" ? "corepack.cmd" : rawCommand;
-
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      env: options.env ?? process.env,
-      shell: false,
-      stdio: "inherit"
-    });
-
-    child.on("error", reject);
-    child.on("exit", (code, signal) => {
-      if (signal !== null) {
-        reject(new Error(`${rawCommand} ${args.join(" ")} exited with signal ${signal}.`));
-        return;
-      }
-
-      if (code !== 0) {
-        reject(new Error(`${rawCommand} ${args.join(" ")} exited with code ${code}.`));
-        return;
-      }
-
-      resolve();
-    });
-  });
+  return runCommand(rawCommand, args, options);
 }
 
 async function readJson(response) {

@@ -21,34 +21,20 @@ corepack pnpm env:init
 $env:DATABASE_URL="postgres://..."
 ```
 
-2. 检查数据库连接：
+2. 检查环境变量并初始化数据库：
 
 ```powershell
 corepack pnpm env:status
-corepack pnpm db:check
+corepack pnpm db:setup
 ```
 
-第一次迁移前如果提示缺少表，是正常状态。
-
-3. 执行 migration：
-
-```powershell
-corepack pnpm db:migrate
-```
-
-4. 再次检查数据库：
-
-```powershell
-corepack pnpm db:check
-```
-
-5. 启动 Web 服务：
+3. 启动 Web 服务：
 
 ```powershell
 corepack pnpm dev
 ```
 
-6. 跑 API smoke test：
+4. 跑 API smoke test：
 
 ```powershell
 corepack pnpm smoke:api
