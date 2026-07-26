@@ -11,7 +11,7 @@
 1. 设置数据库连接：
 
 ```powershell
-Copy-Item .env.example .env.local
+corepack pnpm env:init
 # 修改 .env.local 里的 DATABASE_URL 后继续
 ```
 

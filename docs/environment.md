@@ -3,7 +3,7 @@
 ## 原则
 
 - 真实生产密钥只放在部署平台的环境变量里，不提交到 Git。
-- 本地开发可以复制 `.env.example` 为 `.env.local`，再按实际数据库连接修改。
+- 本地开发先运行 `corepack pnpm env:init` 生成 `.env.local`，再按实际数据库连接修改。
 - 命令行脚本会自动读取项目根目录的 `.env.local` 和 `.env`；已经在当前 shell 设置的变量优先级最高。
 - 改动环境变量后，需要重启本地 dev server 或重新部署生产环境。
 
@@ -19,7 +19,7 @@
 如果本机有 Docker：
 
 ```powershell
-Copy-Item .env.example .env.local
+corepack pnpm env:init
 corepack pnpm db:up
 corepack pnpm db:migrate:local
 corepack pnpm dev:local
@@ -34,7 +34,7 @@ corepack pnpm smoke:api
 如果使用托管 Postgres 或云端数据库：
 
 ```powershell
-Copy-Item .env.example .env.local
+corepack pnpm env:init
 # 修改 .env.local 里的 DATABASE_URL 后再执行：
 corepack pnpm db:check
 corepack pnpm db:migrate
