@@ -1,5 +1,3 @@
-/* global console, fetch, process */
-
 import { loadRootEnv } from "./load-env.mjs";
 import { runCommand } from "./run-command.mjs";
 

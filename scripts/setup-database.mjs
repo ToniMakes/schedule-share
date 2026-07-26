@@ -1,5 +1,3 @@
-/* global console, process */
-
 import { runCommand } from "./run-command.mjs";
 
 const args = new Set(process.argv.slice(2));

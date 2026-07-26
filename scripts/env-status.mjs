@@ -1,5 +1,3 @@
-/* global console, process */
-
 import { loadRootEnv } from "./load-env.mjs";
 import { checkDatabaseUrl, checkSmokeBaseUrl, hasCheckLevel } from "./config-checks.mjs";
 
