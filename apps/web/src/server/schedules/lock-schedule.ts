@@ -1,7 +1,7 @@
 import type { LockScheduleRequest, LockScheduleResponse } from "@schedule-share/api-client";
 
-import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
+import { assertOwnerKeyMatches } from "./access-keys";
 import { assertSchedulePublicId } from "./path-validation";
 import type { LockScheduleRepository } from "./repository";
 
@@ -22,9 +22,7 @@ export async function lockScheduleRecord(
     throw new HttpError(404, "SCHEDULE_NOT_FOUND", "Schedule not found.");
   }
 
-  if (!verifyKey(input.ownerKey, record.schedule.ownerKeyHash)) {
-    throw new HttpError(403, "INVALID_OWNER_KEY", "Owner key is invalid.");
-  }
+  assertOwnerKeyMatches(input.ownerKey, record.schedule.ownerKeyHash);
 
   if (record.schedule.status === "locked") {
     return {

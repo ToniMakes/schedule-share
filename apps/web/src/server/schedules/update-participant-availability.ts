@@ -3,8 +3,8 @@ import type {
   UpdateParticipantAvailabilityResponse
 } from "@schedule-share/api-client";
 
-import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
+import { assertParticipantEditKeyMatches } from "./access-keys";
 import { validateAvailabilitySlotsForSchedule } from "./availability-validation";
 import { assertScheduleParticipantPath } from "./path-validation";
 import type { UpdateParticipantAvailabilityRepository } from "./repository";
@@ -30,9 +30,7 @@ export async function updateParticipantAvailabilityRecord(
     throw new HttpError(404, "PARTICIPANT_NOT_FOUND", "Participant not found.");
   }
 
-  if (!verifyKey(input.editKey, record.participant.editKeyHash)) {
-    throw new HttpError(403, "INVALID_EDIT_KEY", "Participant edit key is invalid.");
-  }
+  assertParticipantEditKeyMatches(input.editKey, record.participant.editKeyHash);
 
   if (record.schedule.status !== "open") {
     throw new HttpError(409, "SCHEDULE_LOCKED", "This schedule no longer accepts changes.");

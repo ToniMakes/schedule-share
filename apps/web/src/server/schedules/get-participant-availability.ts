@@ -4,8 +4,8 @@ import type {
 } from "@schedule-share/api-client";
 import { CoreError, generateTimeSlots } from "@schedule-share/core";
 
-import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
+import { assertParticipantEditKeyMatches, assertParticipantEditKeyPresent } from "./access-keys";
 import { assertScheduleParticipantPath } from "./path-validation";
 import type {
   ParticipantAvailabilityWithScheduleRecord,
@@ -25,10 +25,7 @@ export async function getParticipantAvailabilityView(
   dependencies: GetParticipantAvailabilityDependencies
 ): Promise<GetParticipantAvailabilityResponse> {
   assertScheduleParticipantPath(publicId, participantId);
-
-  if (editKey.length === 0) {
-    throw new HttpError(403, "INVALID_EDIT_KEY", "Participant edit key is invalid.");
-  }
+  assertParticipantEditKeyPresent(editKey);
 
   const record = await dependencies.repository.getParticipantAvailabilityByPublicId(
     publicId,
@@ -39,9 +36,7 @@ export async function getParticipantAvailabilityView(
     throw new HttpError(404, "PARTICIPANT_NOT_FOUND", "Participant not found.");
   }
 
-  if (!verifyKey(editKey, record.participant.editKeyHash)) {
-    throw new HttpError(403, "INVALID_EDIT_KEY", "Participant edit key is invalid.");
-  }
+  assertParticipantEditKeyMatches(editKey, record.participant.editKeyHash);
 
   try {
     return toParticipantAvailabilityResponse(record);

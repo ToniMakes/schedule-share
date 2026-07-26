@@ -1,8 +1,8 @@
 import type { GetScheduleResponse } from "@schedule-share/api-client";
 import { CoreError } from "@schedule-share/core";
 
-import { verifyKey } from "../credentials";
 import { HttpError } from "../errors";
+import { assertOwnerKeyMatches, assertOwnerKeyPresent } from "./access-keys";
 import { toScheduleResponse } from "./get-schedule";
 import { assertSchedulePublicId } from "./path-validation";
 import type { ReadOwnerScheduleRepository } from "./repository";
@@ -17,10 +17,7 @@ export async function getOwnerScheduleView(
   dependencies: GetOwnerScheduleDependencies
 ): Promise<GetScheduleResponse> {
   assertSchedulePublicId(publicId);
-
-  if (ownerKey.length === 0) {
-    throw new HttpError(403, "INVALID_OWNER_KEY", "Owner key is invalid.");
-  }
+  assertOwnerKeyPresent(ownerKey);
 
   const record = await dependencies.repository.getOwnerScheduleByPublicId(publicId);
 
@@ -28,9 +25,7 @@ export async function getOwnerScheduleView(
     throw new HttpError(404, "SCHEDULE_NOT_FOUND", "Schedule not found.");
   }
 
-  if (!verifyKey(ownerKey, record.schedule.ownerKeyHash)) {
-    throw new HttpError(403, "INVALID_OWNER_KEY", "Owner key is invalid.");
-  }
+  assertOwnerKeyMatches(ownerKey, record.schedule.ownerKeyHash);
 
   try {
     return toScheduleResponse(record);
