@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-项目已经从纯架构骨架推进到“海外网页版 MVP 主链路已实现，并已在托管 Neon Postgres 上跑通 API
+项目已经从纯架构骨架推进到“海外网页版 MVP 主链路已实现，已在托管 Neon Postgres 和 Vercel 生产部署上跑通 API
 smoke test”的阶段。
 
 当前部署决策已经补充到 `docs/adr/0007-hosting-database-and-domain.md`：MVP 优先使用 Vercel + Neon Postgres Singapore，并通过 `https://schedule.tonimakes.com` 对外访问。
@@ -41,6 +41,11 @@ smoke test”的阶段。
 - 托管 Neon Postgres Singapore 已完成 migration 和 schema 自检。
 - API smoke test：`corepack pnpm smoke:api`。
 - 使用本地 Web 服务 + Neon Postgres 跑通 API smoke test。
+- Vercel project `schedule-share` 已创建并完成 production 部署。
+- Vercel 生产临时域名 `https://schedule-share-lime.vercel.app` 已通过健康检查和完整部署验证。
+- Vercel 环境变量已设置 `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 到 Production、Preview。
+- Vercel monorepo 部署配置：`vercel.json`、`.vercelignore`。
+- `schedule.tonimakes.com` 已添加到 Vercel project，等待 DNS 配置。
 - 部署配置预检：`corepack pnpm deployment:config`。
 - 根目录脚本 lint：`corepack pnpm lint:scripts`。
 - 部署配置检查逻辑测试：`corepack pnpm test:scripts`。
@@ -76,6 +81,7 @@ corepack pnpm typecheck
 corepack pnpm test
 corepack pnpm db:setup
 $env:SMOKE_BASE_URL="http://127.0.0.1:3001"; corepack pnpm smoke:api
+$env:SMOKE_BASE_URL="https://schedule-share-lime.vercel.app"; corepack pnpm verify:deployment
 ```
 
 当前测试总数：136。
@@ -85,6 +91,8 @@ $env:SMOKE_BASE_URL="http://127.0.0.1:3001"; corepack pnpm smoke:api
 - `corepack pnpm db:setup` 已对 Neon Postgres Singapore 执行 migration。
 - `corepack pnpm db:check` 已确认 `pgcrypto`、`schedule_status`、`schedules`、`participants`、`availability_slots` 存在。
 - `corepack pnpm smoke:api` 已通过真实数据库跑通创建、提交、编辑、锁定、锁定后拒绝修改和归档。
+- 远程 `https://schedule-share-lime.vercel.app/api/health` 已返回 `database: "ok"`。
+- 远程 `verify:deployment` 已通过 `/api/health`、`/privacy`、`/feedback` 和 API smoke test。
 
 浏览器预览验证：
 
@@ -95,9 +103,8 @@ $env:SMOKE_BASE_URL="http://127.0.0.1:3001"; corepack pnpm smoke:api
 
 ## 已知缺口
 
-- 尚未部署到公开 URL。
-- 尚未在公开部署 URL 上运行 `deployment:config` 和 `verify:deployment`。
-- 尚未绑定 `schedule.tonimakes.com`。
+- 尚未把 DNS 指向 Vercel，因此 `schedule.tonimakes.com` 还不能访问。
+- 尚未设置 `APP_BASE_URL=https://schedule.tonimakes.com` 并对正式域名重新部署验证。
 - 尚未做多人手动内测和浏览器端真实用户路径检查。
 - 尚未配置生产日志、监控、告警和备份演练。
 - 隐私与数据保留说明仍需正式法律审阅，正式反馈联系渠道和删除请求处理时限尚未确定。
@@ -106,13 +113,14 @@ $env:SMOKE_BASE_URL="http://127.0.0.1:3001"; corepack pnpm smoke:api
 
 ## 下一步建议
 
-1. 把当前代码推到远程 Git 仓库，并接入 Vercel。
-2. 在 Vercel 设置 `DATABASE_URL`、`DATABASE_MIGRATION_URL` 和 `APP_BASE_URL`。
-3. 部署到 Vercel 临时域名，并设置 `SMOKE_BASE_URL` 后运行 `deployment:config -> verify:deployment`。
-4. 绑定 `schedule.tonimakes.com`，确认 `APP_BASE_URL=https://schedule.tonimakes.com`。
-5. 因数据库连接串曾出现在聊天中，部署验证完成后在 Neon 轮换数据库密码，并更新本地 `.env.local` 和 Vercel 环境变量。
-6. 找 3 到 5 个朋友按内测清单试用。
-7. 整理反馈后再决定是否进入公开发布。
+1. 在 DNS provider 中添加 `schedule.tonimakes.com` 的 CNAME 记录，指向 Vercel 推荐目标。
+2. 运行 `vercel domains verify schedule.tonimakes.com`，等待 Vercel 确认域名配置。
+3. 在 Vercel 设置 `APP_BASE_URL=https://schedule.tonimakes.com`，重新 production deploy。
+4. 设置 `SMOKE_BASE_URL=https://schedule.tonimakes.com` 后运行 `deployment:config -> verify:deployment`。
+5. 因数据库连接串曾出现在聊天中，正式域名验证完成后在 Neon 轮换数据库密码，并更新本地 `.env.local` 和 Vercel 环境变量。
+6. 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
+7. 找 3 到 5 个朋友按内测清单试用。
+8. 整理反馈后再决定是否进入公开发布。
 
 ## Git 基线
 

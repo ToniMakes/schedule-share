@@ -27,5 +27,6 @@ Thumbs.db
 .vscode/
 
 # Local deployment
+.codex/
 .vercel/
 .openai/
