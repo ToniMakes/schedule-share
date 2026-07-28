@@ -1,6 +1,6 @@
 # 项目状态基线
 
-更新日期：2026-07-28
+更新日期：2026-07-29
 
 ## 当前阶段
 
@@ -45,6 +45,7 @@
 - Vercel 生产临时域名 `https://schedule-share-lime.vercel.app` 已通过健康检查和完整部署验证。
 - Vercel 环境变量已设置 `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 到 Production、Preview。
 - Vercel 环境变量已设置 `APP_BASE_URL=https://schedule.tonimakes.com` 到 Production、Preview。
+- Neon 数据库密码已轮换，本地 `.env.local` 和 Vercel Production/Preview 环境变量已更新。
 - Vercel monorepo 部署配置：`vercel.json`、`.vercelignore`。
 - `schedule.tonimakes.com` 已完成 DNS CNAME 配置、Vercel 验证和 production alias。
 - 部署配置预检：`corepack pnpm deployment:config`。
@@ -96,7 +97,7 @@ $env:SMOKE_BASE_URL="https://schedule.tonimakes.com"; $env:APP_BASE_URL="https:/
 - 远程 `https://schedule-share-lime.vercel.app/api/health` 已返回 `database: "ok"`。
 - 远程 `verify:deployment` 已通过 `/api/health`、`/privacy`、`/feedback` 和 API smoke test。
 - 正式域名 `https://schedule.tonimakes.com/api/health` 已返回 `database: "ok"`。
-- 正式域名 `verify:deployment` 已通过 `/api/health`、`/privacy`、`/feedback` 和 API smoke test。
+- 正式域名 `verify:deployment` 已在数据库密码轮换前后通过 `/api/health`、`/privacy`、`/feedback` 和 API smoke test。
 
 浏览器预览验证：
 
@@ -115,11 +116,10 @@ $env:SMOKE_BASE_URL="https://schedule.tonimakes.com"; $env:APP_BASE_URL="https:/
 
 ## 下一步建议
 
-1. 因数据库连接串曾出现在聊天中，在 Neon 轮换数据库密码，并更新本地 `.env.local` 和 Vercel 环境变量。
-2. 轮换后重新运行 `db:setup`、`deployment:config` 和正式域名 `verify:deployment`。
-3. 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
-4. 找 3 到 5 个朋友按内测清单试用。
-5. 整理反馈后再决定是否进入公开发布。
+1. 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
+2. 找 3 到 5 个朋友按内测清单试用。
+3. 整理反馈后再决定是否进入公开发布。
+4. 配置生产日志、监控、告警和备份演练。
 
 ## Git 基线
 
