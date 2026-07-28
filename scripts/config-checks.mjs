@@ -4,15 +4,18 @@ const defaultSmokeBaseUrl = "http://127.0.0.1:3000";
 
 export function checkDatabaseUrl(rawValue, options = {}) {
   const requireHosted = options.requireHosted ?? false;
+  const name = options.name ?? "DATABASE_URL";
   const value = rawValue?.trim() ?? "";
 
   if (value.length === 0) {
     return {
-      detail: requireHosted
-        ? "DATABASE_URL is required and must point to the target hosted Postgres database."
-        : "DATABASE_URL is missing. Run corepack pnpm env:init, then fill .env.local.",
+      detail:
+        options.missingDetail ??
+        (requireHosted
+          ? `${name} is required and must point to the target hosted Postgres database.`
+          : `${name} is missing. Run corepack pnpm env:init, then fill .env.local.`),
       level: requireHosted ? "error" : "warn",
-      name: "DATABASE_URL",
+      name,
       status: "missing"
     };
   }
@@ -21,9 +24,9 @@ export function checkDatabaseUrl(rawValue, options = {}) {
 
   if (parsed === undefined || !["postgres:", "postgresql:"].includes(parsed.protocol)) {
     return {
-      detail: "DATABASE_URL must be a postgres:// or postgresql:// connection string.",
+      detail: `${name} must be a postgres:// or postgresql:// connection string.`,
       level: requireHosted ? "error" : "warn",
-      name: "DATABASE_URL",
+      name,
       status: "invalid",
       value: redactUrl(value)
     };
@@ -34,9 +37,9 @@ export function checkDatabaseUrl(rawValue, options = {}) {
 
   if (isDefault || isLocal) {
     return {
-      detail: describeLocalDatabase({ isDefault, requireHosted }),
+      detail: describeLocalDatabase({ isDefault, name, requireHosted }),
       level: requireHosted ? "error" : "warn",
-      name: "DATABASE_URL",
+      name,
       status: isDefault ? "default-local" : "local",
       value: redactUrl(value)
     };
@@ -47,10 +50,51 @@ export function checkDatabaseUrl(rawValue, options = {}) {
       ? "Looks like a hosted Postgres connection string."
       : "Looks like a hosted Postgres connection string. Run db:check before migration.",
     level: "ok",
-    name: "DATABASE_URL",
+    name,
     status: "hosted",
     value: redactUrl(value)
   };
+}
+
+export function checkMigrationDatabaseUrl(rawValue, fallbackRawValue, options = {}) {
+  const requireHosted = options.requireHosted ?? false;
+  const value = rawValue?.trim() ?? "";
+  const fallbackValue = fallbackRawValue?.trim() ?? "";
+
+  if (value.length === 0) {
+    const fallback = parseUrl(fallbackValue);
+    const fallbackIsPooled = fallback !== undefined && isPooledPostgresHostname(fallback.hostname);
+
+    return {
+      detail: fallbackIsPooled
+        ? "DATABASE_URL looks like a pooled Neon endpoint. Set DATABASE_MIGRATION_URL to the direct endpoint before running migrations."
+        : "Optional. db:migrate uses DATABASE_URL when DATABASE_MIGRATION_URL is missing.",
+      level: fallbackIsPooled ? "warn" : "ok",
+      name: "DATABASE_MIGRATION_URL",
+      status: fallbackIsPooled ? "missing-for-pooled-runtime" : "fallback"
+    };
+  }
+
+  const check = checkDatabaseUrl(value, {
+    missingDetail:
+      "DATABASE_MIGRATION_URL is optional. Set it only when migrations need a direct database connection.",
+    name: "DATABASE_MIGRATION_URL",
+    requireHosted
+  });
+
+  const parsed = parseUrl(value);
+
+  if (check.level === "ok" && parsed !== undefined && isPooledPostgresHostname(parsed.hostname)) {
+    return {
+      ...check,
+      detail:
+        "Use a direct Neon endpoint for migrations. Pooled endpoints can break session-sensitive migration behavior.",
+      level: "warn",
+      status: "pooled"
+    };
+  }
+
+  return check;
 }
 
 export function checkSmokeBaseUrl(rawValue, options = {}) {
@@ -182,11 +226,11 @@ function parseUrl(value) {
   }
 }
 
-function describeLocalDatabase({ isDefault, requireHosted }) {
+function describeLocalDatabase({ isDefault, name, requireHosted }) {
   if (requireHosted) {
     return isDefault
       ? "Still using the local Docker default. Replace it with a hosted Postgres connection string before deployment verification."
-      : "DATABASE_URL points to a local host. Use a hosted Postgres database for deployment verification.";
+      : `${name} points to a local host. Use a hosted Postgres database for deployment verification.`;
   }
 
   return isDefault
@@ -196,4 +240,8 @@ function describeLocalDatabase({ isDefault, requireHosted }) {
 
 function isLocalHostname(hostname) {
   return localHosts.has(hostname.toLowerCase());
+}
+
+function isPooledPostgresHostname(hostname) {
+  return hostname.toLowerCase().includes("-pooler.");
 }

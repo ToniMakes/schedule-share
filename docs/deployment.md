@@ -23,18 +23,19 @@
 完整变量说明见 `docs/environment.md`。
 
 - 生产 Web 运行时必须设置 `DATABASE_URL`。
+- 如果 `DATABASE_URL` 是 Neon pooled 连接串，migration 建议额外设置 `DATABASE_MIGRATION_URL` 为 direct 连接串。
 - 生产 Web 运行时建议设置 `APP_BASE_URL`，用于生成稳定的分享、管理和编辑链接；不设置时会按请求 Host 推断。
-- 本地或部署验证终端需要设置 `DATABASE_URL`，用于 `db:check`、migration 和 `verify:deployment`。
+- 本地或部署验证终端需要设置 `DATABASE_URL`，用于 `db:check` 和 `verify:deployment`；migration 会优先使用 `DATABASE_MIGRATION_URL`，缺失时再使用 `DATABASE_URL`。
 - 命令行脚本会自动读取项目根目录的 `.env.local` 和 `.env`；当前 shell 中已设置的变量优先级最高。
 - `SMOKE_BASE_URL` 只用于本地验证脚本，指向要测试的站点地址；不需要作为 Web 应用的生产运行时变量。
 - `corepack pnpm deployment:config` 会拒绝本地默认数据库和本地 `SMOKE_BASE_URL`，用于生产部署前预检。
-- 不要把真实 `DATABASE_URL`、`ownerUrl` 或 `editUrl` 写进公开日志、截图或文档。
+- 不要把真实 `DATABASE_URL`、`DATABASE_MIGRATION_URL`、`ownerUrl` 或 `editUrl` 写进公开日志、截图或文档。
 
 ## 上线流程
 
 1. 确认 CI 通过：`format`、`lint`、`typecheck`、`test`、`build`。
 2. 创建 Neon Postgres 数据库，区域优先选择 Singapore，并确认备份策略。
-3. 在部署平台设置 `DATABASE_URL`，建议同时设置 `APP_BASE_URL=https://schedule.tonimakes.com`。
+3. 在部署平台设置 `DATABASE_URL`，如果使用 Neon pooled URL，也设置 `DATABASE_MIGRATION_URL` 为 direct URL；建议同时设置 `APP_BASE_URL=https://schedule.tonimakes.com`。
 4. 在本地终端运行 `corepack pnpm env:status`，确认连接串指向目标数据库且输出已打码。
 5. 对生产数据库执行初始化：`corepack pnpm db:setup`。它会运行 migration，并在结束后执行 `db:check`。
 6. 部署 Web 应用。
@@ -74,6 +75,7 @@
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
+$env:DATABASE_MIGRATION_URL="postgres://..."
 $env:SMOKE_BASE_URL="https://your-domain.example"
 corepack pnpm deployment:config
 corepack pnpm verify:deployment
@@ -101,7 +103,7 @@ corepack pnpm verify:deployment
 
 ## 运维注意
 
-- `ownerUrl` 和 `editUrl` 带有密钥，不要写入公开日志、截图或客服对话。
+- `ownerUrl`、`editUrl`、`DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 带有密钥，不要写入公开日志、截图或客服对话。
 - 数据库 migration 要先在测试环境跑过，再用于生产。
 - 每次修改环境变量后重新部署或重启服务，确保运行时拿到新配置。
 - 先保留简单的错误日志和健康检查，等有真实用户后再补充监控、告警和埋点。

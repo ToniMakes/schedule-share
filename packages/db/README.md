@@ -24,7 +24,9 @@
 - `corepack pnpm --filter @schedule-share/db db:check`
 - `corepack pnpm --filter @schedule-share/db db:studio`
 
-这些命令需要 `DATABASE_URL`。脚本会自动读取项目根目录的 `.env.local` 和 `.env`，环境变量说明见 `docs/environment.md`。
+这些命令需要 `DATABASE_URL`。如果使用 Neon pooled 连接串，migration 建议额外设置
+`DATABASE_MIGRATION_URL` 为 direct 连接串。脚本会自动读取项目根目录的 `.env.local` 和 `.env`，环境变量说明见
+`docs/environment.md`。
 
 项目根目录还提供 `corepack pnpm db:setup`，用于按顺序运行环境检查、migration 和 schema 自检。
 

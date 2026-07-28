@@ -9,11 +9,12 @@
 
 ## 变量清单
 
-| 变量             | 必填 | 使用位置                                                                 | 示例                                        | 说明                                                                                                      |
-| ---------------- | ---- | ------------------------------------------------------------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`   | 是   | Web API、Drizzle migration、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。                                  |
-| `APP_BASE_URL`   | 否   | Web API、`deployment:config`                                             | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                 |
-| `SMOKE_BASE_URL` | 否   | `smoke:api`、`deployment:config`、`verify:deployment`                    | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。 |
+| 变量                     | 必填 | 使用位置                                              | 示例                                        | 说明                                                                                                                             |
+| ------------------------ | ---- | ----------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                              |
+| `DATABASE_MIGRATION_URL` | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。 |
+| `APP_BASE_URL`           | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                        |
+| `SMOKE_BASE_URL`         | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                        |
 
 ## 检查配置状态
 
@@ -23,7 +24,7 @@
 corepack pnpm env:status
 ```
 
-这个命令只读取配置，不连接数据库。它会打码显示 `DATABASE_URL`，并在连接串仍然指向默认本地数据库时返回警告。
+这个命令只读取配置，不连接数据库。它会打码显示 `DATABASE_URL` 和 `DATABASE_MIGRATION_URL`，并在连接串仍然指向默认本地数据库时返回警告。
 
 部署前还可以运行更严格的检查：
 
@@ -55,7 +56,8 @@ corepack pnpm smoke:api
 
 ```powershell
 corepack pnpm env:init
-# 修改 .env.local 里的 DATABASE_URL 后再执行：
+# 修改 .env.local 里的 DATABASE_URL 后再执行。
+# 如果 DATABASE_URL 是 Neon pooled 连接串，也设置 DATABASE_MIGRATION_URL 为 direct 连接串。
 corepack pnpm env:status
 corepack pnpm db:setup
 corepack pnpm dev
@@ -65,6 +67,8 @@ corepack pnpm dev
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
+# 如果 DATABASE_URL 是 Neon pooled 连接串，也设置：
+$env:DATABASE_MIGRATION_URL="postgres://..."
 corepack pnpm env:status
 corepack pnpm db:setup
 corepack pnpm dev
@@ -76,6 +80,7 @@ corepack pnpm dev
 
 ```text
 DATABASE_URL=postgres://...
+DATABASE_MIGRATION_URL=postgres://...
 APP_BASE_URL=https://schedule.tonimakes.com
 ```
 
@@ -84,6 +89,7 @@ APP_BASE_URL=https://schedule.tonimakes.com
 ```powershell
 # 可以写进 .env.local，也可以在当前 shell 设置：
 $env:DATABASE_URL="postgres://..."
+$env:DATABASE_MIGRATION_URL="postgres://..."
 $env:SMOKE_BASE_URL="https://schedule.tonimakes.com"
 corepack pnpm deployment:config
 corepack pnpm verify:deployment
@@ -93,6 +99,6 @@ corepack pnpm verify:deployment
 
 ## 安全注意
 
-- `DATABASE_URL` 包含数据库用户名和密码，不能截图、公开贴出或写进 issue。
+- `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 包含数据库用户名和密码，不能截图、公开贴出或写进 issue。
 - `ownerUrl` 和 `editUrl` 带有管理或编辑密钥，也不能公开记录。
 - 如果怀疑连接串泄露，先在数据库平台轮换密码，再更新部署平台环境变量并重新部署。

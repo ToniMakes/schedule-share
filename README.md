@@ -90,12 +90,15 @@ corepack pnpm smoke:api
 
 烟雾测试会通过 HTTP 跑通创建日程、提交可用时间、编辑提交、锁定日程，并确认锁定后不能再提交或修改。
 
-如果使用云端或托管 Postgres，不需要本机 Docker。先设置 `DATABASE_URL`，再检查连接和 schema：
+如果使用云端或托管 Postgres，不需要本机 Docker。先设置 `DATABASE_URL`，再检查连接和 schema。如果
+`DATABASE_URL` 是 Neon pooled 连接串，建议同时设置 migration 专用的 direct 连接串：
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
+$env:DATABASE_MIGRATION_URL="postgres://..."
 corepack pnpm env:status
 corepack pnpm db:setup
+corepack pnpm dev
 ```
 
 部署后可针对真实站点运行烟雾测试：
@@ -110,6 +113,7 @@ smoke-test 日程：
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
+$env:DATABASE_MIGRATION_URL="postgres://..."
 $env:SMOKE_BASE_URL="https://your-domain.example"
 corepack pnpm deployment:config
 corepack pnpm verify:deployment

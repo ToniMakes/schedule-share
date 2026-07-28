@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   checkAppBaseUrl,
   checkDatabaseUrl,
+  checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
   hasCheckLevel,
   redactUrl
@@ -63,6 +64,51 @@ describe("checkDatabaseUrl", () => {
     assert.equal(check.level, "ok");
     assert.equal(check.status, "hosted");
     assert.equal(check.value, "postgresql://us***:***@db.example.com:5432/app");
+  });
+});
+
+describe("checkMigrationDatabaseUrl", () => {
+  it("falls back to DATABASE_URL when no migration URL is set", () => {
+    const check = checkMigrationDatabaseUrl(
+      undefined,
+      "postgresql://user:pass@db.example.com:5432/app"
+    );
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "fallback");
+  });
+
+  it("warns when DATABASE_URL is pooled and no migration URL is set", () => {
+    const check = checkMigrationDatabaseUrl(
+      undefined,
+      "postgresql://user:pass@ep-test-pooler.ap-southeast-1.aws.neon.tech/app"
+    );
+
+    assert.equal(check.level, "warn");
+    assert.equal(check.status, "missing-for-pooled-runtime");
+  });
+
+  it("accepts a direct migration URL", () => {
+    const check = checkMigrationDatabaseUrl(
+      "postgresql://user:pass@ep-test.ap-southeast-1.aws.neon.tech/app",
+      "postgresql://user:pass@ep-test-pooler.ap-southeast-1.aws.neon.tech/app",
+      { requireHosted: true }
+    );
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "hosted");
+    assert.equal(check.name, "DATABASE_MIGRATION_URL");
+  });
+
+  it("warns when the migration URL is pooled", () => {
+    const check = checkMigrationDatabaseUrl(
+      "postgresql://user:pass@ep-test-pooler.ap-southeast-1.aws.neon.tech/app",
+      "postgresql://user:pass@ep-test-pooler.ap-southeast-1.aws.neon.tech/app",
+      { requireHosted: true }
+    );
+
+    assert.equal(check.level, "warn");
+    assert.equal(check.status, "pooled");
   });
 });
 

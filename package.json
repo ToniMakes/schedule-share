@@ -13,7 +13,7 @@
     "db:setup": "node scripts/setup-database.mjs",
     "db:up": "docker compose up -d postgres",
     "deployment:config": "node scripts/check-deployment-config.mjs",
-    "dev": "corepack pnpm --filter @schedule-share/web dev",
+    "dev": "node scripts/run-web-dev.mjs",
     "dev:local": "node scripts/run-with-local-db.mjs corepack pnpm --filter @schedule-share/web dev",
     "env:init": "node scripts/init-env.mjs",
     "env:status": "node scripts/env-status.mjs",

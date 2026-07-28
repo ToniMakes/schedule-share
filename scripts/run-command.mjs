@@ -5,6 +5,7 @@ export function runCommand(rawCommand, rawArgs, options = {}) {
 
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
+      cwd: options.cwd,
       env: options.env ?? process.env,
       shell: false,
       stdio: options.stdio ?? "inherit"

@@ -2,6 +2,7 @@ import { loadRootEnv } from "./load-env.mjs";
 import {
   checkAppBaseUrl,
   checkDatabaseUrl,
+  checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
   hasCheckLevel
 } from "./config-checks.mjs";
@@ -10,6 +11,9 @@ loadRootEnv();
 
 const checks = [
   checkDatabaseUrl(process.env.DATABASE_URL, { requireHosted: true }),
+  checkMigrationDatabaseUrl(process.env.DATABASE_MIGRATION_URL, process.env.DATABASE_URL, {
+    requireHosted: true
+  }),
   checkSmokeBaseUrl(process.env.SMOKE_BASE_URL, { requireRemote: true }),
   checkAppBaseUrl(process.env.APP_BASE_URL, { requireRemote: true })
 ];

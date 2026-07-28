@@ -13,12 +13,14 @@
 ```powershell
 corepack pnpm env:init
 # 修改 .env.local 里的 DATABASE_URL 后继续
+# 如果 DATABASE_URL 是 Neon pooled 连接串，也设置 DATABASE_MIGRATION_URL 为 direct 连接串
 ```
 
 也可以在当前 PowerShell 会话中设置：
 
 ```powershell
 $env:DATABASE_URL="postgres://..."
+$env:DATABASE_MIGRATION_URL="postgres://..."
 ```
 
 2. 检查环境变量并初始化数据库：
