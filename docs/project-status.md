@@ -1,10 +1,12 @@
 # 项目状态基线
 
-更新日期：2026-07-26
+更新日期：2026-07-28
 
 ## 当前阶段
 
 项目已经从纯架构骨架推进到“海外网页版 MVP 主链路已实现，等待真实 Postgres 跑通内测链路”的阶段。
+
+当前部署决策已经补充到 `docs/adr/0007-hosting-database-and-domain.md`：MVP 优先使用 Vercel + Neon Postgres Singapore，并通过 `https://schedule.tonimakes.com` 对外访问。
 
 当前本机限制：
 
@@ -90,12 +92,14 @@ corepack pnpm build
 
 ## 下一步建议
 
-1. 按 `docs/environment.md` 准备托管 Postgres 连接串。
+1. 创建 Neon Postgres 项目，区域优先选择 Singapore，并取得 `DATABASE_URL`。
 2. 运行 `env:status -> db:setup`。
 3. 启动带 `DATABASE_URL` 的 Web 服务。
 4. 运行 `smoke:api`。
-5. 找 3 到 5 个朋友按内测清单试用。
-6. 整理反馈后再决定是否进入公开部署。
+5. 部署到 Vercel 临时域名并运行 `deployment:config -> verify:deployment`。
+6. 绑定 `schedule.tonimakes.com`，设置 `APP_BASE_URL=https://schedule.tonimakes.com`。
+7. 找 3 到 5 个朋友按内测清单试用。
+8. 整理反馈后再决定是否进入公开部署。
 
 ## Git 基线
 

@@ -5,7 +5,18 @@
 - Web 应用：运行 `apps/web` 的 Next.js 服务。
 - Postgres 数据库：保存日程、参与者和可用时间。
 - 环境变量：生产环境至少需要设置 `DATABASE_URL`，建议设置 `APP_BASE_URL`。
-- 域名：先使用托管平台分配的临时域名验证流程，再绑定正式域名。
+- 域名：先使用托管平台分配的临时域名验证流程，再绑定 `schedule.tonimakes.com`。
+
+## 当前推荐配置
+
+当前 MVP 推荐配置见 `docs/adr/0007-hosting-database-and-domain.md`：
+
+- Web 应用：Vercel。
+- 数据库：Neon Postgres，优先选择 Singapore 区域。
+- 正式地址：`https://schedule.tonimakes.com`。
+- `APP_BASE_URL`：生产环境设置为 `https://schedule.tonimakes.com`。
+
+`tonimakes.com/schedule` 暂不作为 MVP 首选入口。除非未来主站和日程表应用由同一部署系统托管，或明确引入反向代理/重写规则，否则优先使用子域名可以降低部署和迁移复杂度。
 
 ## 环境变量
 
@@ -22,8 +33,8 @@
 ## 上线流程
 
 1. 确认 CI 通过：`format`、`lint`、`typecheck`、`test`、`build`。
-2. 创建生产 Postgres 数据库，并配置备份策略。
-3. 在部署平台设置 `DATABASE_URL`，建议同时设置 `APP_BASE_URL` 为正式站点地址。
+2. 创建 Neon Postgres 数据库，区域优先选择 Singapore，并确认备份策略。
+3. 在部署平台设置 `DATABASE_URL`，建议同时设置 `APP_BASE_URL=https://schedule.tonimakes.com`。
 4. 在本地终端运行 `corepack pnpm env:status`，确认连接串指向目标数据库且输出已打码。
 5. 对生产数据库执行初始化：`corepack pnpm db:setup`。它会运行 migration，并在结束后执行 `db:check`。
 6. 部署 Web 应用。
@@ -84,9 +95,9 @@ corepack pnpm verify:deployment
 
 ## 平台选择建议
 
-- 海外 Web MVP：优先选择 Vercel、Render、Fly.io 或 Railway 这类能直接部署 Next.js 并绑定 Postgres 的平台。
-- 数据库：使用托管 Postgres，先从低规格实例开始，重点确认自动备份、地区、迁移流程和连接上限。
-- 国内访问：如果后续做微信小程序，建议复用现有 API contract，再根据国内部署、备案和微信登录规则单独设计适配层。
+- 海外 Web MVP：优先使用 Vercel 部署 Next.js 应用。
+- 数据库：优先使用 Neon Postgres Singapore，从免费或低规格实例开始，重点确认备份、迁移流程和连接上限。
+- 国内访问：当前方案只追求中国大陆“尽量可用”，不承诺性能和稳定性。如果后续做微信小程序，建议复用现有 API contract，再根据国内部署、备案和微信登录规则单独设计适配层。
 
 ## 运维注意
 
