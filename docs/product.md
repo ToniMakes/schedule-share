@@ -6,6 +6,8 @@
 
 第一阶段优先服务海外用户和少量国内用户，通过移动优先的网页版验证需求。微信小程序作为第二阶段入口，复用同一套后端 API 和核心业务逻辑。
 
+多种可用时间添加方式的详细产品规格见 `docs/availability-entry-methods.md`。架构决策见 `docs/adr/0008-availability-import-and-templates.md` 和 `docs/adr/0009-multiple-availability-entry-methods.md`。
+
 ## 目标用户
 
 - 经常组织多人会议、聚会、课程、社群活动的人。
@@ -89,3 +91,12 @@ MVP 暂不包含：
 - 机构版：品牌页、多人管理、批量活动。
 - 微信小程序：微信群分享、微信生态内填写体验。
 - 日历集成：导入忙闲状态、导出最终时间。
+
+## 产品文档维护
+
+- 产品总定位、MVP 范围和成功标准维护在本文档。
+- 多种添加方式、优先级、用户流程和验收标准维护在 `docs/availability-entry-methods.md`。
+- 涉及实体、时间、权限和保留规则时，同步更新 `docs/domain-model.md`。
+- 涉及接口契约时，同步更新 `docs/api.md`。
+- 涉及隐私和上传内容处理时，同步更新 `docs/privacy.md`。
+- 涉及阶段状态、已完成能力和下一步时，同步更新 `docs/project-status.md`。

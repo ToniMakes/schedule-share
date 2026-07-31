@@ -136,7 +136,7 @@ flowchart LR
   G --> H["Web displays common times"]
 ```
 
-计划中的多种添加方式数据流：
+计划中的多种添加方式数据流，产品规格见 `docs/availability-entry-methods.md`：
 
 ```mermaid
 flowchart LR

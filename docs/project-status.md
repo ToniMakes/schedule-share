@@ -59,7 +59,8 @@
 - 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`。
 - 反馈与删除请求说明：`docs/feedback.md`、`/feedback`。
 - GitHub Actions CI：format、脚本和 workspace lint、typecheck、test、build。
-- 多种可用时间添加方式的产品、领域、API、隐私和架构边界文档。
+- 多种可用时间添加方式的产品规格：`docs/availability-entry-methods.md`。
+- 多种可用时间添加方式的领域、API、隐私和架构边界文档。
 
 ## 代码结构
 
@@ -123,7 +124,7 @@ $env:SMOKE_BASE_URL="https://schedule.tonimakes.com"; $env:APP_BASE_URL="https:/
 
 ## 下一步建议
 
-1. 为多种添加方式实现 `packages/core` 中的 `AvailabilityDraft` 归一化逻辑，并补时间边界测试。
+1. 以 `docs/availability-entry-methods.md` 为产品规格，为多种添加方式实现 `packages/core` 中的 `AvailabilityDraft` 归一化逻辑，并补时间边界测试。
 2. 为课表/排班导入实现忙碌时间块到可用时间槽转换。
 3. 为个人长期模板实现每周可用窗口投影逻辑，并补跨时区测试。
 4. 改进参与者填写页的手动拖拽网格和群体热力图体验。

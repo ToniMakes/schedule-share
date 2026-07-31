@@ -1,10 +1,16 @@
 # 日程表共享网站
 
-一个面向跨时区多人协调的日程共享工具。组织者创建日程房间并分享链接，参与者填写可用时间后，系统自动找出所有人或多数人都有空的时间段。
+一个面向跨时区多人协调的日程共享工具。组织者创建日程房间并分享链接，参与者通过手动填写、课表/排班导入、长期模板或候选时间投票等方式提供可用时间后，系统自动找出所有人或多数人都有空的时间段。
 
 ## 当前阶段
 
-项目处于“海外网页版 MVP 主链路已实现，等待真实 Postgres 跑通内测链路”的阶段。第一阶段目标是构建移动优先的海外网页版 MVP，验证核心流程：
+项目处于“海外网页版 MVP 主链路已实现，已部署到正式域名并进入内测与 MVP+ 差异化设计”的阶段。
+
+正式域名：
+
+- `https://schedule.tonimakes.com`
+
+第一阶段目标是通过移动优先的海外网页版 MVP 验证核心流程：
 
 1. 创建日程。
 2. 分享链接。
@@ -32,14 +38,18 @@
 - `GET /api/schedules/:publicId/export` 组织者 CSV 导出 API。
 - `GET /api/health` 健康检查 API。
 - Drizzle + Postgres 数据库 schema 和初始 migration。
+- Neon Postgres Singapore 托管数据库接入。
+- Vercel production 部署和正式子域名 `schedule.tonimakes.com`。
 - 核心时间格生成。
 - 核心可用时间统计和交集计算。
 - 核心逻辑测试。
 - GitHub Actions CI 门禁。
+- 多种可用时间添加方式的产品和架构文档基线。
 
 ## 文档
 
 - `docs/product.md`：产品定位、MVP 范围和成功标准。
+- `docs/availability-entry-methods.md`：手动拖拽、图片/文本导入、长期模板、候选时间投票和文件轻导入的产品规格。
 - `docs/domain-model.md`：核心实体、时间规则和权限规则。
 - `docs/architecture.md`：推荐技术栈、目录结构和模块边界。
 - `docs/api.md`：API 草案。
@@ -54,7 +64,7 @@
 
 ## 推荐开发流程
 
-1. 先确认需求是否属于 `docs/product.md` 的 MVP 范围。
+1. 先确认需求属于 `docs/product.md` 的 MVP、MVP+ 或后续范围。
 2. 涉及数据、时间、权限时先更新 `docs/domain-model.md`。
 3. 涉及技术栈或架构选择时新增 ADR。
 4. 先实现 `packages/core` 的领域逻辑和测试。
@@ -134,8 +144,9 @@ docs/
 
 ## 下一步
 
-- 选择海外 Web MVP 的托管平台和生产 Postgres。
-- 按 `docs/environment.md` 配置本地或托管数据库连接。
-- 运行 `corepack pnpm env:status`，确认 `DATABASE_URL` 已经指向目标数据库。
-- 在真实部署环境跑通 `db:setup` 和 `verify:deployment`。
-- 接真实 Postgres，跑通可保存、可分享的内测链路。
+- 为多种添加方式实现 `packages/core` 中的 `AvailabilityDraft` 归一化逻辑，并补时间边界测试。
+- 为课表/排班导入实现忙碌时间块到可用时间槽转换。
+- 为个人长期模板实现每周可用窗口投影逻辑，并在登录方案确定后实现数据表。
+- 改进参与者填写页的手动拖拽网格和群体热力图体验。
+- 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
+- 找 3 到 5 个朋友按 `docs/internal-test-checklist.md` 做真实内测。
