@@ -232,6 +232,30 @@
 }
 ```
 
+候选时间投票模式计划扩展请求：
+
+```json
+{
+  "displayName": "Aki",
+  "candidateVotes": [
+    {
+      "candidateTimeOptionId": "opt_123",
+      "response": "available"
+    },
+    {
+      "candidateTimeOptionId": "opt_456",
+      "response": "maybe"
+    }
+  ]
+}
+```
+
+运行要求：
+
+- `candidateVotes` 只能用于 `candidate_poll` 日程。
+- `candidateTimeOptionId` 必须属于当前日程。
+- `maybe` 和偏好权重上线前，结果计算需要先在 `packages/core` 补测试。
+
 ## 更新可用时间
 
 `GET /api/schedules/:publicId/participants/:participantId?key=...`
@@ -388,41 +412,89 @@ CSV 内容包含：
 - 当前时间槽排名。
 - 参与者列表。
 
-## 导入可用时间预览
+## 候选时间投票模式
 
-`POST /api/schedules/:publicId/import-preview`
+状态：计划中。
+
+当前 `POST /api/schedules` 已实现开放网格模式。后续可扩展 `scheduleMode` 支持候选时间投票：
+
+```json
+{
+  "title": "Project sync",
+  "description": "Pick one of these candidate times",
+  "timezone": "Australia/Sydney",
+  "scheduleMode": "candidate_poll",
+  "slotMinutes": 30,
+  "candidateWindows": [
+    {
+      "startUtc": "2026-08-03T08:00:00.000Z",
+      "endUtc": "2026-08-03T08:30:00.000Z",
+      "label": "Option A"
+    },
+    {
+      "startUtc": "2026-08-04T09:00:00.000Z",
+      "endUtc": "2026-08-04T09:30:00.000Z",
+      "label": "Option B"
+    }
+  ]
+}
+```
+
+运行要求：
+
+- 服务端需要校验候选时间包含明确 UTC 时间戳。
+- 候选时间必须能按日程时区展示。
+- 参与者投票后，仍应能复用当前结果汇总、排名和导出链路。
+- 如果支持 `maybe` 或偏好权重，需要同步更新 `packages/core` 的结果计算和测试。
+
+## 可用时间预填预览
+
+`POST /api/schedules/:publicId/availability-preview`
 
 状态：计划中。
 
 用途：
 
-- 根据当前日程配置，把课表截图、排班截图或粘贴文本转换为建议可用时间。
-- 该接口只返回预览结果，不创建参与者，也不提交可用时间。
+- 根据当前日程配置，把不同来源的时间信息转换为建议可用时间。
+- 支持图片导入、文本导入、个人模板和后续文件导入。
+- 该接口只返回 `AvailabilityDraft`，不创建参与者，也不提交可用时间。
 - 用户仍需在页面确认后调用现有提交接口。
 
 运行要求：
 
 - 服务端需要 `DATABASE_URL`。
-- 服务端需要按环境配置启用识别 provider；未配置时应返回 `IMPORT_PROVIDER_UNAVAILABLE`。
 - 服务端必须校验日程存在且状态为 `open`。
-- 图片上传需要限制文件类型和大小。
-- 请求会先通过 `packages/api-client` 的 schema 校验；服务端再调用 `packages/core` 把忙碌时间转换为当前日程内的建议可用时间槽。
+- 请求会先通过 `packages/api-client` 的 schema 校验。
+- 服务端再调用 `packages/core` 把输入来源转换为当前日程内的建议可用时间槽。
+- 图片和文本识别需要按环境配置启用识别 provider；未配置时应返回 `IMPORT_PROVIDER_UNAVAILABLE`。
+- 图片或文件上传需要限制文件类型和大小。
 
 图片请求：`multipart/form-data`
 
 ```text
 file: timetable.png
+method: image_import
 timezone: Australia/Sydney
-mode: busy
+interpretsAs: busy
 ```
 
 文本请求：`application/json`
 
 ```json
 {
+  "method": "text_import",
   "sourceText": "Mon 09:00-11:00 COMP101, Wed 14:00-16:00 Lab",
   "timezone": "Australia/Sydney",
-  "mode": "busy"
+  "interpretsAs": "busy"
+}
+```
+
+模板请求：`application/json`
+
+```json
+{
+  "method": "template",
+  "templateId": "tpl_123"
 }
 ```
 
@@ -430,6 +502,7 @@ mode: busy
 
 ```json
 {
+  "entryMethod": "image_import",
   "busyBlocks": [
     {
       "sourceLabel": "COMP101",
@@ -441,7 +514,7 @@ mode: busy
       "warnings": []
     }
   ],
-  "suggestedAvailableSlots": [
+  "availableSlots": [
     {
       "startUtc": "2026-08-01T08:00:00.000Z",
       "endUtc": "2026-08-01T08:30:00.000Z"
@@ -543,7 +616,7 @@ mode: busy
 
 ### 模板预填当前日程
 
-`POST /api/schedules/:publicId/template-preview`
+使用 `POST /api/schedules/:publicId/availability-preview`，并传入 `method: "template"`。
 
 运行要求：
 
@@ -556,6 +629,7 @@ mode: busy
 
 ```json
 {
+  "method": "template",
   "templateId": "tpl_123"
 }
 ```
@@ -564,7 +638,8 @@ mode: busy
 
 ```json
 {
-  "suggestedAvailableSlots": [
+  "entryMethod": "template",
+  "availableSlots": [
     {
       "startUtc": "2026-08-01T08:00:00.000Z",
       "endUtc": "2026-08-01T08:30:00.000Z"
@@ -605,3 +680,6 @@ mode: busy
 - `IMPORT_FILE_TOO_LARGE`
 - `IMPORT_UNSUPPORTED_FILE_TYPE`
 - `IMPORT_LOW_CONFIDENCE`
+- `UNSUPPORTED_ENTRY_METHOD`
+- `CANDIDATE_OPTION_NOT_FOUND`
+- `TEMPLATE_NOT_FOUND`

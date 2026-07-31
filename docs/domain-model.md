@@ -17,6 +17,7 @@
 - `date_range_end`：本地日期范围结束。
 - `slot_minutes`：时间粒度，允许 15、30、60。
 - `daily_windows`：每天可选的本地时间窗口。
+- `schedule_mode`：计划扩展字段，`availability_grid` 表示开放网格，`candidate_poll` 表示候选时间投票。
 - `owner_key_hash`：组织者管理密钥哈希。
 - `status`：`open`、`locked`、`archived`。
 - `created_at`：UTC 时间。
@@ -74,6 +75,32 @@
 - `available_participant_ids`
 - `is_everyone_available`
 
+### AvailabilityEntryMethod
+
+参与者添加可用时间的来源。短期可只作为 API 预览和分析字段，最终提交仍以 `Availability` 为准。
+
+可选值草案：
+
+- `manual_grid`：手动拖拽网格。
+- `candidate_vote`：候选时间投票。
+- `image_import`：课表或排班图片导入。
+- `text_import`：粘贴文本导入。
+- `template`：个人长期模板导入。
+- `ics_import`：`.ics` 文件导入。
+- `calendar_sync`：日历账号同步，后置能力。
+
+### AvailabilityDraft
+
+由不同添加方式生成、等待用户确认的可用时间草稿。默认不落库，确认后才转换为 `Availability`。
+
+字段草案：
+
+- `entry_method`：对应的 `AvailabilityEntryMethod`。
+- `available_slots`：建议可用时间槽，使用 UTC 精确时间。
+- `busy_blocks`：可选，导入流程识别出的忙碌时间块。
+- `confidence`：可选整体置信度。
+- `warnings`：需要用户复核的问题。
+
 ### ImportedBusyBlock
 
 从课表截图、排班截图或粘贴文本中识别出的忙碌时间块。导入 v1 中默认不直接落库，只作为生成预填建议的中间结果。
@@ -91,14 +118,36 @@
 
 ### AvailabilityImportPreview
 
-导入接口返回的预览结果。它不是提交结果，用户确认后才会转换为 `Availability`。
+导入接口返回的预览结果。它是 `AvailabilityDraft` 的一种具体来源，不是提交结果，用户确认后才会转换为 `Availability`。
 
 字段草案：
 
 - `busy_blocks`：识别出的忙碌时间块。
-- `suggested_available_slots`：按当前日程配置计算出的建议可用时间槽。
+- `available_slots`：按当前日程配置计算出的建议可用时间槽。
 - `warnings`：需要用户复核的问题。
 - `confidence`：整体置信度。
+
+### CandidateTimeOption
+
+候选时间投票模式中的组织者预设时间。它适合 Doodle/Rallly 风格的“几个候选时间里选一个或几个”场景。
+
+字段草案：
+
+- `id`：内部唯一 ID。
+- `schedule_id`：所属日程。
+- `slot_start_utc`：候选时间开始，UTC。
+- `slot_end_utc`：候选时间结束，UTC。
+- `label`：可选显示标签，例如“晚饭前”或“线上会议”。
+
+### CandidateVote
+
+参与者对某个候选时间的选择。该能力计划中，尚未替代当前二元可用时间模型。
+
+字段草案：
+
+- `candidate_time_option_id`：候选时间。
+- `participant_id`：参与者。
+- `response`：`available`、`maybe`、`unavailable`。
 
 ### UserAccount
 
@@ -174,6 +223,8 @@
 - 连续相邻时间格可以合并为更长时间段。
 - 导入流程中的忙碌时间块需要先与日程时间格求差集，生成建议可用时间槽。
 - 长期模板需要先按日程日期范围投影为候选可用窗口，再与日程时间格求交集。
+- 候选时间投票模式需要把组织者预设候选时间对齐到统一时间槽，再参与排名和汇总。
+- 所有非手动入口都必须先形成 `AvailabilityDraft`，由用户确认后再写入最终提交。
 - 核心计算逻辑必须放在 `packages/core`，UI 和 API 层不得重复实现。
 
 ## 数据保留规则
