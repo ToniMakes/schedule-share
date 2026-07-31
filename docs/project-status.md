@@ -1,6 +1,6 @@
 # 项目状态基线
 
-更新日期：2026-07-29
+更新日期：2026-07-31
 
 ## 当前阶段
 
@@ -8,6 +8,8 @@
 正式域名在 Vercel 生产部署上跑通 API smoke test”的阶段。
 
 当前部署决策已经补充到 `docs/adr/0007-hosting-database-and-domain.md`：MVP 优先使用 Vercel + Neon Postgres Singapore，并通过 `https://schedule.tonimakes.com` 对外访问。
+
+下一阶段的产品差异化决策已经补充到 `docs/adr/0008-availability-import-and-templates.md`：优先把课表/排班导入和登录用户长期可用模板作为填写辅助能力推进，但它们只生成预填建议，不绕过用户确认，也不替代当前匿名主流程。
 
 当前本机限制：
 
@@ -57,6 +59,7 @@
 - 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`。
 - 反馈与删除请求说明：`docs/feedback.md`、`/feedback`。
 - GitHub Actions CI：format、脚本和 workspace lint、typecheck、test、build。
+- 课表/排班导入与个人长期可用模板的产品、领域、API、隐私和架构边界文档。
 
 ## 代码结构
 
@@ -113,13 +116,17 @@ $env:SMOKE_BASE_URL="https://schedule.tonimakes.com"; $env:APP_BASE_URL="https:/
 - 隐私与数据保留说明仍需正式法律审阅，正式反馈联系渠道和删除请求处理时限尚未确定。
 - 尚未做微信小程序版。
 - 尚未做广告、商业化或支付能力。
+- 尚未实现课表/排班导入、AI/OCR provider、导入确认 UI。
+- 尚未实现登录账号和个人长期可用模板。
 
 ## 下一步建议
 
-1. 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
-2. 找 3 到 5 个朋友按内测清单试用。
-3. 整理反馈后再决定是否进入公开发布。
-4. 配置生产日志、监控、告警和备份演练。
+1. 为课表/排班导入实现 `packages/core` 中的忙碌时间块到可用时间槽转换，并补时间边界测试。
+2. 为个人长期模板实现 `packages/core` 中的每周可用窗口投影逻辑，并补跨时区测试。
+3. 在决定登录方案前新增或更新认证 ADR，再实现用户和模板数据库表。
+4. 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
+5. 找 3 到 5 个朋友按内测清单试用，重点观察手动填写是否已经够用、导入是否明显降低填写成本。
+6. 配置生产日志、监控、告警和备份演练。
 
 ## Git 基线
 

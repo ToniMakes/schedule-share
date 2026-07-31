@@ -63,6 +63,8 @@ docs/
 - 时间格生成。
 - 时区转换策略。
 - 可用时间交集计算。
+- 忙碌时间块反推出可用时间建议。
+- 长期模板投影到具体日程时间格。
 - 多数人空闲排序。
 - 领域校验规则。
 
@@ -131,6 +133,19 @@ flowchart LR
   E --> F["API stores slots"]
   F --> G["Core calculates result"]
   G --> H["Web displays common times"]
+```
+
+计划中的导入和模板预填数据流：
+
+```mermaid
+flowchart LR
+  A["Participant opens schedule"] --> B["Upload image, paste text, or choose template"]
+  B --> C["API validates request and permissions"]
+  C --> D["Server import or template service prepares busy or available windows"]
+  D --> E["Core maps windows to schedule slots"]
+  E --> F["Web shows editable preview"]
+  F --> G["Participant confirms submission"]
+  G --> H["Existing participant submit API stores availability"]
 ```
 
 ## 测试策略

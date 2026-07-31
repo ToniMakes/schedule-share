@@ -388,6 +388,192 @@ CSV 内容包含：
 - 当前时间槽排名。
 - 参与者列表。
 
+## 导入可用时间预览
+
+`POST /api/schedules/:publicId/import-preview`
+
+状态：计划中。
+
+用途：
+
+- 根据当前日程配置，把课表截图、排班截图或粘贴文本转换为建议可用时间。
+- 该接口只返回预览结果，不创建参与者，也不提交可用时间。
+- 用户仍需在页面确认后调用现有提交接口。
+
+运行要求：
+
+- 服务端需要 `DATABASE_URL`。
+- 服务端需要按环境配置启用识别 provider；未配置时应返回 `IMPORT_PROVIDER_UNAVAILABLE`。
+- 服务端必须校验日程存在且状态为 `open`。
+- 图片上传需要限制文件类型和大小。
+- 请求会先通过 `packages/api-client` 的 schema 校验；服务端再调用 `packages/core` 把忙碌时间转换为当前日程内的建议可用时间槽。
+
+图片请求：`multipart/form-data`
+
+```text
+file: timetable.png
+timezone: Australia/Sydney
+mode: busy
+```
+
+文本请求：`application/json`
+
+```json
+{
+  "sourceText": "Mon 09:00-11:00 COMP101, Wed 14:00-16:00 Lab",
+  "timezone": "Australia/Sydney",
+  "mode": "busy"
+}
+```
+
+成功响应：`200`
+
+```json
+{
+  "busyBlocks": [
+    {
+      "sourceLabel": "COMP101",
+      "dayOfWeek": 1,
+      "startTime": "09:00",
+      "endTime": "11:00",
+      "timezone": "Australia/Sydney",
+      "confidence": 0.88,
+      "warnings": []
+    }
+  ],
+  "suggestedAvailableSlots": [
+    {
+      "startUtc": "2026-08-01T08:00:00.000Z",
+      "endUtc": "2026-08-01T08:30:00.000Z"
+    }
+  ],
+  "warnings": ["Some class names were ignored because only busy times are needed."],
+  "confidence": 0.82
+}
+```
+
+## 个人长期模板
+
+以下接口状态均为计划中。它们需要登录能力，认证方案开始前必须新增或更新认证 ADR。
+
+### 获取模板列表
+
+`GET /api/me/availability-templates`
+
+运行要求：
+
+- 必须登录。
+- 只能返回当前用户自己的模板。
+
+响应：
+
+```json
+{
+  "templates": [
+    {
+      "id": "tpl_123",
+      "name": "Semester default",
+      "timezone": "Australia/Sydney",
+      "notes": "Usually free outside classes",
+      "windows": [
+        {
+          "dayOfWeek": 1,
+          "startTime": "18:00",
+          "endTime": "22:00"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 创建模板
+
+`POST /api/me/availability-templates`
+
+请求：
+
+```json
+{
+  "name": "Semester default",
+  "timezone": "Australia/Sydney",
+  "notes": "Usually free outside classes",
+  "windows": [
+    {
+      "dayOfWeek": 1,
+      "startTime": "18:00",
+      "endTime": "22:00"
+    }
+  ]
+}
+```
+
+响应：`201`
+
+```json
+{
+  "template": {
+    "id": "tpl_123",
+    "name": "Semester default",
+    "timezone": "Australia/Sydney",
+    "notes": "Usually free outside classes",
+    "windows": []
+  }
+}
+```
+
+### 更新模板
+
+`PUT /api/me/availability-templates/:templateId`
+
+运行要求：
+
+- 必须登录。
+- 只能更新当前用户自己的模板。
+- 更新时替换模板基础信息和全部窗口。
+
+### 删除模板
+
+`DELETE /api/me/availability-templates/:templateId`
+
+运行要求：
+
+- 必须登录。
+- 只能删除当前用户自己的模板。
+
+### 模板预填当前日程
+
+`POST /api/schedules/:publicId/template-preview`
+
+运行要求：
+
+- 必须登录。
+- 只能读取当前用户自己的模板。
+- 日程必须存在且状态为 `open`。
+- 接口只返回预填建议，不提交参与者可用时间。
+
+请求：
+
+```json
+{
+  "templateId": "tpl_123"
+}
+```
+
+响应：
+
+```json
+{
+  "suggestedAvailableSlots": [
+    {
+      "startUtc": "2026-08-01T08:00:00.000Z",
+      "endUtc": "2026-08-01T08:30:00.000Z"
+    }
+  ],
+  "warnings": []
+}
+```
+
 ## 错误格式
 
 ```json
@@ -413,3 +599,9 @@ CSV 内容包含：
 - `INVALID_EDIT_KEY`
 - `SLOT_OUT_OF_RANGE`
 - `UNSUPPORTED_SLOT_MINUTES`
+- `UNAUTHENTICATED`
+- `FORBIDDEN`
+- `IMPORT_PROVIDER_UNAVAILABLE`
+- `IMPORT_FILE_TOO_LARGE`
+- `IMPORT_UNSUPPORTED_FILE_TYPE`
+- `IMPORT_LOW_CONFIDENCE`
