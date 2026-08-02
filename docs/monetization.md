@@ -39,6 +39,21 @@
 
 这套组合的判断是：普通参与者付费意愿很低，常驻广告能把每次访问变成微小收入，激励广告能把高成本 AI 操作和收入绑定，组织者增值则保留真正可能付费的人群。
 
+## 广告平台选择
+
+展示广告和激励广告要按两条不同接入线管理：
+
+- 常驻展示广告：优先评估 Google AdSense / Auto ads，用于顶部、底部、桌面侧栏、移动 anchor 和结果页内容间广告。
+- 激励广告：不能把普通 AdSense 展示广告包装成“看广告得额度”。必须使用明确支持 rewarded inventory、用户同意和服务端验证的产品，例如 Google Ad Manager / Google Publisher Tag rewarded ad，或其他明确支持 Web rewarded ad 的广告网络。
+- 自营或内部广告：带管理/编辑密钥的页面、上传预览页和高隐私页面在未完成 URL 密钥迁移前，只允许内部推广、无第三方脚本的赞助占位或不展示广告。
+
+平台选择规则：
+
+- 普通展示广告不能承诺奖励、不能诱导点击、不能靠误触盈利。
+- 激励广告必须由用户主动触发，并且奖励事件必须能在服务端校验、去重和审计。
+- 如果某个平台不支持 Web rewarded ad 或不能提供可验证完成事件，就不能用于发放 AI 图片识别额度。
+- 真实广告只允许在生产域名启用；本地、Preview、自动化测试和内部 QA 默认关闭真实广告或使用平台 test mode。
+
 ## 常驻展示广告策略
 
 常驻广告用于被动收入，产品策略改为“默认每个页面都有外围广告框架”。创建、填写、编辑、结果、管理和说明类页面都可以展示广告，但广告只能占用页面边缘、段落间或完成动作之后的位置，不能进入用户正在做选择、拖拽、上传、提交、复制和导出的关键操作区。
@@ -46,7 +61,7 @@
 推荐页面密度：
 
 - A 档，核心操作页：创建页、参与者填写页、编辑页。使用顶部 slim banner、桌面左右 rail、移动端可关闭底部 anchor。中间表单、时间格和提交区保持无广告。
-- B 档，结果和管理页：公开结果页、组织者管理页。可以使用顶部 banner、结果块之间的 in-content ad、桌面左右 rail、页面底部广告；带管理密钥的页面必须先处理 referrer 泄露风险。
+- B 档，结果和管理页：公开结果页、组织者管理页。可以使用顶部 banner、结果块之间的 in-content ad、桌面左右 rail、页面底部广告；带管理密钥的页面必须先处理完整 URL 密钥暴露风险。
 - C 档，完成和说明页：提交成功状态、隐私页、反馈页、公开说明页。可以使用更完整的顶部、底部、侧栏和内容间广告，但仍需要控制单屏广告占比。
 
 推荐广告位：
@@ -64,7 +79,7 @@
 - 参与者正在填写的时间格区域。
 - 候选投票按钮区域。
 - 图片、CSV、ICS 或文本导入预览区域。
-- 广告请求可能带出管理密钥或编辑密钥 URL 的页面；除非已经通过 referrer policy、URL 结构或代理层确认不会泄露密钥。
+- 广告请求或第三方脚本可能接触管理密钥或编辑密钥 URL 的页面；除非已经确认第三方脚本无法读到完整密钥 URL。
 - 任何用户可能误以为广告是“提交”“复制”“导出”“继续”的位置。
 
 展示规则：
@@ -74,6 +89,40 @@
 - 不把广告放进浮层脚本、弹窗、下载按钮附近或容易误触的位置。
 - 如果广告显著降低提交率、造成移动端遮挡或让页面布局跳动，应优先降广告密度。
 - 默认以 `DISPLAY_ADS_ENABLED` 和 `DISPLAY_ADS_DEFAULT_ON` 做全站开关，再按页面类型、视口、密钥泄露风险和广告密度决定具体位置。
+- 首期关闭 vignette / interstitial 这类全屏或页面跳转间广告，直到创建率、填写完成率和移动端遮挡数据稳定。
+- 如果启用 Auto ads，需要配置 page exclusion 或局部禁用清单，不能让平台自动把广告插入表单、时间格、上传预览、候选按钮和复制/导出区域。
+
+## AdSense 上线准备
+
+AdSense 更像“网站内容和流量审核”，不是接上代码就能长期稳定出广告。公开开放前需要先准备：
+
+- 生产域名、HTTPS 和基础导航已经稳定。当前正式域名可以作为审核入口，但页面内容还需要补齐。
+- 首页不能只有空表单，要有可被搜索引擎和广告审核理解的原创内容：这个工具解决什么问题、适合谁、如何处理时区、隐私如何保护、用户如何反馈。
+- 至少提供稳定可访问的 `/privacy`、`/feedback`，并补上 `/terms`、`/about` 或等价说明页。
+- 动态日程页属于用户生成内容和临时链接，不应作为广告审核的主要内容来源；审核重点放在公开首页、说明页、隐私页和真实可用的创建入口。
+- 隐私说明需要明确广告 cookie、Google 和其他第三方广告供应商、个性化广告退出方式、地区化 consent、广告请求会包含哪些设备/网络/页面信息。
+- 拿到 publisher ID 后发布 `/ads.txt`，并确认根域可抓取。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
+- `robots.txt` 和 `sitemap.xml` 应该让公开说明页可抓取；带管理密钥、编辑密钥或临时 UGC 的日程页首期可以 `noindex`。
+- 本地、Vercel Preview、自动化测试、站长自测和内部 QA 不加载真实广告，避免无效流量。
+
+建议在广告审核前新增或确认这些公开资产：
+
+- `/about`：一句话产品定位、适合人群、核心功能和联系方式。
+- `/privacy`：广告版隐私说明。
+- `/feedback`：反馈和删除请求入口。
+- `/terms`：基础使用条款、免责声明和用户内容规则。
+- `/ads.txt`：拿到 AdSense publisher ID 后发布。
+- `robots.txt` 和 `sitemap.xml`：让公开内容可被审核和抓取，避免密钥页进入索引。
+
+## 密钥 URL 与第三方广告脚本
+
+当前代码生成的 `ownerUrl` 和 `editUrl` 带有 `?key=` 查询参数。`Referrer-Policy` 可以减少跳转或资源请求时的 referrer 泄露，但加载到页面里的第三方广告脚本仍可能通过 `window.location.href` 读到完整 URL。因此：
+
+- 带 `?key=` 的管理页和编辑页首期不能加载第三方广告脚本。
+- 这类页面可以展示自营推广、无第三方脚本的静态赞助位，或完全不展示广告。
+- `DISPLAY_AD_KEYED_URL_MODE` 默认应为 `off` 或 `internal`，不应默认为 `full`。
+- 如果未来要在管理/编辑页放第三方广告，先把权限密钥从 URL 迁移到 httpOnly cookie、一次性交换 session、短期服务端状态或其他不暴露给第三方脚本的机制。
+- 即使完成密钥迁移，也仍要设置 `Referrer-Policy: strict-origin-when-cross-origin` 或更严格策略，并监控页面是否引入未批准第三方脚本。
 
 ## 常驻广告收入模型
 
@@ -83,6 +132,15 @@
 
 ```text
 monthlyDisplayAdRevenue = monthlyPageViews / 1000 * pageRpm
+```
+
+按单个日程看毛利时，需要把常驻广告和图片识别成本放在同一张表里：
+
+```text
+revenuePerSchedule =
+  schedulePageViews / 1000 * pageRpm
+  + rewardedAdCompletions * rewardedRevenuePerCompletion
+  - imageRecognitionAttempts * averageAiCostPerAttempt
 ```
 
 示例：
@@ -100,6 +158,12 @@ monthlyDisplayAdRevenue = monthlyPageViews / 1000 * pageRpm
 - 不直接承担所有 AI 图片识别成本。
 
 AI 图片识别仍应通过激励广告额度或未来付费额度单独控制。
+
+判断口径：
+
+- 纯手动、文本、CSV、ICS 日程主要看 `schedulePageViews / 1000 * pageRpm` 能否覆盖基础流量成本。
+- 图片识别日程必须额外看 `rewardedAdCompletions * rewardedRevenuePerCompletion` 是否覆盖 `imageRecognitionAttempts * averageAiCostPerAttempt`。
+- 如果图片识别尝试次数增长，但 rewarded ad 收入没有同步覆盖成本，就要降低免费额度、提高兑换门槛、限制图片尺寸/重试次数，或临时关闭图片识别。
 
 ## AI 图片识别激励广告机制
 
@@ -185,7 +249,7 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 - `scope_id_hash`：匿名 session、设备标识或用户 ID 的哈希；尽量避免保存原始广告标识。
 - `schedule_id`：可选，额度如限定在某个日程内使用则填写。
 - `source`：`free_quota`、`rewarded_ad`、`admin` 或 `refund`。
-- `provider`：广告或额度来源，例如 `google_admob`、`adsense`、`internal_free_quota`。
+- `provider`：广告或额度来源，例如 `google_ad_manager`、`rewarded_web_network`、`internal_free_quota`。
 - `provider_event_id_hash`：广告完成事件 ID 的哈希，用于防重复发放。
 - `credits_granted`：发放额度数。
 - `credits_remaining`：剩余额度数。
@@ -269,23 +333,28 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 常驻展示广告：
 
-| 变量                                     | 说明                                                      |
-| ---------------------------------------- | --------------------------------------------------------- |
-| `DISPLAY_ADS_ENABLED`                    | 是否启用常驻展示广告。                                    |
-| `DISPLAY_ADS_DEFAULT_ON`                 | 是否默认所有页面都尝试展示外围广告。                      |
-| `DISPLAY_AD_PROVIDER`                    | 常驻广告提供商标识，例如 `adsense` 或 `ad_manager`。      |
-| `DISPLAY_AD_CLIENT_ID`                   | 广告 client / publisher ID。                              |
-| `DISPLAY_AD_SLOT_RESULTS_INLINE`         | 结果页内联广告位 ID。                                     |
-| `DISPLAY_AD_SLOT_GLOBAL_TOP`             | 全站顶部横幅广告位 ID。                                   |
-| `DISPLAY_AD_SLOT_GLOBAL_BOTTOM`          | 全站底部广告位 ID。                                       |
-| `DISPLAY_AD_SLOT_CORE_PAGE_EDGE`         | 创建、填写和编辑页的外围广告位 ID。                       |
-| `DISPLAY_AD_SLOT_DESKTOP_RAIL`           | 桌面侧栏广告位 ID。                                       |
-| `DISPLAY_AD_SLOT_MOBILE_ANCHOR`          | 移动端底部 anchor ad 或等价广告位 ID。                    |
-| `DISPLAY_AD_SUPPRESS_IN_CORE_ACTIONS`    | 是否在表单、时间格、上传预览、提交和复制/导出区禁用广告。 |
-| `DISPLAY_AD_KEYED_URL_MODE`              | 带管理/编辑密钥页面的广告模式：`off`、`edge` 或 `full`。  |
-| `DISPLAY_AD_MAX_SLOTS_PER_PAGE`          | 单页最大展示广告位数量。                                  |
-| `ADS_CONSENT_MODE_ENABLED`               | 是否启用广告 consent mode 或等价的地区化同意/拒绝处理。   |
-| `ADS_POLICY_REVIEW_REQUIRED_BEFORE_LIVE` | 是否要求通过人工策略检查后才允许生产展示。默认应为 true。 |
+| 变量                                     | 说明                                                         |
+| ---------------------------------------- | ------------------------------------------------------------ |
+| `DISPLAY_ADS_ENABLED`                    | 是否启用常驻展示广告。                                       |
+| `DISPLAY_ADS_DEFAULT_ON`                 | 是否默认所有页面都尝试展示外围广告。                         |
+| `DISPLAY_AD_PROVIDER`                    | 常驻广告提供商标识，例如 `adsense` 或 `ad_manager`。         |
+| `DISPLAY_AD_CLIENT_ID`                   | 广告 client / publisher ID。                                 |
+| `DISPLAY_AD_AUTO_ADS_ENABLED`            | 是否启用 Auto ads；首期建议 false 或只对说明/结果页开启。    |
+| `DISPLAY_AD_VIGNETTE_ENABLED`            | 是否启用 vignette / interstitial；首期默认 false。           |
+| `DISPLAY_AD_SLOT_RESULTS_INLINE`         | 结果页内联广告位 ID。                                        |
+| `DISPLAY_AD_SLOT_GLOBAL_TOP`             | 全站顶部横幅广告位 ID。                                      |
+| `DISPLAY_AD_SLOT_GLOBAL_BOTTOM`          | 全站底部广告位 ID。                                          |
+| `DISPLAY_AD_SLOT_CORE_PAGE_EDGE`         | 创建、填写和编辑页的外围广告位 ID。                          |
+| `DISPLAY_AD_SLOT_DESKTOP_RAIL`           | 桌面侧栏广告位 ID。                                          |
+| `DISPLAY_AD_SLOT_MOBILE_ANCHOR`          | 移动端底部 anchor ad 或等价广告位 ID。                       |
+| `DISPLAY_AD_SUPPRESS_IN_CORE_ACTIONS`    | 是否在表单、时间格、上传预览、提交和复制/导出区禁用广告。    |
+| `DISPLAY_AD_KEYED_URL_MODE`              | 带管理/编辑密钥页面的广告模式：`off`、`internal` 或 `full`。 |
+| `DISPLAY_AD_MAX_SLOTS_PER_PAGE`          | 单页最大展示广告位数量。                                     |
+| `DISPLAY_AD_ALLOWED_HOSTS`               | 允许加载真实广告的生产域名白名单。                           |
+| `DISPLAY_AD_TEST_MODE`                   | 是否使用广告平台测试模式；本地/Preview/自动化测试应为 true。 |
+| `ADS_TXT_PUBLISHER_ID`                   | 生成 `/ads.txt` 时使用的广告发布商 ID。                      |
+| `ADS_CONSENT_MODE_ENABLED`               | 是否启用广告 consent mode 或等价的地区化同意/拒绝处理。      |
+| `ADS_POLICY_REVIEW_REQUIRED_BEFORE_LIVE` | 是否要求通过人工策略检查后才允许生产展示。默认应为 true。    |
 
 AI 图片识别和激励广告：
 
@@ -305,20 +374,24 @@ AI 图片识别和激励广告：
 ## 隐私和合规原则
 
 - 常驻广告平台可能会接收广告请求所需的页面 URL、浏览器、设备、网络和地区等信息；产品不得主动把日程标题、参与者姓名、上传图片、识别文本或可用时间作为广告定向字段传递。
-- 带管理密钥或编辑密钥的页面只有在确认广告请求不会泄露完整 URL 或密钥后，才允许展示第三方广告；否则只能展示自营占位、内部推广或不展示广告。
+- 带管理密钥或编辑密钥的页面只有在完成 URL 密钥迁移、并确认第三方脚本无法读到完整密钥 URL 后，才允许展示第三方广告；否则只能展示自营占位、内部推广或不展示广告。
 - 上传预览和高密度个人排期内容区域不放第三方广告，但页面外围可以展示广告。
 - 图片内容只发送给配置的 AI provider，并且只用于生成本次可编辑预览。
 - 用户必须主动选择观看激励广告；不能把广告伪装成继续按钮，也不能把广告插入无关流程。
 - 不能承诺点击广告获得更多额度，也不能诱导点击广告。
 - 上线前需要按目标地区和广告平台政策确认 rewarded ad 是否适用于网页、学生场景和匿名用户。
-- 隐私说明页需要补充常驻广告 SDK、rewarded ad、奖励验证、额度记录和 AI provider 的公开说明。
+- 隐私说明页需要补充常驻广告 SDK、rewarded ad、奖励验证、额度记录、AI provider、广告 cookie、第三方供应商和个性化广告退出方式的公开说明。
 - 如果进入需要 cookie / consent 管理的地区，需要在上线前补充同意、拒绝和撤回机制。
+- 真实广告只在生产域名启用；本地开发、Preview 部署、自动化测试和内部 QA 必须关闭真实广告或使用测试模式。
 
 ## 风控和成本护栏
 
 - 对常驻广告记录页面类型、展示位置、展示次数、估算收入、CLS 和提交转化影响。
 - 对常驻广告做位置禁用清单，先保护表单、时间格、上传预览、提交按钮、复制/导出按钮和可能泄露密钥的 URL。
 - 对异常展示、异常刷新、异常点击和可疑流量做监控，避免广告账号被限制。
+- 对站长自测、自动化测试、Preview 流量和内部 QA 流量默认禁用真实广告，减少无效流量风险。
+- 对带密钥页面建立第三方脚本检查，把 `?key=` 页面加载外部广告脚本作为上线阻断项。
+- 监控 `/ads.txt` 是否能被生产域名访问，以及广告后台是否识别为已授权库存。
 - 对匿名 session、IP、日程和全站分别做频率限制。
 - 对广告事件做防重放：同一个 `reward_event_id` 只能发放一次额度。
 - 对 OpenAI provider 设置超时、图片大小限制和总成本限额。
@@ -332,6 +405,8 @@ AI 图片识别和激励广告：
 
 - 常驻广告曝光、可见率、Page RPM、广告加载失败率和广告拦截比例。
 - 常驻广告对创建率、填写完成率、提交耗时和移动端滚动/遮挡的影响。
+- 真实广告是否误出现在本地、Preview、自动化测试、内部 QA 或带 `?key=` 的页面。
+- `/ads.txt` 可访问性、广告后台授权状态和广告审核状态。
 - 图片识别入口曝光次数。
 - 上传图片尝试次数。
 - rewarded ad 展示、完成、验证成功和验证失败次数。
@@ -345,21 +420,25 @@ AI 图片识别和激励广告：
 ## 分阶段落地
 
 1. 文档阶段：明确成本、广告、隐私、数据模型和 API 计划，不改现有可用主链路。
-2. 常驻广告试水阶段：接入默认全站外围广告框架。核心操作页只启用顶部、底部、桌面 rail 或移动 anchor；结果页、提交成功页和说明页可以增加内容间广告。
-3. 免费额度阶段：做本机或匿名 session 的少量免费图片识别额度和全站限额，不接 rewarded ad。
-4. 小流量激励广告阶段：接入 rewarded ad provider，使用服务端验证发放额度，并保留手动 fallback。
-5. 动态兑换阶段：按真实 eCPM、填充率、AI 成本和风控情况调整 1 广告换 1 次或多广告换 1 次。
-6. 组织者增值阶段：只有在真实用户证明有高频组织需求后，再考虑移除广告、品牌页、群组、批量活动、付费额度或会员。
+2. 审核准备阶段：补齐首页原创说明、`/about`、`/terms`、广告版 `/privacy`、`robots.txt`、`sitemap.xml`、`/ads.txt` 和生产域名白名单。
+3. 常驻广告试水阶段：接入默认全站外围广告框架。核心操作页只启用顶部、底部、桌面 rail 或移动 anchor；结果页、提交成功页和说明页可以增加内容间广告。带 `?key=` 页面只允许 `off` 或 `internal`。
+4. 密钥安全阶段：如果要在管理/编辑页展示第三方广告，先把 URL 密钥迁移到不暴露给第三方脚本的机制，并增加第三方脚本检查。
+5. 免费额度阶段：做本机或匿名 session 的少量免费图片识别额度和全站限额，不接 rewarded ad。
+6. 小流量激励广告阶段：接入 rewarded ad provider，使用服务端验证发放额度，并保留手动 fallback。
+7. 动态兑换阶段：按真实 eCPM、填充率、AI 成本和风控情况调整 1 广告换 1 次或多广告换 1 次。
+8. 组织者增值阶段：只有在真实用户证明有高频组织需求后，再考虑移除广告、品牌页、群组、批量活动、付费额度或会员。
 
 ## 打开条件
 
 公开开放常驻广告前，至少需要满足：
 
 - 广告平台账号、站点审核、广告位置和政策要求已经确认。
-- 生产环境有 `DISPLAY_ADS_ENABLED` 全站开关、默认开启开关、位置禁用清单和单页广告数量上限。
-- 创建、填写、编辑、上传预览和密钥页面可以有外围广告，但不会被广告遮挡、诱导误触或泄露完整密钥 URL。
-- 隐私说明已经补充广告平台、广告请求数据和用户同意/拒绝规则。
+- 公开首页、`/about`、`/privacy`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 已准备好，拿到 publisher ID 后 `/ads.txt` 可从生产根域访问。
+- 生产环境有 `DISPLAY_ADS_ENABLED`、`DISPLAY_ADS_DEFAULT_ON`、`DISPLAY_AD_ALLOWED_HOSTS`、`DISPLAY_AD_TEST_MODE`、位置禁用清单和单页广告数量上限。
+- 创建、填写、编辑、上传预览和密钥页面可以有外围广告，但不会被广告遮挡、诱导误触或泄露完整密钥 URL；带 `?key=` 页面不加载第三方广告脚本。
+- 隐私说明已经补充广告平台、广告请求数据、广告 cookie、个性化广告退出方式和用户同意/拒绝规则。
 - 有创建率、填写完成率、广告收入、广告加载失败和布局稳定性监控。
+- 本地、Preview、自动化测试、站长自测和内部 QA 不会产生真实广告请求。
 
 公开开放广告换图片识别前，至少需要满足：
 
@@ -373,5 +452,8 @@ AI 图片识别和激励广告：
 ## 参考资料
 
 - Google AdSense Auto ads：`https://support.google.com/adsense/answer/9261805`
+- Google AdSense ad placement policies：`https://support.google.com/adsense/answer/1346295`
 - Google AdSense Program policies：`https://support.google.com/adsense/answer/48182`
+- Google AdSense required privacy policy content：`https://support.google.com/adsense/answer/1348695`
+- Google AdSense ads.txt guide：`https://support.google.com/adsense/answer/12171612`
 - Google Publisher Tag rewarded ad sample：`https://developers.google.com/publisher-tag/samples/display-rewarded-ad`
