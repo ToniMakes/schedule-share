@@ -8,6 +8,7 @@
 
 - 真实广告默认关闭，不会向第三方广告平台发请求。
 - `/contact` 已作为公开联系主入口，`/feedback` 继续作为兼容说明页。
+- Vercel Production/Preview 已配置 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com`，生产 `/contact` 已验证能显示该公开支持邮箱。
 - `/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`/robots.txt`、`/sitemap.xml` 和 `/ads.txt` 已有公开路由。
 - 带 `?key=` 的管理页和编辑页不会加载第三方广告脚本。
 - `deployment:config` 已把真实 AdSense 开启前置条件变成硬闸门。
@@ -15,9 +16,9 @@
 ## Phase 1：公开资产准备
 
 - 确认生产域名 `https://schedule.tonimakes.com` 可访问。
-- 创建一个专用公开支持邮箱或站内表单，不使用私人邮箱或内部工作邮箱。
-- 在 Vercel Production 和 Preview 设置 `NEXT_PUBLIC_SUPPORT_EMAIL`，然后重新部署。
-- 检查 `/contact` 是否展示公开联系方式，且不要求用户发送管理密钥、编辑密钥或隐私截图。
+- 专用公开支持邮箱已使用 `hello@tonimakes.com`，后续站内表单可在用户反馈管理系统稳定后再接入。
+- Vercel Production 和 Preview 已设置 `NEXT_PUBLIC_SUPPORT_EMAIL` 并重新部署。
+- `/contact` 已展示公开联系方式，且页面提示不要公开发送管理密钥、编辑密钥或隐私截图。
 - 检查 `/privacy` 和 `/terms` 的广告、cookie、AI 图片识别和数据保留说明。
 - 继续保持 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED=false`。
 
