@@ -555,8 +555,8 @@ export function NewScheduleForm({ locale = "zh-CN" }: { readonly locale?: NewSch
             copy={copy.copy}
             copiedLabel={copy.copied}
             label={copy.shareLink}
-            onCopy={() => copyLink("share", submitState.result.shareUrl)}
-            value={submitState.result.shareUrl}
+            onCopy={() => copyLink("share", toLocalizedShareUrl(submitState.result.shareUrl, copy))}
+            value={toLocalizedShareUrl(submitState.result.shareUrl, copy)}
           />
           <LinkRow
             copied={copiedTarget === "owner"}
@@ -696,4 +696,20 @@ function readFormString(formData: FormData, key: string): string {
 function readOptionalFormString(formData: FormData, key: string): string | undefined {
   const value = readFormString(formData, key).trim();
   return value.length === 0 ? undefined : value;
+}
+
+function toLocalizedShareUrl(shareUrl: string, copy: NewScheduleFormCopy): string {
+  try {
+    const parsedUrl = new URL(shareUrl);
+    const publicId = parsedUrl.pathname.match(/^\/s\/([^/]+)$/)?.[1];
+
+    if (publicId === undefined) {
+      return shareUrl;
+    }
+
+    parsedUrl.pathname = `${copy.publicSchedulePathPrefix}${publicId}`;
+    return parsedUrl.toString();
+  } catch {
+    return shareUrl;
+  }
 }

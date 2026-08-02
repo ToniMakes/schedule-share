@@ -15,6 +15,7 @@ import type { CandidateVoteResponse } from "@schedule-share/api-client";
 
 import { slotKey } from "./availability-slot-grid";
 import styles from "./page.module.css";
+import { schedulePageCopy, type CandidateVoteListCopy } from "./schedule-page-copy";
 
 export interface CandidateVoteSlot {
   readonly availableParticipantCount?: number;
@@ -33,6 +34,7 @@ export type CandidatePreferenceMove = "append" | "down" | "up";
 
 export function CandidateVoteList({
   ariaLabel = "候选时间投票",
+  copy = schedulePageCopy["zh-CN"].candidateVoteList,
   onChange,
   onPreferenceMove,
   onPreferenceReorder,
@@ -42,6 +44,7 @@ export function CandidateVoteList({
   totalParticipantCount
 }: {
   readonly ariaLabel?: string;
+  readonly copy?: CandidateVoteListCopy;
   readonly onChange: (slot: CandidateVoteSlot, response: CandidateVoteResponse) => void;
   readonly onPreferenceMove?: (slot: CandidateVoteSlot, move: CandidatePreferenceMove) => void;
   readonly onPreferenceReorder?: (
@@ -194,6 +197,7 @@ export function CandidateVoteList({
         const response = responsesBySlotKey.get(key) ?? "unavailable";
         const preferenceRank = preferenceRanksBySlotKey?.get(key);
         const maybeCount = slot.maybeParticipantCount ?? 0;
+        const slotLabel = slot.label ?? copy.candidateFallback(index);
         const isDraggablePreference =
           onPreferenceReorder !== undefined &&
           response !== "unavailable" &&
@@ -215,35 +219,38 @@ export function CandidateVoteList({
             onDrop={(event) => handlePreferenceDrop(event, slot, key)}
           >
             <div className={styles.candidateVoteInfo}>
-              <strong>{slot.label ?? `候选 ${index + 1}`}</strong>
+              <strong>{slotLabel}</strong>
               <span>
-                {formatLocalDateRange(slot)} {slot.localStartTime}-{slot.localEndTime}
+                {formatLocalDateRange(slot, copy)} {slot.localStartTime}-{slot.localEndTime}
               </span>
               {totalParticipantCount === undefined ? null : (
                 <p>
-                  已有 {slot.availableParticipantCount ?? 0}/{totalParticipantCount} 方便
-                  {maybeCount > 0 ? ` · ${maybeCount} 也许` : ""}
+                  {copy.availabilitySummary(
+                    slot.availableParticipantCount ?? 0,
+                    totalParticipantCount,
+                    maybeCount
+                  )}
                 </p>
               )}
             </div>
             <div className={styles.candidateVoteChoiceGroup}>
               <CandidateVoteChoice
                 checked={response === "available"}
-                label="方便"
+                label={copy.available}
                 name={`candidate-${key}`}
                 onChange={() => onChange(slot, "available")}
                 value="available"
               />
               <CandidateVoteChoice
                 checked={response === "maybe"}
-                label="也许"
+                label={copy.maybe}
                 name={`candidate-${key}`}
                 onChange={() => onChange(slot, "maybe")}
                 value="maybe"
               />
               <CandidateVoteChoice
                 checked={response === "unavailable"}
-                label="不方便"
+                label={copy.unavailable}
                 name={`candidate-${key}`}
                 onChange={() => onChange(slot, "unavailable")}
                 value="unavailable"
@@ -252,14 +259,16 @@ export function CandidateVoteList({
             {onPreferenceMove === undefined || response === "unavailable" ? null : (
               <div className={styles.candidatePreferenceControls}>
                 <span>
-                  {preferenceRank === undefined ? "偏好未排序" : `偏好 #${preferenceRank}`}
+                  {preferenceRank === undefined
+                    ? copy.noPreferenceRank
+                    : copy.preferenceRank(preferenceRank)}
                 </span>
                 {preferenceRank === undefined ? (
                   <button
-                    aria-label={`把 ${slot.label ?? `候选 ${index + 1}`} 加入偏好排序`}
+                    aria-label={copy.addPreferenceAria(slotLabel)}
                     className={styles.candidatePreferenceButton}
                     onClick={() => onPreferenceMove(slot, "append")}
-                    title="加入偏好排序"
+                    title={copy.addPreferenceTitle}
                     type="button"
                   >
                     <ListPlus aria-hidden="true" size={15} />
@@ -268,7 +277,7 @@ export function CandidateVoteList({
                   <>
                     {onPreferenceReorder === undefined ? null : (
                       <span
-                        aria-label={`拖拽调整 ${slot.label ?? `候选 ${index + 1}`} 的偏好顺位`}
+                        aria-label={copy.dragPreferenceAria(slotLabel)}
                         className={styles.candidatePreferenceDragHandle}
                         onPointerCancel={clearPreferencePointerDrag}
                         onPointerDown={(event) =>
@@ -276,27 +285,27 @@ export function CandidateVoteList({
                         }
                         onPointerMove={handlePreferencePointerMove}
                         onPointerUp={clearPreferencePointerDrag}
-                        title="拖拽调整偏好顺位"
+                        title={copy.dragPreferenceTitle}
                       >
                         <GripVertical aria-hidden="true" size={15} />
                       </span>
                     )}
                     <button
-                      aria-label={`提高 ${slot.label ?? `候选 ${index + 1}`} 的偏好顺位`}
+                      aria-label={copy.increasePreferenceAria(slotLabel)}
                       className={styles.candidatePreferenceButton}
                       disabled={preferenceRank <= 1}
                       onClick={() => onPreferenceMove(slot, "up")}
-                      title="提高偏好顺位"
+                      title={copy.increasePreferenceTitle}
                       type="button"
                     >
                       <ArrowUp aria-hidden="true" size={15} />
                     </button>
                     <button
-                      aria-label={`降低 ${slot.label ?? `候选 ${index + 1}`} 的偏好顺位`}
+                      aria-label={copy.decreasePreferenceAria(slotLabel)}
                       className={styles.candidatePreferenceButton}
                       disabled={preferenceRank >= rankedPreferenceCount}
                       onClick={() => onPreferenceMove(slot, "down")}
-                      title="降低偏好顺位"
+                      title={copy.decreasePreferenceTitle}
                       type="button"
                     >
                       <ArrowDown aria-hidden="true" size={15} />
@@ -340,13 +349,16 @@ function CandidateVoteChoice({
   );
 }
 
-function formatLocalDateRange(value: {
-  readonly localEndDate: string;
-  readonly localStartDate: string;
-}): string {
+function formatLocalDateRange(
+  value: {
+    readonly localEndDate: string;
+    readonly localStartDate: string;
+  },
+  copy: CandidateVoteListCopy
+): string {
   if (value.localStartDate === value.localEndDate) {
     return value.localStartDate;
   }
 
-  return `${value.localStartDate} 至 ${value.localEndDate}`;
+  return `${value.localStartDate}${copy.rangeSeparator}${value.localEndDate}`;
 }

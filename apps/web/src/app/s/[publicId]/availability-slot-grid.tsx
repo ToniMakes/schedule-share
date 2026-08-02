@@ -17,6 +17,7 @@ import { CheckSquare, Eraser } from "lucide-react";
 import type { TimeSlotDto } from "@schedule-share/api-client";
 
 import styles from "./page.module.css";
+import { schedulePageCopy, type AvailabilitySlotGridCopy } from "./schedule-page-copy";
 
 type PaintMode = "select" | "clear";
 type AvailabilityPickerView = "matrix" | "cards";
@@ -46,16 +47,16 @@ export interface AvailabilitySlotMatrixRow {
 
 interface AvailabilitySlotGridProps {
   readonly ariaLabel?: string;
+  readonly copy?: AvailabilitySlotGridCopy;
   readonly selectedSlotKeys: ReadonlySet<string>;
   readonly setSelectedSlotKeys: Dispatch<SetStateAction<Set<string>>>;
   readonly slots: readonly AvailabilityGridSlot[];
   readonly totalParticipantCount?: number;
 }
 
-const weekdayLabels = ["日", "一", "二", "三", "四", "五", "六"] as const;
-
 export function AvailabilitySlotGrid({
   ariaLabel = "可用时间",
+  copy = schedulePageCopy["zh-CN"].availabilitySlotGrid,
   selectedSlotKeys,
   setSelectedSlotKeys,
   slots,
@@ -247,8 +248,8 @@ export function AvailabilitySlotGrid({
   if (matrix.days.length === 0 || matrix.rows.length === 0) {
     return (
       <div className={styles.emptyState} role="status">
-        <strong>没有可填写的时间格</strong>
-        <p>创建者还没有为这个日程生成可选时间。</p>
+        <strong>{copy.emptyTitle}</strong>
+        <p>{copy.emptyBody}</p>
       </div>
     );
   }
@@ -262,13 +263,11 @@ export function AvailabilitySlotGrid({
       <div className={styles.slotPickerControls}>
         <div className={styles.slotProgressSummary} aria-live="polite">
           <strong>
-            {slotSummary.selectedSlotCount}/{slotSummary.totalSlotCount} 已选
+            {copy.selectedSlotsSummary(slotSummary.selectedSlotCount, slotSummary.totalSlotCount)}
           </strong>
-          <span>
-            {slotSummary.activeDayCount}/{slotSummary.dayCount} 天有选择
-          </span>
+          <span>{copy.selectedDaysSummary(slotSummary.activeDayCount, slotSummary.dayCount)}</span>
         </div>
-        <div className={styles.slotPickerViewTabs} role="group" aria-label="手动填写视图">
+        <div className={styles.slotPickerViewTabs} role="group" aria-label={copy.viewAria}>
           <button
             aria-pressed={pickerView === "matrix"}
             className={[
@@ -280,7 +279,7 @@ export function AvailabilitySlotGrid({
             onClick={() => setPickerView("matrix")}
             type="button"
           >
-            表格涂选
+            {copy.matrixView}
           </button>
           <button
             aria-pressed={pickerView === "cards"}
@@ -293,17 +292,17 @@ export function AvailabilitySlotGrid({
             onClick={() => setPickerView("cards")}
             type="button"
           >
-            卡片选择
+            {copy.cardsView}
           </button>
         </div>
-        <div className={styles.slotPickerActions} role="group" aria-label="批量选择">
+        <div className={styles.slotPickerActions} role="group" aria-label={copy.batchActionsAria}>
           <button className={styles.compactButton} onClick={() => selectSlots(slots)} type="button">
             <CheckSquare aria-hidden="true" size={15} />
-            全选
+            {copy.all}
           </button>
           <button className={styles.compactButton} onClick={() => clearSlots(slots)} type="button">
             <Eraser aria-hidden="true" size={15} />
-            清空
+            {copy.clear}
           </button>
         </div>
       </div>
@@ -311,13 +310,13 @@ export function AvailabilitySlotGrid({
       {pickerView === "matrix" ? (
         <div className={styles.availabilityCanvas}>
           <div className={styles.availabilityCanvasHeader}>
-            <h3>你的可用时间</h3>
-            <div className={styles.availabilityCanvasLegend} aria-label="颜色图例">
+            <h3>{copy.yourAvailability}</h3>
+            <div className={styles.availabilityCanvasLegend} aria-label={copy.colorLegendAria}>
               <span>
-                未选 <i className={styles.availabilityLegendUnavailable} />
+                {copy.noSelection} <i className={styles.availabilityLegendUnavailable} />
               </span>
               <span>
-                已选 <i className={styles.availabilityLegendAvailable} />
+                {copy.selected} <i className={styles.availabilityLegendAvailable} />
               </span>
             </div>
           </div>
@@ -338,7 +337,7 @@ export function AvailabilitySlotGrid({
                     key={day.date}
                   >
                     <span>{compactDateLabel(day.date)}</span>
-                    <strong>{weekdayLabel(day.date)}</strong>
+                    <strong>{weekdayLabel(day.date, copy)}</strong>
                   </div>
                 );
               })}
@@ -381,7 +380,7 @@ export function AvailabilitySlotGrid({
 
                       return (
                         <button
-                          aria-label={slotAriaLabel(slot, selected, totalParticipantCount)}
+                          aria-label={slotAriaLabel(slot, selected, totalParticipantCount, copy)}
                           aria-pressed={selected}
                           className={[
                             styles.availabilityMatrixCell,
@@ -398,7 +397,7 @@ export function AvailabilitySlotGrid({
                           onPointerEnter={() => paintEnteredSlot(key)}
                           onPointerMove={(event) => paintPointedSlot(event)}
                           onPointerUp={(event) => endPainting(event)}
-                          title={slotTooltip(slot, selected, totalParticipantCount)}
+                          title={slotTooltip(slot, selected, totalParticipantCount, copy)}
                           type="button"
                         />
                       );
@@ -411,13 +410,16 @@ export function AvailabilitySlotGrid({
         </div>
       ) : (
         <>
-          <nav className={styles.slotDayNav} aria-label="日期快速跳转">
+          <nav className={styles.slotDayNav} aria-label={copy.dateJumpAria}>
             {matrix.days.map((day) => {
               const selectedCount = countSelectedSlots(day.slots, selectedSlotKeys);
 
               return (
                 <button
-                  aria-label={`${day.date}，已选 ${selectedCount}/${day.slots.length}`}
+                  aria-label={`${day.date}, ${copy.selectedSlotsSummary(
+                    selectedCount,
+                    day.slots.length
+                  )}`}
                   className={[
                     styles.slotDayNavButton,
                     selectedCount > 0 ? styles.slotDayNavButtonSelected : undefined
@@ -453,8 +455,12 @@ export function AvailabilitySlotGrid({
                 <div>
                   <h3>{day.date}</h3>
                   <span className={styles.slotDayCount}>
-                    第 {index + 1}/{matrix.days.length} 天 ·{" "}
-                    {countSelectedSlots(day.slots, selectedSlotKeys)}/{day.slots.length} 已选
+                    {copy.daySelectionSummary(
+                      index + 1,
+                      matrix.days.length,
+                      countSelectedSlots(day.slots, selectedSlotKeys),
+                      day.slots.length
+                    )}
                   </span>
                 </div>
                 <div className={styles.slotDayActions}>
@@ -464,7 +470,7 @@ export function AvailabilitySlotGrid({
                     type="button"
                   >
                     <CheckSquare aria-hidden="true" size={15} />
-                    全选
+                    {copy.all}
                   </button>
                   <button
                     className={styles.compactButton}
@@ -472,7 +478,7 @@ export function AvailabilitySlotGrid({
                     type="button"
                   >
                     <Eraser aria-hidden="true" size={15} />
-                    清空
+                    {copy.clear}
                   </button>
                 </div>
               </div>
@@ -507,7 +513,7 @@ export function AvailabilitySlotGrid({
                         {slot.localStartTime}-{slot.localEndTime}
                       </span>
                       <span className={styles.slotChoiceMeta}>
-                        {slotMetaText(slot, totalParticipantCount)}
+                        {slotMetaText(slot, totalParticipantCount, copy)}
                       </span>
                     </button>
                   );
@@ -625,7 +631,10 @@ export function compactDateLabel(localDate: string): string {
   return `${Number(match[2])}/${Number(match[3])}`;
 }
 
-export function weekdayLabel(localDate: string): string {
+export function weekdayLabel(
+  localDate: string,
+  copy: AvailabilitySlotGridCopy = schedulePageCopy["zh-CN"].availabilitySlotGrid
+): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(localDate);
 
   if (match === null) {
@@ -635,7 +644,7 @@ export function weekdayLabel(localDate: string): string {
   const [, year, month, day] = match;
   const dayIndex = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getUTCDay();
 
-  return weekdayLabels[dayIndex] ?? "";
+  return copy.weekdayLabels[dayIndex] ?? "";
 }
 
 export function timeTickLabel(localTime: string): string {
@@ -673,36 +682,43 @@ function slotKeyFromPoint(clientX: number, clientY: number): string | undefined 
 function slotAriaLabel(
   slot: AvailabilityGridSlot,
   selected: boolean,
-  totalParticipantCount: number | undefined
+  totalParticipantCount: number | undefined,
+  copy: AvailabilitySlotGridCopy
 ): string {
-  return [
-    `${slot.localStartDate} ${slot.localStartTime}-${slot.localEndTime}`,
-    selected ? "已标记可用" : "未标记可用",
-    slotMetaText(slot, totalParticipantCount)
-  ].join("，");
+  return copy.slotAriaLabel({
+    date: slot.localStartDate,
+    meta: slotMetaText(slot, totalParticipantCount, copy),
+    selected,
+    time: `${slot.localStartTime}-${slot.localEndTime}`
+  });
 }
 
 function slotTooltip(
   slot: AvailabilityGridSlot,
   selected: boolean,
-  totalParticipantCount: number | undefined
+  totalParticipantCount: number | undefined,
+  copy: AvailabilitySlotGridCopy
 ): string {
-  return `${slot.localStartDate} ${slot.localStartTime}-${slot.localEndTime}\n${
-    selected ? "已标记可用" : "未标记可用"
-  }\n${slotMetaText(slot, totalParticipantCount)}`;
+  return copy.slotAriaLabel({
+    date: slot.localStartDate,
+    meta: slotMetaText(slot, totalParticipantCount, copy),
+    selected,
+    time: `${slot.localStartTime}-${slot.localEndTime}`
+  });
 }
 
 function slotMetaText(
   slot: AvailabilityGridSlot,
-  totalParticipantCount: number | undefined
+  totalParticipantCount: number | undefined,
+  copy: AvailabilitySlotGridCopy
 ): string {
   if (slot.availableParticipantCount === undefined) {
     return slot.timezone;
   }
 
   if (totalParticipantCount !== undefined && totalParticipantCount > 0) {
-    return `${slot.availableParticipantCount}/${totalParticipantCount} 人可用`;
+    return copy.slotMetaTotalCount(slot.availableParticipantCount, totalParticipantCount);
   }
 
-  return `${slot.availableParticipantCount} 人已选`;
+  return copy.slotMetaSelectedCount(slot.availableParticipantCount);
 }

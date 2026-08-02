@@ -18,6 +18,7 @@ export function GET(): Response {
     "Allow: /ads.txt$",
     "Disallow: /api/",
     "Disallow: /s/",
+    "Disallow: /en/s/",
     "Disallow: /*?key=",
     `Sitemap: ${new URL("/sitemap.xml", getSiteOrigin()).toString()}`,
     ""

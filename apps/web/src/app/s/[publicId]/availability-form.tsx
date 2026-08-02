@@ -33,10 +33,17 @@ import {
 } from "./participant-name-memory";
 import { rememberParticipantEditLink } from "./participant-edit-link-memory";
 import styles from "./page.module.css";
+import {
+  schedulePageCopy,
+  type AvailabilityFormCopy,
+  type SchedulePageLocale
+} from "./schedule-page-copy";
 
 interface AvailabilityFormProps {
   readonly imageImportVisible: boolean;
+  readonly locale?: SchedulePageLocale;
   readonly publicId: string;
+  readonly quickImportVisible?: boolean;
   readonly scheduleMode: ScheduleDetail["scheduleMode"];
   readonly scheduleStatus: ScheduleDetail["status"];
   readonly scheduleTimezone: string;
@@ -54,13 +61,17 @@ type CopyState = "idle" | "copied" | "failed";
 
 export function AvailabilityForm({
   imageImportVisible,
+  locale = "zh-CN",
   publicId,
+  quickImportVisible = true,
   scheduleMode,
   scheduleStatus,
   scheduleTimezone,
   slots,
   totalParticipantCount
 }: AvailabilityFormProps) {
+  const copySet = schedulePageCopy[locale];
+  const copy = copySet.availabilityForm;
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [selectedSlotKeys, setSelectedSlotKeys] = useState<Set<string>>(() => new Set());
@@ -75,6 +86,7 @@ export function AvailabilityForm({
   const isClosed = scheduleStatus !== "open";
   const isCandidatePoll = scheduleMode === "candidate_poll";
   const isSubmitting = submitState.status === "submitting";
+  const showQuickImport = quickImportVisible && !isCandidatePoll;
   const candidateVoteCounts = countCandidateVotes(slots, candidateResponsesBySlotKey);
 
   useEffect(() => {
@@ -132,7 +144,7 @@ export function AvailabilityForm({
     } catch (error) {
       setSubmitState({
         status: "error",
-        message: toErrorMessage(error)
+        message: toErrorMessage(error, copy)
       });
     }
   }
@@ -195,12 +207,12 @@ export function AvailabilityForm({
     return (
       <section className={styles.formSection} aria-labelledby="availability-heading">
         <div className={styles.sectionHeader}>
-          <h2 id="availability-heading">填写可用时间</h2>
-          <span>已关闭</span>
+          <h2 id="availability-heading">{copy.title}</h2>
+          <span>{copy.closedBadge}</span>
         </div>
         <div className={styles.emptyState}>
-          <strong>这个日程已经停止接收提交</strong>
-          <p>组织者锁定或归档后，参与者不能再更新可用时间。</p>
+          <strong>{copy.closedTitle}</strong>
+          <p>{copy.closedBody}</p>
         </div>
       </section>
     );
@@ -209,24 +221,24 @@ export function AvailabilityForm({
   return (
     <section className={styles.formSection} aria-labelledby="availability-heading">
       <div className={styles.sectionHeader}>
-        <h2 id="availability-heading">{isCandidatePoll ? "候选时间投票" : "填写可用时间"}</h2>
+        <h2 id="availability-heading">{isCandidatePoll ? copy.voteTitle : copy.title}</h2>
         <span>
           {isCandidatePoll
-            ? `${candidateVoteCounts.available} 方便 · ${candidateVoteCounts.maybe} 也许`
-            : `${selectedSlotKeys.size} 个已选`}
+            ? copy.candidateCountSummary(candidateVoteCounts.available, candidateVoteCounts.maybe)
+            : copy.selectedCountSummary(selectedSlotKeys.size)}
         </span>
       </div>
 
       <form className={styles.availabilityForm} onSubmit={handleSubmit}>
-        <ol className={styles.availabilityFlowSteps} aria-label="填写流程">
+        <ol className={styles.availabilityFlowSteps} aria-label={copy.flowAria}>
           <li className={displayName.trim().length > 0 ? styles.availabilityFlowStepDone : ""}>
             <span>1</span>
-            <strong>名字</strong>
+            <strong>{copy.stepName}</strong>
           </li>
-          {!isCandidatePoll ? (
+          {showQuickImport ? (
             <li>
               <span>2</span>
-              <strong>可选预填</strong>
+              <strong>{copy.stepImport}</strong>
             </li>
           ) : null}
           <li
@@ -240,12 +252,12 @@ export function AvailabilityForm({
                   : ""
             }
           >
-            <span>{isCandidatePoll ? "2" : "3"}</span>
-            <strong>{isCandidatePoll ? "投票" : "涂选"}</strong>
+            <span>{isCandidatePoll || !showQuickImport ? "2" : "3"}</span>
+            <strong>{isCandidatePoll ? copy.stepVote : copy.stepManual}</strong>
           </li>
           <li>
-            <span>{isCandidatePoll ? "3" : "4"}</span>
-            <strong>提交</strong>
+            <span>{isCandidatePoll || !showQuickImport ? "3" : "4"}</span>
+            <strong>{copy.stepSubmit}</strong>
           </li>
         </ol>
 
@@ -254,29 +266,29 @@ export function AvailabilityForm({
             <div className={styles.availabilityStepHeader}>
               <span className={styles.availabilityStepBadge}>1</span>
               <div>
-                <h3 id="participant-step">先写名字</h3>
-                <p>结果页会用它标记你的提交。</p>
+                <h3 id="participant-step">{copy.nameStepTitle}</h3>
+                <p>{copy.nameStepBody}</p>
               </div>
             </div>
             <label className={styles.participantField}>
-              <span>你的名字</span>
+              <span>{copy.displayName}</span>
               <input
                 required
                 maxLength={80}
                 onChange={(event) => setDisplayName(event.target.value)}
-                placeholder="Aki"
+                placeholder={copy.displayNamePlaceholder}
                 value={displayName}
               />
             </label>
           </section>
 
-          {!isCandidatePoll ? (
+          {showQuickImport ? (
             <section className={styles.availabilityStepBlock} aria-labelledby="quick-fill-step">
               <div className={styles.availabilityStepHeader}>
                 <span className={styles.availabilityStepBadgeMuted}>2</span>
                 <div>
-                  <h3 id="quick-fill-step">任选一种快速预填</h3>
-                  <p>有课表、日历、排班或固定作息时用；没有就跳过。</p>
+                  <h3 id="quick-fill-step">{copy.importStepTitle}</h3>
+                  <p>{copy.importStepBody}</p>
                 </div>
               </div>
               <AvailabilityImportPanel
@@ -290,18 +302,20 @@ export function AvailabilityForm({
 
           <section className={styles.availabilityStepBlock} aria-labelledby="manual-fill-step">
             <div className={styles.availabilityStepHeader}>
-              <span className={styles.availabilityStepBadge}>{isCandidatePoll ? "2" : "3"}</span>
+              <span className={styles.availabilityStepBadge}>
+                {isCandidatePoll || !showQuickImport ? "2" : "3"}
+              </span>
               <div>
-                <h3 id="manual-fill-step">{isCandidatePoll ? "选择你的偏好" : "检查并涂选时间"}</h3>
-                <p>
-                  {isCandidatePoll
-                    ? "对候选时间标记方便程度，想优先安排的时间可以排在前面。"
-                    : "预填结果会落在这里，也可以直接手动填写。"}
-                </p>
+                <h3 id="manual-fill-step">
+                  {isCandidatePoll ? copy.manualStepCandidateTitle : copy.manualStepTitle}
+                </h3>
+                <p>{isCandidatePoll ? copy.manualStepCandidateBody : copy.manualStepBody}</p>
               </div>
             </div>
             {isCandidatePoll ? (
               <CandidateVoteList
+                ariaLabel={copy.candidateHeading}
+                copy={copySet.candidateVoteList}
                 onChange={setCandidateResponse}
                 onPreferenceMove={moveCandidatePreference}
                 onPreferenceReorder={reorderCandidatePreference}
@@ -312,7 +326,8 @@ export function AvailabilityForm({
               />
             ) : (
               <AvailabilitySlotGrid
-                ariaLabel="可用时间"
+                ariaLabel={copy.availabilityAria}
+                copy={copySet.availabilitySlotGrid}
                 selectedSlotKeys={selectedSlotKeys}
                 setSelectedSlotKeys={setSelectedSlotKeys}
                 slots={slots as readonly AvailabilityGridSlot[]}
@@ -331,13 +346,9 @@ export function AvailabilityForm({
         <div className={styles.formActions}>
           <div>
             <strong>
-              {isCandidatePoll ? "提交后会更新投票结果" : "提交后会更新大家的重叠时间"}
+              {isCandidatePoll ? copy.submitTitleCandidate : copy.submitTitleAvailability}
             </strong>
-            <p>
-              {isCandidatePoll
-                ? "之后可以用编辑链接修改投票。"
-                : "之后可以用编辑链接修改可用时间。"}
-            </p>
+            <p>{isCandidatePoll ? copy.submitHintCandidate : copy.submitHintAvailability}</p>
           </div>
           <button
             className={styles.primaryButton}
@@ -349,27 +360,27 @@ export function AvailabilityForm({
             ) : (
               <SendHorizontal aria-hidden="true" size={18} />
             )}
-            {isCandidatePoll ? "提交投票" : "提交可用时间"}
+            {isCandidatePoll ? copy.submitCandidate : copy.submitAvailability}
           </button>
         </div>
 
         {submitState.status === "success" ? (
           <div className={styles.success} aria-live="polite">
-            <strong>已提交，请保存编辑链接</strong>
-            <p>之后修改可用时间需要这个链接；这台浏览器也会记住这个编辑入口。</p>
+            <strong>{copy.successTitle}</strong>
+            <p>{copy.successBody}</p>
             <div className={styles.copyLinkRow}>
-              <input aria-label="编辑链接" readOnly value={submitState.result.editUrl} />
+              <input aria-label={copy.editLinkAria} readOnly value={submitState.result.editUrl} />
               <button
                 className={styles.copyButton}
                 onClick={() => copyEditLink(submitState.result.editUrl)}
                 type="button"
               >
                 <Clipboard aria-hidden="true" size={17} />
-                {copyState === "copied" ? "已复制" : "复制"}
+                {copyState === "copied" ? copy.copied : copy.copy}
               </button>
             </div>
             {copyState === "failed" ? (
-              <p className={styles.inlineWarning}>无法自动复制，可以手动选中链接。</p>
+              <p className={styles.inlineWarning}>{copy.copyFailed}</p>
             ) : null}
           </div>
         ) : null}
@@ -378,32 +389,32 @@ export function AvailabilityForm({
   );
 }
 
-function toErrorMessage(error: unknown): string {
+function toErrorMessage(error: unknown, copy: AvailabilityFormCopy): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
-      return "数据库尚未配置。";
+      return copy.errorDatabase;
     }
 
     if (error.code === "SCHEDULE_LOCKED") {
-      return "这个日程已经停止接收提交。";
+      return copy.errorLocked;
     }
 
     if (error.code === "SCHEDULE_NOT_FOUND") {
-      return "这个日程不存在或链接有误。";
+      return copy.errorNotFound;
     }
 
     if (error.code === "SLOT_OUT_OF_RANGE") {
-      return "提交的时间不在这个日程范围内。";
+      return copy.errorSlotOutOfRange;
     }
 
     return error.message;
   }
 
   if (error instanceof Error && error.name === "ZodError") {
-    return "请检查填写内容。";
+    return copy.errorValidation;
   }
 
-  return "提交失败。";
+  return copy.errorDefault;
 }
 
 function buildCandidateVotes(

@@ -12,6 +12,11 @@ import {
   type AvailabilityHeatmapSlot
 } from "./availability-heatmap";
 import styles from "./page.module.css";
+import {
+  schedulePageCopy,
+  type AvailabilityHeatmapCopy,
+  type SchedulePageLocale
+} from "./schedule-page-copy";
 
 const defaultExpandedDayCount = 3;
 
@@ -23,19 +28,18 @@ const heatmapLevelClasses = [
   styles.heatmapLevel4
 ] as const;
 
-const densityOptions: ReadonlyArray<{ label: string; value: AvailabilityHeatmapDensity }> = [
-  { label: "全部", value: "all" },
-  { label: "有人可用", value: "available" },
-  { label: "只看峰值", value: "peak" }
-];
+const densityValues: readonly AvailabilityHeatmapDensity[] = ["all", "available", "peak"];
 
 export function AvailabilityHeatmapPanel({
+  locale = "zh-CN",
   slots,
   totalParticipantCount
 }: {
+  readonly locale?: SchedulePageLocale;
   readonly slots: GetScheduleResponse["results"]["slotResults"];
   readonly totalParticipantCount: number;
 }) {
+  const copy = schedulePageCopy[locale].availabilityHeatmap;
   const [density, setDensity] = useState<AvailabilityHeatmapDensity>("all");
   const days = useMemo(
     () => buildAvailabilityHeatmap({ slots, totalParticipantCount }),
@@ -77,14 +81,14 @@ export function AvailabilityHeatmapPanel({
   return (
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
-        <h2>结果热力图</h2>
-        <span>{totalParticipantCount} 人参与</span>
+        <h2>{copy.title}</h2>
+        <span>{copy.participantCount(totalParticipantCount)}</span>
       </div>
 
       {totalParticipantCount === 0 ? (
         <div className={styles.emptyState}>
-          <strong>等待参与者提交</strong>
-          <p>有人填写后，这里会按人数深浅显示每个时间格的重合程度。</p>
+          <strong>{copy.waitingTitle}</strong>
+          <p>{copy.waitingBody}</p>
         </div>
       ) : (
         <div className={styles.heatmapPanel}>
@@ -92,35 +96,36 @@ export function AvailabilityHeatmapPanel({
             <div className={styles.heatmapSummaryMetrics}>
               <span>
                 <Flame aria-hidden="true" size={15} />
-                峰值 {peakSlots[0]?.slot.availableParticipantCount ?? 0}/{totalParticipantCount}
+                {copy.peakSummary(
+                  peakSlots[0]?.slot.availableParticipantCount ?? 0,
+                  totalParticipantCount
+                )}
               </span>
               <span>
                 <Filter aria-hidden="true" size={15} />
-                {density === "all"
-                  ? `${slots.length} 格`
-                  : `${visibleSlotCount}/${slots.length} 格`}
+                {copy.gridCount(visibleSlotCount, slots.length, density === "all")}
               </span>
             </div>
             <div className={styles.heatmapControls}>
-              <div className={styles.heatmapToggleGroup} aria-label="热力图筛选">
-                {densityOptions.map((option) => (
+              <div className={styles.heatmapToggleGroup} aria-label={copy.densityAria}>
+                {densityValues.map((value) => (
                   <button
-                    aria-pressed={density === option.value}
+                    aria-pressed={density === value}
                     className={`${styles.heatmapToggleButton} ${
-                      density === option.value ? styles.heatmapToggleButtonActive : ""
+                      density === value ? styles.heatmapToggleButtonActive : ""
                     }`}
-                    data-testid={`heatmap-density-${option.value}`}
-                    key={option.value}
+                    data-testid={`heatmap-density-${value}`}
+                    key={value}
                     onClick={() => {
-                      setDensity(option.value);
+                      setDensity(value);
                     }}
                     type="button"
                   >
-                    {option.label}
+                    {copy.densityLabels[value]}
                   </button>
                 ))}
               </div>
-              <div className={styles.heatmapLegend} aria-label="热力图图例">
+              <div className={styles.heatmapLegend} aria-label={copy.legendAria}>
                 {[0, 1, 2, 3, 4].map((level) => (
                   <span className={heatmapLevelClasses[level]} key={level} />
                 ))}
@@ -130,8 +135,8 @@ export function AvailabilityHeatmapPanel({
 
           {visibleDays.length === 0 ? (
             <div className={styles.emptyState}>
-              <strong>当前筛选没有时间格</strong>
-              <p>切回全部可以查看所有候选时间格。</p>
+              <strong>{copy.emptyFilteredTitle}</strong>
+              <p>{copy.emptyFilteredBody}</p>
             </div>
           ) : (
             <div className={styles.heatmapDays}>
@@ -139,8 +144,8 @@ export function AvailabilityHeatmapPanel({
                 const isCollapsed = density === "all" && collapsedDates.has(day.date);
                 const slotCountLabel =
                   density === "all"
-                    ? `${day.slots.length} 格`
-                    : `${day.filteredSlots.length}/${day.slots.length} 格`;
+                    ? copy.gridCount(day.slots.length, day.slots.length, true)
+                    : copy.gridCount(day.filteredSlots.length, day.slots.length, false);
 
                 return (
                   <div className={styles.heatmapDay} key={day.date}>
@@ -149,7 +154,7 @@ export function AvailabilityHeatmapPanel({
                         <h3>
                           <button
                             aria-expanded={!isCollapsed}
-                            aria-label={`${isCollapsed ? "展开" : "收起"} ${day.date}`}
+                            aria-label={`${isCollapsed ? copy.expand : copy.collapse} ${day.date}`}
                             className={styles.heatmapDayToggle}
                             onClick={() => {
                               toggleDay(day.date);
@@ -173,6 +178,7 @@ export function AvailabilityHeatmapPanel({
                       <div className={styles.heatmapGrid}>
                         {day.filteredSlots.map((slot) => (
                           <HeatmapSlotItem
+                            copy={copy}
                             key={`${slot.slot.startUtc}-${slot.slot.endUtc}`}
                             slot={slot}
                             totalParticipantCount={totalParticipantCount}
@@ -192,9 +198,11 @@ export function AvailabilityHeatmapPanel({
 }
 
 function HeatmapSlotItem({
+  copy,
   slot,
   totalParticipantCount
 }: {
+  readonly copy: AvailabilityHeatmapCopy;
   readonly slot: AvailabilityHeatmapSlot;
   readonly totalParticipantCount: number;
 }) {
@@ -204,11 +212,11 @@ function HeatmapSlotItem({
         <strong>
           {slot.slot.localStartTime}-{slot.slot.localEndTime}
         </strong>
-        {slot.isPeak ? <span>峰值</span> : null}
+        {slot.isPeak ? <span>{copy.peak}</span> : null}
       </div>
       <p>
         <Users aria-hidden="true" size={13} />
-        {slot.slot.availableParticipantCount}/{totalParticipantCount} 可用
+        {slot.slot.availableParticipantCount}/{totalParticipantCount} {copy.available}
       </p>
       <div className={styles.heatmapMeter} aria-hidden="true">
         <span style={{ width: `${slot.availablePercent}%` }} />
