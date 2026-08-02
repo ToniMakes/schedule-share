@@ -125,7 +125,6 @@ function ScheduleView({
             publicId={data.schedule.publicId}
             imageImportVisible={isPublicImageImportVisible()}
             locale={locale}
-            quickImportVisible={locale === "zh-CN"}
             scheduleMode={data.schedule.scheduleMode}
             scheduleStatus={data.schedule.status}
             scheduleTimezone={data.schedule.timezone}

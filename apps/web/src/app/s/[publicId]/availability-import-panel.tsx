@@ -39,9 +39,11 @@ import {
   type SavedParticipantTemplate
 } from "./participant-template-memory";
 import styles from "./page.module.css";
+import type { SchedulePageLocale } from "./schedule-page-copy";
 
 interface AvailabilityImportPanelProps {
   readonly imageImportVisible: boolean;
+  readonly locale?: SchedulePageLocale;
   readonly onPreviewApplied: (selectedSlotKeys: Set<string>) => void;
   readonly publicId: string;
   readonly scheduleTimezone: string;
@@ -70,43 +72,275 @@ type PreviewState =
   | { readonly status: "error"; readonly message: string };
 
 const defaultTemplateDays = [1, 2, 3, 4, 5] as const satisfies readonly TemplateDay[];
+const templateDayOrder = [1, 2, 3, 4, 5, 6, 0] as const satisfies readonly TemplateDay[];
+const previewMethodOrder = ["text", "image", "ics", "csv", "template"] as const;
 
-const templateDayOptions = [
-  { label: "周一", value: 1 },
-  { label: "周二", value: 2 },
-  { label: "周三", value: 3 },
-  { label: "周四", value: 4 },
-  { label: "周五", value: 5 },
-  { label: "周六", value: 6 },
-  { label: "周日", value: 0 }
-] as const satisfies readonly { readonly label: string; readonly value: TemplateDay }[];
-
-const previewMethodLabels = {
-  text: "文本预填",
-  image: "图片预填",
-  ics: "日历预填",
-  csv: "CSV 预填",
-  template: "模板预填"
-} as const satisfies Record<PreviewMethod, string>;
-
-const importMethodOptions = [
-  { helper: "粘贴忙碌时间", label: "文本", method: "text" },
-  { helper: "课表或排班截图", label: "图片", method: "image" },
-  { helper: ".ics 日历文件", label: "日历", method: "ics" },
-  { helper: "CSV 排班文件", label: "CSV", method: "csv" },
-  { helper: "固定每周作息", label: "模板", method: "template" }
-] as const satisfies readonly {
+interface ImportMethodCopy {
+  readonly actionLabel: string;
   readonly helper: string;
   readonly label: string;
-  readonly method: PreviewMethod;
-}[];
+  readonly previewLabel: string;
+}
+
+interface AvailabilityImportPanelCopy {
+  readonly appliedBadge: string;
+  readonly appliedTemplate: (name: string) => string;
+  readonly csvFileLabel: string;
+  readonly databaseError: string;
+  readonly defaultError: string;
+  readonly deleteTemplate: string;
+  readonly deletedTemplate: (name: string) => string;
+  readonly detailsSubtitle: string;
+  readonly detailsTitle: string;
+  readonly fileTooLargeError: string;
+  readonly imageFileLabel: string;
+  readonly lowConfidenceError: string;
+  readonly methods: Record<PreviewMethod, ImportMethodCopy>;
+  readonly missingCsvFileError: string;
+  readonly missingIcsFileError: string;
+  readonly missingImageFileError: string;
+  readonly missingTemplateDayError: string;
+  readonly missingTemplateDaySaveError: string;
+  readonly missingTemplateNameError: string;
+  readonly missingTextError: string;
+  readonly noBusyBlocksHeadline: (sourceLabel: string) => string;
+  readonly noTemplateSlotsHeadline: (sourceLabel: string) => string;
+  readonly providerUnavailableError: string;
+  readonly reviewBadge: string;
+  readonly savedTemplate: (name: string) => string;
+  readonly savedTemplatesAria: string;
+  readonly savedTemplatesLabel: string;
+  readonly savedTemplatesPlaceholder: string;
+  readonly sameTemplateTimeError: string;
+  readonly saveTemplate: string;
+  readonly scheduleLockedError: string;
+  readonly scheduleNotFoundError: string;
+  readonly successHeadline: (sourceLabel: string) => string;
+  readonly successHelper: string;
+  readonly summaryText: (busyBlocks: number, availableSlots: number, confidence?: string) => string;
+  readonly tabAria: string;
+  readonly templateDays: Record<TemplateDay, string>;
+  readonly templateEndLabel: string;
+  readonly templateLegend: string;
+  readonly templateNameDefault: string;
+  readonly templateNameLabel: string;
+  readonly templateNamePlaceholder: string;
+  readonly templateStorageDeniedError: string;
+  readonly templateStartLabel: string;
+  readonly textFieldLabel: string;
+  readonly textPlaceholder: string;
+  readonly unsupportedEntryMethodError: string;
+  readonly unsupportedFileTypeError: string;
+  readonly validationError: string;
+  readonly zodError: string;
+  readonly icsFileLabel: string;
+  readonly weeklyTemplateApiName: string;
+}
+
+const availabilityImportPanelCopy = {
+  "zh-CN": {
+    appliedBadge: "已应用",
+    appliedTemplate: (name) => `已套用“${name}”。`,
+    csvFileLabel: "上传 CSV 排班",
+    databaseError: "数据库尚未配置。",
+    defaultError: "生成预填失败。",
+    deleteTemplate: "删除",
+    deletedTemplate: (name) => `已删除“${name}”。`,
+    detailsSubtitle: "不准确时可以直接在下方时间格修正",
+    detailsTitle: "识别明细",
+    fileTooLargeError: "图片不能超过 4MB，ICS 和 CSV 不能超过 1MB。",
+    imageFileLabel: "上传课表截图",
+    lowConfidenceError: "这张图暂时没能可靠识别，可以换一张更清晰的截图。",
+    methods: {
+      csv: {
+        actionLabel: "用 CSV 预填",
+        helper: "CSV 排班文件",
+        label: "CSV",
+        previewLabel: "CSV 预填"
+      },
+      ics: {
+        actionLabel: "用日历预填",
+        helper: ".ics 日历文件",
+        label: "日历",
+        previewLabel: "日历预填"
+      },
+      image: {
+        actionLabel: "用图片预填",
+        helper: "课表或排班截图",
+        label: "图片",
+        previewLabel: "图片预填"
+      },
+      template: {
+        actionLabel: "用模板预填",
+        helper: "固定每周作息",
+        label: "模板",
+        previewLabel: "模板预填"
+      },
+      text: {
+        actionLabel: "用文本预填",
+        helper: "粘贴忙碌时间",
+        label: "文本",
+        previewLabel: "文本预填"
+      }
+    },
+    missingCsvFileError: "请先选择一个 CSV 文件。",
+    missingIcsFileError: "请先选择一个 .ics 日历文件。",
+    missingImageFileError: "请先选择一张课表或排班截图。",
+    missingTemplateDayError: "请选择至少一天。",
+    missingTemplateDaySaveError: "请选择至少一天再保存模板。",
+    missingTemplateNameError: "请先填写模板名称。",
+    missingTextError: "请先粘贴一段忙碌时间。",
+    noBusyBlocksHeadline: (sourceLabel) => `${sourceLabel}没有识别到忙碌时段`,
+    noTemplateSlotsHeadline: (sourceLabel) => `${sourceLabel}没有找到可用时间格`,
+    providerUnavailableError: "图片识别服务还没有配置。可以先粘贴文本或手动选择。",
+    reviewBadge: "需复核",
+    savedTemplate: (name) => `已保存“${name}”。`,
+    savedTemplatesAria: "选择保存的模板",
+    savedTemplatesLabel: "保存的本机模板",
+    savedTemplatesPlaceholder: "选择模板",
+    sameTemplateTimeError: "开始和结束时间不能相同。",
+    saveTemplate: "保存到本机",
+    scheduleLockedError: "这个日程已经停止接收提交。",
+    scheduleNotFoundError: "这个日程不存在或链接有误。",
+    successHeadline: (sourceLabel) => `${sourceLabel}已应用到时间格`,
+    successHelper: "下方时间格已更新，可以继续调整后提交。",
+    summaryText: (busyBlocks, availableSlots, confidence) =>
+      [`${busyBlocks} 段忙碌`, `${availableSlots} 个可用时间`, confidence]
+        .filter((item): item is string => item !== undefined)
+        .join(" · "),
+    tabAria: "预填来源",
+    templateDays: {
+      0: "周日",
+      1: "周一",
+      2: "周二",
+      3: "周三",
+      4: "周四",
+      5: "周五",
+      6: "周六"
+    },
+    templateEndLabel: "结束时间",
+    templateLegend: "每周模板",
+    templateNameDefault: "工作日晚上",
+    templateNameLabel: "模板名称",
+    templateNamePlaceholder: "如 工作日晚上",
+    templateStorageDeniedError: "浏览器没有允许保存本机模板。",
+    templateStartLabel: "开始时间",
+    textFieldLabel: "粘贴忙碌时间",
+    textPlaceholder: "Mon 9-11 COMP101; 8/1 9am-10:30am Work; 8月1日 14.00-16.00 Lab",
+    unsupportedEntryMethodError: "这个导入方式暂不支持。",
+    unsupportedFileTypeError: "请上传 PNG、JPG、WebP 图片、.ics 日历或 CSV 文件。",
+    validationError: "无法生成预填，请检查文本或模板时间。",
+    weeklyTemplateApiName: "每周模板",
+    zodError: "预填结果格式不正确。",
+    icsFileLabel: "上传 .ics 日历"
+  },
+  en: {
+    appliedBadge: "Applied",
+    appliedTemplate: (name) => `Applied "${name}".`,
+    csvFileLabel: "Upload CSV schedule",
+    databaseError: "The database is not configured yet.",
+    defaultError: "Could not generate the preview.",
+    deleteTemplate: "Delete",
+    deletedTemplate: (name) => `Deleted "${name}".`,
+    detailsSubtitle: "If anything looks off, adjust the grid below before submitting",
+    detailsTitle: "Recognized Busy Times",
+    fileTooLargeError: "Images must be under 4MB. ICS and CSV files must be under 1MB.",
+    imageFileLabel: "Upload schedule screenshot",
+    lowConfidenceError: "This image could not be read reliably. Try a clearer screenshot.",
+    methods: {
+      csv: {
+        actionLabel: "Use CSV",
+        helper: "CSV schedule file",
+        label: "CSV",
+        previewLabel: "CSV import"
+      },
+      ics: {
+        actionLabel: "Use calendar",
+        helper: ".ics calendar file",
+        label: "Calendar",
+        previewLabel: "Calendar import"
+      },
+      image: {
+        actionLabel: "Use image",
+        helper: "Schedule screenshot",
+        label: "Image",
+        previewLabel: "Image import"
+      },
+      template: {
+        actionLabel: "Use template",
+        helper: "Weekly routine",
+        label: "Template",
+        previewLabel: "Template import"
+      },
+      text: {
+        actionLabel: "Use text",
+        helper: "Paste busy times",
+        label: "Text",
+        previewLabel: "Text import"
+      }
+    },
+    missingCsvFileError: "Choose a CSV file first.",
+    missingIcsFileError: "Choose an .ics calendar file first.",
+    missingImageFileError: "Choose a schedule screenshot first.",
+    missingTemplateDayError: "Choose at least one day.",
+    missingTemplateDaySaveError: "Choose at least one day before saving the template.",
+    missingTemplateNameError: "Enter a template name first.",
+    missingTextError: "Paste at least one busy time first.",
+    noBusyBlocksHeadline: (sourceLabel) => `${sourceLabel} did not find any busy blocks`,
+    noTemplateSlotsHeadline: (sourceLabel) => `${sourceLabel} did not find available slots`,
+    providerUnavailableError:
+      "Image recognition is not enabled yet. Use text import or the manual grid for now.",
+    reviewBadge: "Review",
+    savedTemplate: (name) => `Saved "${name}".`,
+    savedTemplatesAria: "Choose a saved template",
+    savedTemplatesLabel: "Saved local templates",
+    savedTemplatesPlaceholder: "Choose template",
+    sameTemplateTimeError: "Start and end time cannot be the same.",
+    saveTemplate: "Save locally",
+    scheduleLockedError: "This schedule is no longer accepting submissions.",
+    scheduleNotFoundError: "This schedule does not exist, or the link is incorrect.",
+    successHeadline: (sourceLabel) => `${sourceLabel} applied to the grid`,
+    successHelper: "The grid below has been updated. You can still adjust it before submitting.",
+    summaryText: (busyBlocks, availableSlots, confidence) =>
+      [`${busyBlocks} busy blocks`, `${availableSlots} available slots`, confidence]
+        .filter((item): item is string => item !== undefined)
+        .join(" · "),
+    tabAria: "Import source",
+    templateDays: {
+      0: "Sun",
+      1: "Mon",
+      2: "Tue",
+      3: "Wed",
+      4: "Thu",
+      5: "Fri",
+      6: "Sat"
+    },
+    templateEndLabel: "End time",
+    templateLegend: "Weekly Template",
+    templateNameDefault: "Weekday evenings",
+    templateNameLabel: "Template name",
+    templateNamePlaceholder: "e.g. Weekday evenings",
+    templateStorageDeniedError: "This browser did not allow saving a local template.",
+    templateStartLabel: "Start time",
+    textFieldLabel: "Paste busy times",
+    textPlaceholder: "Mon 9-11 COMP101; Aug 1 9am-10:30am Work; Aug 1 14:00-16:00 Lab",
+    unsupportedEntryMethodError: "This import method is not supported yet.",
+    unsupportedFileTypeError: "Upload a PNG, JPG, WebP image, .ics calendar, or CSV file.",
+    validationError: "Could not generate the preview. Check the text or template time.",
+    weeklyTemplateApiName: "Weekly template",
+    zodError: "The preview result was not in the expected format.",
+    icsFileLabel: "Upload .ics calendar"
+  }
+} satisfies Record<SchedulePageLocale, AvailabilityImportPanelCopy>;
 
 export function AvailabilityImportPanel({
   imageImportVisible,
+  locale = "zh-CN",
   onPreviewApplied,
   publicId,
   scheduleTimezone
 }: AvailabilityImportPanelProps) {
+  const copy = availabilityImportPanelCopy[locale];
   const [importText, setImportText] = useState("");
   const [importFile, setImportFile] = useState<File | undefined>(undefined);
   const [icsFile, setIcsFile] = useState<File | undefined>(undefined);
@@ -114,7 +348,7 @@ export function AvailabilityImportPanel({
   const [templateDays, setTemplateDays] = useState<Set<TemplateDay>>(
     () => new Set(defaultTemplateDays)
   );
-  const [templateName, setTemplateName] = useState("工作日晚上");
+  const [templateName, setTemplateName] = useState(copy.templateNameDefault);
   const [templateStartTime, setTemplateStartTime] = useState("18:00");
   const [templateEndTime, setTemplateEndTime] = useState("21:00");
   const [savedTemplates, setSavedTemplates] = useState<readonly SavedParticipantTemplate[]>([]);
@@ -131,9 +365,9 @@ export function AvailabilityImportPanel({
   const isPreviewingCsv = previewState.status === "previewing" && previewState.method === "csv";
   const isPreviewingTemplate =
     previewState.status === "previewing" && previewState.method === "template";
-  const availableImportMethods = importMethodOptions.filter(
-    ({ method }) => imageImportVisible || method !== "image"
-  );
+  const availableImportMethods = previewMethodOrder
+    .filter((method) => imageImportVisible || method !== "image")
+    .map((method) => ({ method, ...copy.methods[method] }));
 
   useEffect(() => {
     const rememberedTemplate = readRememberedParticipantTemplate(window.localStorage);
@@ -154,7 +388,7 @@ export function AvailabilityImportPanel({
     if (trimmedText.length === 0) {
       setPreviewState({
         status: "error",
-        message: "请先粘贴一段忙碌时间。"
+        message: copy.missingTextError
       });
       return;
     }
@@ -173,7 +407,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error)
+        message: toPreviewErrorMessage(error, copy)
       });
     }
   }
@@ -182,7 +416,7 @@ export function AvailabilityImportPanel({
     if (importFile === undefined) {
       setPreviewState({
         status: "error",
-        message: "请先选择一张课表或排班截图。"
+        message: copy.missingImageFileError
       });
       return;
     }
@@ -200,7 +434,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error)
+        message: toPreviewErrorMessage(error, copy)
       });
     }
   }
@@ -209,7 +443,7 @@ export function AvailabilityImportPanel({
     if (icsFile === undefined) {
       setPreviewState({
         status: "error",
-        message: "请先选择一个 .ics 日历文件。"
+        message: copy.missingIcsFileError
       });
       return;
     }
@@ -227,7 +461,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error)
+        message: toPreviewErrorMessage(error, copy)
       });
     }
   }
@@ -236,7 +470,7 @@ export function AvailabilityImportPanel({
     if (csvFile === undefined) {
       setPreviewState({
         status: "error",
-        message: "请先选择一个 CSV 文件。"
+        message: copy.missingCsvFileError
       });
       return;
     }
@@ -254,7 +488,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error)
+        message: toPreviewErrorMessage(error, copy)
       });
     }
   }
@@ -265,7 +499,7 @@ export function AvailabilityImportPanel({
     if (selectedTemplateDays.length === 0) {
       setPreviewState({
         status: "error",
-        message: "请选择至少一天。"
+        message: copy.missingTemplateDayError
       });
       return;
     }
@@ -273,7 +507,7 @@ export function AvailabilityImportPanel({
     if (templateStartTime === templateEndTime) {
       setPreviewState({
         status: "error",
-        message: "开始和结束时间不能相同。"
+        message: copy.sameTemplateTimeError
       });
       return;
     }
@@ -285,7 +519,7 @@ export function AvailabilityImportPanel({
         interpretsAs: "busy",
         method: "template",
         template: {
-          name: "每周模板",
+          name: copy.weeklyTemplateApiName,
           timezone: scheduleTimezone,
           weeklyWindows: selectedTemplateDays.map((value) => ({
             dayOfWeek: value,
@@ -305,7 +539,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error)
+        message: toPreviewErrorMessage(error, copy)
       });
     }
   }
@@ -315,11 +549,11 @@ export function AvailabilityImportPanel({
     setPreviewState({
       status: "success",
       availableCount: result.availableSlots.length,
-      busyBlocks: buildPreviewBusyBlockSummaries(result),
+      busyBlocks: buildPreviewBusyBlockSummaries(result, locale),
       busyBlockCount: result.busyBlocks.length,
       ...(result.confidence === undefined ? {} : { confidence: result.confidence }),
       method,
-      warnings: collectPreviewWarnings(result)
+      warnings: collectPreviewWarnings(result, locale)
     });
   }
 
@@ -351,7 +585,7 @@ export function AvailabilityImportPanel({
     setTemplateName(savedTemplate.name);
     setTemplateStorageNotice({
       tone: "success",
-      message: `已套用“${savedTemplate.name}”。`
+      message: copy.appliedTemplate(savedTemplate.name)
     } satisfies TemplateStorageNotice);
   }
 
@@ -362,7 +596,7 @@ export function AvailabilityImportPanel({
     if (trimmedTemplateName.length === 0) {
       setTemplateStorageNotice({
         tone: "error",
-        message: "请先填写模板名称。"
+        message: copy.missingTemplateNameError
       } satisfies TemplateStorageNotice);
       return;
     }
@@ -370,7 +604,7 @@ export function AvailabilityImportPanel({
     if (selectedTemplateDays.length === 0) {
       setTemplateStorageNotice({
         tone: "error",
-        message: "请选择至少一天再保存模板。"
+        message: copy.missingTemplateDaySaveError
       } satisfies TemplateStorageNotice);
       return;
     }
@@ -378,7 +612,7 @@ export function AvailabilityImportPanel({
     if (templateStartTime === templateEndTime) {
       setTemplateStorageNotice({
         tone: "error",
-        message: "开始和结束时间不能相同。"
+        message: copy.sameTemplateTimeError
       } satisfies TemplateStorageNotice);
       return;
     }
@@ -395,7 +629,7 @@ export function AvailabilityImportPanel({
     if (!nextSavedTemplates.some(({ id }) => id === savedTemplate.id)) {
       setTemplateStorageNotice({
         tone: "error",
-        message: "浏览器没有允许保存本机模板。"
+        message: copy.templateStorageDeniedError
       } satisfies TemplateStorageNotice);
       return;
     }
@@ -406,7 +640,7 @@ export function AvailabilityImportPanel({
     rememberParticipantTemplate(window.localStorage, savedTemplate);
     setTemplateStorageNotice({
       tone: "success",
-      message: `已保存“${trimmedTemplateName}”。`
+      message: copy.savedTemplate(trimmedTemplateName)
     } satisfies TemplateStorageNotice);
   }
 
@@ -421,7 +655,7 @@ export function AvailabilityImportPanel({
     setSelectedSavedTemplateId("");
     setTemplateStorageNotice({
       tone: "success",
-      message: `已删除“${savedTemplate.name}”。`
+      message: copy.deletedTemplate(savedTemplate.name)
     } satisfies TemplateStorageNotice);
   }
 
@@ -433,7 +667,7 @@ export function AvailabilityImportPanel({
 
   return (
     <div className={styles.importPanel}>
-      <div className={styles.importSourceTabs} role="tablist" aria-label="预填来源">
+      <div className={styles.importSourceTabs} role="tablist" aria-label={copy.tabAria}>
         {availableImportMethods.map(({ helper, label, method }) => (
           <button
             aria-selected={activeImportMethod === method}
@@ -460,11 +694,11 @@ export function AvailabilityImportPanel({
       <div className={styles.importSourcePanel} role="tabpanel">
         {activeImportMethod === "text" ? (
           <label className={styles.importField}>
-            <span>粘贴忙碌时间</span>
+            <span>{copy.textFieldLabel}</span>
             <textarea
               maxLength={5000}
               onChange={(event) => setImportText(event.target.value)}
-              placeholder="Mon 9-11 COMP101; 8/1 9am-10:30am Work; 8月1日 14.00-16.00 Lab"
+              placeholder={copy.textPlaceholder}
               rows={3}
               value={importText}
             />
@@ -472,7 +706,7 @@ export function AvailabilityImportPanel({
         ) : null}
         {activeImportMethod === "image" && imageImportVisible ? (
           <label className={styles.importField}>
-            <span>上传课表截图</span>
+            <span>{copy.imageFileLabel}</span>
             <input
               accept="image/png,image/jpeg,image/webp"
               onChange={(event) => setImportFile(event.target.files?.[0])}
@@ -482,7 +716,7 @@ export function AvailabilityImportPanel({
         ) : null}
         {activeImportMethod === "ics" ? (
           <label className={styles.importField}>
-            <span>上传 .ics 日历</span>
+            <span>{copy.icsFileLabel}</span>
             <input
               accept=".ics,text/calendar"
               onChange={(event) => setIcsFile(event.target.files?.[0])}
@@ -492,7 +726,7 @@ export function AvailabilityImportPanel({
         ) : null}
         {activeImportMethod === "csv" ? (
           <label className={styles.importField}>
-            <span>上传 CSV 排班</span>
+            <span>{copy.csvFileLabel}</span>
             <input
               accept=".csv,text/csv"
               onChange={(event) => setCsvFile(event.target.files?.[0])}
@@ -502,17 +736,17 @@ export function AvailabilityImportPanel({
         ) : null}
         {activeImportMethod === "template" ? (
           <fieldset className={styles.templatePanel}>
-            <legend>每周模板</legend>
+            <legend>{copy.templateLegend}</legend>
             {savedTemplates.length > 0 ? (
               <div className={styles.savedTemplateGrid}>
                 <label className={styles.importField}>
-                  <span>保存的本机模板</span>
+                  <span>{copy.savedTemplatesLabel}</span>
                   <select
-                    aria-label="选择保存的模板"
+                    aria-label={copy.savedTemplatesAria}
                     onChange={handleSavedTemplateChange}
                     value={selectedSavedTemplateId}
                   >
-                    <option value="">选择模板</option>
+                    <option value="">{copy.savedTemplatesPlaceholder}</option>
                     {savedTemplates.map((template) => (
                       <option key={template.id} value={template.id}>
                         {template.name}
@@ -527,35 +761,35 @@ export function AvailabilityImportPanel({
                   type="button"
                 >
                   <Trash2 aria-hidden="true" size={18} />
-                  删除
+                  {copy.deleteTemplate}
                 </button>
               </div>
             ) : null}
             <label className={styles.importField}>
-              <span>模板名称</span>
+              <span>{copy.templateNameLabel}</span>
               <input
                 maxLength={40}
                 onChange={(event) => setTemplateName(event.target.value)}
-                placeholder="如 工作日晚上"
+                placeholder={copy.templateNamePlaceholder}
                 type="text"
                 value={templateName}
               />
             </label>
             <div className={styles.templateDayList}>
-              {templateDayOptions.map((day) => (
-                <label className={styles.templateDayChoice} key={day.value}>
+              {templateDayOrder.map((day) => (
+                <label className={styles.templateDayChoice} key={day}>
                   <input
-                    checked={templateDays.has(day.value)}
-                    onChange={() => toggleTemplateDay(day.value)}
+                    checked={templateDays.has(day)}
+                    onChange={() => toggleTemplateDay(day)}
                     type="checkbox"
                   />
-                  <span>{day.label}</span>
+                  <span>{copy.templateDays[day]}</span>
                 </label>
               ))}
             </div>
             <div className={styles.templateTimeGrid}>
               <label className={styles.importField}>
-                <span>开始时间</span>
+                <span>{copy.templateStartLabel}</span>
                 <input
                   onChange={(event) => setTemplateStartTime(event.target.value)}
                   type="time"
@@ -563,7 +797,7 @@ export function AvailabilityImportPanel({
                 />
               </label>
               <label className={styles.importField}>
-                <span>结束时间</span>
+                <span>{copy.templateEndLabel}</span>
                 <input
                   onChange={(event) => setTemplateEndTime(event.target.value)}
                   type="time"
@@ -579,7 +813,7 @@ export function AvailabilityImportPanel({
                 type="button"
               >
                 <Save aria-hidden="true" size={18} />
-                保存到本机
+                {copy.saveTemplate}
               </button>
               {templateStorageNotice === undefined ? null : (
                 <p
@@ -612,7 +846,7 @@ export function AvailabilityImportPanel({
               ) : (
                 <FileText aria-hidden="true" size={18} />
               )}
-              用文本预填
+              {copy.methods.text.actionLabel}
             </button>
           ) : null}
           {activeImportMethod === "image" && imageImportVisible ? (
@@ -627,7 +861,7 @@ export function AvailabilityImportPanel({
               ) : (
                 <ImagePlus aria-hidden="true" size={18} />
               )}
-              用图片预填
+              {copy.methods.image.actionLabel}
             </button>
           ) : null}
           {activeImportMethod === "ics" ? (
@@ -642,7 +876,7 @@ export function AvailabilityImportPanel({
               ) : (
                 <FileUp aria-hidden="true" size={18} />
               )}
-              用日历预填
+              {copy.methods.ics.actionLabel}
             </button>
           ) : null}
           {activeImportMethod === "csv" ? (
@@ -657,7 +891,7 @@ export function AvailabilityImportPanel({
               ) : (
                 <FileText aria-hidden="true" size={18} />
               )}
-              用 CSV 预填
+              {copy.methods.csv.actionLabel}
             </button>
           ) : null}
           {activeImportMethod === "template" ? (
@@ -672,18 +906,22 @@ export function AvailabilityImportPanel({
               ) : (
                 <CalendarClock aria-hidden="true" size={18} />
               )}
-              用模板预填
+              {copy.methods.template.actionLabel}
             </button>
           ) : null}
         </div>
-        {previewState.status === "success" ? <span>{previewSummaryText(previewState)}</span> : null}
+        {previewState.status === "success" ? (
+          <span>{previewSummaryText(previewState, copy, locale)}</span>
+        ) : null}
       </div>
       {previewState.status === "error" ? (
         <p className={styles.error} role="alert">
           {previewState.message}
         </p>
       ) : null}
-      {previewState.status === "success" ? <PreviewFeedback previewState={previewState} /> : null}
+      {previewState.status === "success" ? (
+        <PreviewFeedback copy={copy} locale={locale} previewState={previewState} />
+      ) : null}
     </div>
   );
 }
@@ -705,8 +943,12 @@ function importMethodIcon(method: PreviewMethod, active: boolean) {
 }
 
 function PreviewFeedback({
+  copy,
+  locale,
   previewState
 }: {
+  readonly copy: AvailabilityImportPanelCopy;
+  readonly locale: SchedulePageLocale;
   readonly previewState: Extract<PreviewState, { readonly status: "success" }>;
 }) {
   const hasWarnings = previewState.warnings.length > 0;
@@ -721,11 +963,11 @@ function PreviewFeedback({
           {hasWarnings ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
         </span>
         <div className={styles.previewFeedbackText}>
-          <strong>{previewHeadline(previewState)}</strong>
-          <p>{previewSummaryText(previewState)}</p>
+          <strong>{previewHeadline(previewState, copy)}</strong>
+          <p>{previewSummaryText(previewState, copy, locale)}</p>
         </div>
         <span className={hasWarnings ? styles.previewBadgeReview : styles.previewBadge}>
-          {hasWarnings ? "需复核" : "已应用"}
+          {hasWarnings ? copy.reviewBadge : copy.appliedBadge}
         </span>
       </div>
       {hasWarnings ? (
@@ -735,13 +977,13 @@ function PreviewFeedback({
           ))}
         </ul>
       ) : (
-        <p className={styles.previewHelper}>下方时间格已更新，可以继续调整后提交。</p>
+        <p className={styles.previewHelper}>{copy.successHelper}</p>
       )}
       {previewState.busyBlocks.length > 0 ? (
         <div className={styles.previewBusyReview}>
           <div className={styles.previewBusyReviewHeader}>
-            <strong>识别明细</strong>
-            <span>不准确时可以直接在下方时间格修正</span>
+            <strong>{copy.detailsTitle}</strong>
+            <span>{copy.detailsSubtitle}</span>
           </div>
           <ul className={styles.previewBusyList}>
             {previewState.busyBlocks.map((block) => (
@@ -777,87 +1019,88 @@ function PreviewFeedback({
 }
 
 function previewHeadline(
-  previewState: Extract<PreviewState, { readonly status: "success" }>
+  previewState: Extract<PreviewState, { readonly status: "success" }>,
+  copy: AvailabilityImportPanelCopy
 ): string {
-  const sourceLabel = previewMethodLabels[previewState.method];
+  const sourceLabel = copy.methods[previewState.method].previewLabel;
 
   if (previewState.method === "template") {
     return previewState.availableCount === 0
-      ? `${sourceLabel}没有找到可用时间格`
-      : `${sourceLabel}已应用到时间格`;
+      ? copy.noTemplateSlotsHeadline(sourceLabel)
+      : copy.successHeadline(sourceLabel);
   }
 
   if (previewState.busyBlockCount === 0) {
-    return `${sourceLabel}没有识别到忙碌时段`;
+    return copy.noBusyBlocksHeadline(sourceLabel);
   }
 
-  return `${sourceLabel}已应用到时间格`;
+  return copy.successHeadline(sourceLabel);
 }
 
 function previewSummaryText(
-  previewState: Extract<PreviewState, { readonly status: "success" }>
+  previewState: Extract<PreviewState, { readonly status: "success" }>,
+  copy: AvailabilityImportPanelCopy,
+  locale: SchedulePageLocale
 ): string {
-  return [
-    `${previewState.busyBlockCount} 段忙碌`,
-    `${previewState.availableCount} 个可用时间`,
-    previewConfidenceText(previewState.confidence)
-  ]
-    .filter((item): item is string => item !== undefined)
-    .join(" · ");
+  return copy.summaryText(
+    previewState.busyBlockCount,
+    previewState.availableCount,
+    previewConfidenceText(previewState.confidence, locale)
+  );
 }
 
 function selectedTemplateDayValues(days: ReadonlySet<TemplateDay>): TemplateDay[] {
-  return templateDayOptions.filter(({ value }) => days.has(value)).map(({ value }) => value);
+  return templateDayOrder.filter((day) => days.has(day));
 }
 
 function createSavedTemplateId(): string {
   return `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function toPreviewErrorMessage(error: unknown): string {
+function toPreviewErrorMessage(error: unknown, copy: AvailabilityImportPanelCopy): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
-      return "数据库尚未配置。";
+      return copy.databaseError;
     }
 
     if (error.code === "SCHEDULE_LOCKED") {
-      return "这个日程已经停止接收提交。";
+      return copy.scheduleLockedError;
     }
 
     if (error.code === "SCHEDULE_NOT_FOUND") {
-      return "这个日程不存在或链接有误。";
+      return copy.scheduleNotFoundError;
     }
 
     if (error.code === "VALIDATION_ERROR") {
-      return "无法生成预填，请检查文本或模板时间。";
+      return copy.validationError;
     }
 
     if (error.code === "IMPORT_PROVIDER_UNAVAILABLE") {
-      return "图片识别服务还没有配置。可以先粘贴文本或手动选择。";
+      return copy.providerUnavailableError;
     }
 
     if (error.code === "IMPORT_UNSUPPORTED_FILE_TYPE") {
-      return "请上传 PNG、JPG、WebP 图片、.ics 日历或 CSV 文件。";
+      return copy.unsupportedFileTypeError;
     }
 
     if (error.code === "IMPORT_FILE_TOO_LARGE") {
-      return "图片不能超过 4MB，ICS 和 CSV 不能超过 1MB。";
+      return copy.fileTooLargeError;
     }
 
     if (error.code === "IMPORT_LOW_CONFIDENCE") {
-      return "这张图暂时没能可靠识别，可以换一张更清晰的截图。";
+      return copy.lowConfidenceError;
     }
 
     if (error.code === "UNSUPPORTED_ENTRY_METHOD") {
-      return "这个导入方式暂不支持。";
+      return copy.unsupportedEntryMethodError;
     }
 
     return error.message;
   }
 
   if (error instanceof Error && error.name === "ZodError") {
-    return "预填结果格式不正确。";
+    return copy.zodError;
   }
 
-  return "生成预填失败。";
+  return copy.defaultError;
 }

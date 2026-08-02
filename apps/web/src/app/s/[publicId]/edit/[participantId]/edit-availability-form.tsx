@@ -266,6 +266,7 @@ export function EditAvailabilityForm({
         {showQuickImport ? (
           <AvailabilityImportPanel
             imageImportVisible={imageImportVisible}
+            locale={locale}
             onPreviewApplied={setSelectedSlotKeys}
             publicId={publicId}
             scheduleTimezone={scheduleTimezone}

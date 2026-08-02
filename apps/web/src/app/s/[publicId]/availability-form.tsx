@@ -299,6 +299,7 @@ export function AvailabilityForm({
               </div>
               <AvailabilityImportPanel
                 imageImportVisible={imageImportVisible}
+                locale={locale}
                 onPreviewApplied={setSelectedSlotKeys}
                 publicId={publicId}
                 scheduleTimezone={scheduleTimezone}

@@ -163,7 +163,6 @@ function EditView({
             locale={locale}
             participantId={data.participant.id}
             publicId={data.schedule.publicId}
-            quickImportVisible={locale === "zh-CN"}
             scheduleMode={data.schedule.scheduleMode}
             scheduleStatus={data.schedule.status}
             scheduleTimezone={data.schedule.timezone}

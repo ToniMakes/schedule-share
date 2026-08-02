@@ -59,6 +59,39 @@ describe("buildPreviewBusyBlockSummaries", () => {
       title: "忙碌时段 1"
     });
   });
+
+  it("formats parsed busy blocks in English", () => {
+    expect(
+      buildPreviewBusyBlockSummaries(
+        buildPreviewResponse({
+          busyBlocks: [
+            {
+              sourceLabel: "Algebra",
+              localDate: "2026-08-03",
+              dayOfWeek: 1,
+              startTime: "08:30",
+              endTime: "10:10",
+              timezone: "Australia/Sydney",
+              confidence: 0.75,
+              warnings: [
+                'Imported busy block "Algebra" did not overlap any selectable schedule slot.'
+              ]
+            }
+          ]
+        }),
+        "en"
+      )
+    ).toEqual([
+      {
+        confidenceText: "Confidence 75% medium",
+        dateText: "2026/8/3 · Mon",
+        key: "0-Algebra-2026-08-03-1-08:30-10:10",
+        timeText: "08:30-10:10",
+        title: "Algebra",
+        warnings: ["Outside this schedule's selectable range: Algebra"]
+      }
+    ]);
+  });
 });
 
 describe("collectPreviewWarnings", () => {
@@ -84,6 +117,32 @@ describe("collectPreviewWarnings", () => {
       )
     ).toEqual(["课程节次已按默认作息表换算，请确认你的学校节次时间是否一致。"]);
   });
+
+  it("translates and deduplicates warnings in English", () => {
+    const warning =
+      "Class periods were interpreted using the default timetable; review if your school uses different period times.";
+
+    expect(
+      collectPreviewWarnings(
+        buildPreviewResponse({
+          warnings: [warning],
+          busyBlocks: [
+            {
+              sourceLabel: "Physics",
+              dayOfWeek: 1,
+              startTime: "10:00",
+              endTime: "11:40",
+              timezone: "Australia/Sydney",
+              warnings: [warning]
+            }
+          ]
+        }),
+        "en"
+      )
+    ).toEqual([
+      "Class periods were interpreted using the default timetable. Review if your school uses different period times."
+    ]);
+  });
 });
 
 describe("previewConfidenceText", () => {
@@ -92,6 +151,13 @@ describe("previewConfidenceText", () => {
     expect(previewConfidenceText(0.91)).toBe("置信度 91% 高");
     expect(previewConfidenceText(0.72)).toBe("置信度 72% 中");
     expect(previewConfidenceText(0.42)).toBe("置信度 42% 低");
+  });
+
+  it("labels confidence bands in English", () => {
+    expect(previewConfidenceText(undefined, "en")).toBeUndefined();
+    expect(previewConfidenceText(0.91, "en")).toBe("Confidence 91% high");
+    expect(previewConfidenceText(0.72, "en")).toBe("Confidence 72% medium");
+    expect(previewConfidenceText(0.42, "en")).toBe("Confidence 42% low");
   });
 });
 
@@ -109,6 +175,18 @@ describe("toUserPreviewWarning", () => {
 
   it("keeps unknown warnings visible", () => {
     expect(toUserPreviewWarning("Custom provider warning")).toBe("Custom provider warning");
+  });
+
+  it("translates template projection warnings in English", () => {
+    expect(
+      toUserPreviewWarning(
+        "Template window 2 18:00-21:00 did not include any selectable schedule slot.",
+        "en"
+      )
+    ).toBe("Template window Tue 18:00-21:00 is outside this schedule's selectable range.");
+    expect(toUserPreviewWarning("Template did not match any selectable schedule slot.", "en")).toBe(
+      "The template did not match any selectable schedule slot."
+    );
   });
 });
 

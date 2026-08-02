@@ -352,7 +352,8 @@ export const schedulePageCopy: Record<SchedulePageLocale, SchedulePageCopy> = {
       errorSlotOutOfRange: "The submitted time is outside this schedule.",
       errorValidation: "Check the form contents.",
       flowAria: "Availability flow",
-      importStepBody: "Quick import tools are still being localized. Use the manual grid for now.",
+      importStepBody:
+        "Choose one optional shortcut: paste busy times, upload a calendar or CSV, or apply a weekly template. You can still edit the grid before submitting.",
       importStepTitle: "Quick Import",
       manualStepBody: "Click and drag across the grid to mark when you are available.",
       manualStepCandidateBody:
