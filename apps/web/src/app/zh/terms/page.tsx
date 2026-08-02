@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AdPageChrome, DisplayAd } from "../../ads/display-ad";
 import { LanguageSwitcher } from "../../i18n/language-switcher";
 import { PageLanguage } from "../../i18n/page-language";
+import { formatPublicOperator, getPublicSiteInfo } from "../../site/public-site-info";
 import styles from "../../terms/page.module.css";
 
 export const metadata: Metadata = {
@@ -33,6 +34,9 @@ const aiAndAdItems = [
 ];
 
 export default function TermsPage() {
+  const publicSiteInfo = getPublicSiteInfo();
+  const operatorLine = formatPublicOperator(publicSiteInfo, "zh-CN");
+
   return (
     <main className={styles.page}>
       <PageLanguage lang="zh-CN" />
@@ -117,6 +121,20 @@ export default function TermsPage() {
               MVP
               可能出现功能调整、临时不可用、数据迁移或内测清理。请不要把它作为医疗、法律、财务、安全生产或其他高风险决策的唯一依据。遇到问题、归档或删除请求，请查看{" "}
               <a href="/zh/contact">联系与删除请求</a>。
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>运营主体与联系</h2>
+            <p>
+              {operatorLine ? (
+                <>
+                  公开运营主体：<strong>{operatorLine}</strong>。{" "}
+                </>
+              ) : (
+                "公开运营主体尚未配置。"
+              )}
+              联系方式可以在<a href="/zh/contact">联系与删除请求</a>页面查看。
             </p>
           </section>
 

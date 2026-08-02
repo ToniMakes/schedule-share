@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AdPageChrome, DisplayAd } from "../../ads/display-ad";
 import { LanguageSwitcher } from "../../i18n/language-switcher";
 import { PageLanguage } from "../../i18n/page-language";
+import { formatPublicOperator, getPublicSiteInfo } from "../../site/public-site-info";
 import styles from "../../about/page.module.css";
 
 export const metadata: Metadata = {
@@ -41,6 +42,9 @@ const audienceItems = [
 ];
 
 export default function AboutPage() {
+  const publicSiteInfo = getPublicSiteInfo();
+  const operatorLine = formatPublicOperator(publicSiteInfo, "zh-CN");
+
   return (
     <main className={styles.page}>
       <PageLanguage lang="zh-CN" />
@@ -106,6 +110,20 @@ export default function AboutPage() {
             <p>
               图片识别属于可能产生成本的高级入口，目前仍受功能开关、release
               mode、成本护栏和广告额度方案限制；手动填写、文本、CSV 和 ICS 方式仍保持免费可用。
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>运营主体与联系</h2>
+            <p>
+              {operatorLine ? (
+                <>
+                  公开运营主体：<strong>{operatorLine}</strong>。{" "}
+                </>
+              ) : (
+                "公开运营主体尚未配置。"
+              )}
+              反馈、归档请求和删除请求可以通过<a href="/zh/contact">联系页面</a>发送。
             </p>
           </section>
 

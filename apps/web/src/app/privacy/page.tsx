@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
 import { PageLanguage } from "../i18n/page-language";
+import { formatPublicOperator, getPublicSiteInfo } from "../site/public-site-info";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -42,6 +43,9 @@ const aiItems = [
 ];
 
 export default function EnglishPrivacyPage() {
+  const publicSiteInfo = getPublicSiteInfo();
+  const operatorLine = formatPublicOperator(publicSiteInfo, "en");
+
   return (
     <main className={styles.page}>
       <PageLanguage lang="en" />
@@ -144,6 +148,21 @@ export default function EnglishPrivacyPage() {
               schedules and later hard-delete archived records after a grace period. Before broad
               public launch, production monitoring, backup-retention notes, and deletion-failure
               alerts still need to be finalized.
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>Operator and Contact</h2>
+            <p>
+              {operatorLine ? (
+                <>
+                  Public operator: <strong>{operatorLine}</strong>.{" "}
+                </>
+              ) : (
+                "The public operator name is not configured yet. "
+              )}
+              For feedback, archive requests, or deletion requests, use the{" "}
+              <a href="/contact">contact page</a>.
             </p>
           </section>
 

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
 import { PageLanguage } from "../i18n/page-language";
+import { formatPublicOperator, getPublicSiteInfo } from "../site/public-site-info";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -34,6 +35,9 @@ const aiAndAdItems = [
 ];
 
 export default function EnglishTermsPage() {
+  const publicSiteInfo = getPublicSiteInfo();
+  const operatorLine = formatPublicOperator(publicSiteInfo, "en");
+
   return (
     <main className={styles.page}>
       <PageLanguage lang="en" />
@@ -129,6 +133,21 @@ export default function EnglishTermsPage() {
               schedules. Do not use it as the only source of truth for medical, legal, financial,
               safety-critical, or other high-risk decisions. For issues, archive requests, or
               deletion requests, see <a href="/contact">Contact and deletion requests</a>.
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>Operator and Contact</h2>
+            <p>
+              {operatorLine ? (
+                <>
+                  Public operator: <strong>{operatorLine}</strong>.{" "}
+                </>
+              ) : (
+                "The public operator name is not configured yet. "
+              )}
+              Contact information is available on the{" "}
+              <a href="/contact">contact and deletion requests</a> page.
             </p>
           </section>
 

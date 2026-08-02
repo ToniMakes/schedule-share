@@ -15,6 +15,8 @@
 | `DATABASE_MIGRATION_URL`                 | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。                   |
 | `APP_BASE_URL`                           | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                                          |
 | `NEXT_PUBLIC_SUPPORT_EMAIL`              | 否   | Web 页面                                              | `support@example.com`                       | 公开联系、反馈和删除请求邮箱。会进入前端 bundle；只填写准备公开展示的支持邮箱，不要填写私人邮箱或内部密钥。                                        |
+| `NEXT_PUBLIC_SITE_OPERATOR_NAME`         | 否   | Web 页面、`deployment:config`                         | `Toni Makes`                                | 公开运营主体名称。会显示在 About、Privacy、Terms 和 Contact 页面；真实广告上线前生产预检要求配置。                                                 |
+| `NEXT_PUBLIC_SITE_OPERATOR_REGION`       | 否   | Web 页面                                              | `Australia`                                 | 公开运营主体所在国家或地区。用于帮助访客和广告审核理解运营归属；不应填写证件号、税号或内部注册地址截图。                                           |
 | `CRON_SECRET`                            | 是   | Vercel Cron、Web API、`deployment:config`             | `random-long-secret`                        | 保护 `/api/maintenance/cleanup-expired-schedules`。Vercel Cron 会用 `Authorization: Bearer <CRON_SECRET>` 调用；生产和 Preview 需要设置。          |
 | `SCHEDULE_HARD_DELETE_GRACE_DAYS`        | 否   | Web API、`deployment:config`                          | `30`                                        | 已归档日程在 `expires_at` 后继续保留多少天再硬删除。默认 30，允许 1 到 365。                                                                       |
 | `SCHEDULE_CLEANUP_BATCH_SIZE`            | 否   | Web API、`deployment:config`                          | `100`                                       | 每次清理任务最多归档和硬删除的日程数量。默认 100，允许 1 到 1000。                                                                                 |
@@ -79,7 +81,7 @@
 - 首页、隐私页、反馈页可以显示顶部、内容间、底部、桌面 rail 和移动 anchor。
 - 创建、填写和编辑这类高摩擦页面只在外围或提交后显示广告，不插入表单、时间格、上传预览、候选投票按钮、提交按钮附近。
 - 管理页和编辑页这类带 `?key=` 的页面传入 `thirdPartyAllowed=false`；即使将 provider 改成 `adsense`，也不会在这些页面加载第三方广告脚本。
-- `deployment:config` 会在真实 AdSense 开启时要求公开支持邮箱、`/ads.txt` publisher ID、隐私披露确认、广告政策审阅确认和 consent 策略确认；缺任一项都会阻断生产部署验证。
+- `deployment:config` 会在真实 AdSense 开启时要求公开支持邮箱、公开运营主体、`/ads.txt` publisher ID、隐私披露确认、广告政策审阅确认和 consent 策略确认；缺任一项都会阻断生产部署验证。
 
 ## 后续 AI 图片识别额度和激励广告变量
 
@@ -174,6 +176,8 @@ AI_IMAGE_IMPORT_RELEASE_MODE=off
 
 ```text
 NEXT_PUBLIC_SUPPORT_EMAIL=support@example.com
+NEXT_PUBLIC_SITE_OPERATOR_NAME=<public person or company name>
+NEXT_PUBLIC_SITE_OPERATOR_REGION=<country or region>
 ```
 
 `OPENAI_API_KEY` 不是当前公开生产必填项。可以先只配置到本地或 Preview 调优；如果已经配置到
@@ -197,6 +201,7 @@ corepack pnpm verify:deployment
 
 - `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 包含数据库用户名和密码，不能截图、公开贴出或写进 issue。
 - `NEXT_PUBLIC_SUPPORT_EMAIL` 是公开展示变量，只能放准备公开接收反馈的邮箱。
+- `NEXT_PUBLIC_SITE_OPERATOR_NAME` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 也是公开展示变量，只填写愿意出现在公开页面和广告审核材料里的信息。
 - `OPENAI_API_KEY` 是第三方 API 密钥，也只能放在本地 `.env.local` 或部署平台环境变量里。
 - `OPENAI_API_KEY` 不等于功能开放；公开开放前必须经过图片识别 release mode、额度账本强制校验、广告验证和成本护栏。
 - `ownerUrl` 和 `editUrl` 带有管理或编辑密钥，也不能公开记录。

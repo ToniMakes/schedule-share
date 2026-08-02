@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
 import { PageLanguage } from "../i18n/page-language";
+import { formatPublicOperator, getPublicSiteInfo } from "../site/public-site-info";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -43,6 +44,9 @@ const audienceItems = [
 ];
 
 export default function EnglishAboutPage() {
+  const publicSiteInfo = getPublicSiteInfo();
+  const operatorLine = formatPublicOperator(publicSiteInfo, "en");
+
   return (
     <main className={styles.page}>
       <PageLanguage lang="en" />
@@ -116,6 +120,21 @@ export default function EnglishAboutPage() {
               behind feature flags, release-mode checks, cost guardrails, and future credit or
               rewarded-ad validation. Manual entry, text import, CSV import, and ICS import remain
               available as non-AI paths.
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>Operator and Contact</h2>
+            <p>
+              {operatorLine ? (
+                <>
+                  Public operator: <strong>{operatorLine}</strong>.{" "}
+                </>
+              ) : (
+                "The public operator name is not configured yet. "
+              )}
+              Feedback, archive requests, and deletion requests can be sent through the{" "}
+              <a href="/contact">contact page</a>.
             </p>
           </section>
 

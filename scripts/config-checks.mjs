@@ -393,6 +393,7 @@ export function checkDisplayAdsConfig(environment = {}, options = {}) {
   const policyReviewReady = parseBooleanFlag(environment.ADS_POLICY_REVIEW_READY);
   const privacyDisclosureReady = parseBooleanFlag(environment.ADS_PRIVACY_DISCLOSURE_READY);
   const supportEmail = normalizeDisplayString(environment.NEXT_PUBLIC_SUPPORT_EMAIL);
+  const siteOperatorName = normalizeDisplayString(environment.NEXT_PUBLIC_SITE_OPERATOR_NAME);
   const testMode = parseBooleanFlag(environment.NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE);
   const configuredSlotIds = [
     environment.NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER,
@@ -476,6 +477,16 @@ export function checkDisplayAdsConfig(environment = {}, options = {}) {
       level: requireProductionSafe ? "error" : "warn",
       name: "DISPLAY_ADS",
       status: "invalid-support-email"
+    };
+  }
+
+  if (requireProductionSafe && siteOperatorName.length === 0) {
+    return {
+      detail:
+        "Real display ads require NEXT_PUBLIC_SITE_OPERATOR_NAME so public pages identify the operating entity before ad review.",
+      level: "error",
+      name: "DISPLAY_ADS",
+      status: "missing-site-operator"
     };
   }
 

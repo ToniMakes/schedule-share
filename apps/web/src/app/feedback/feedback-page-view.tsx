@@ -3,6 +3,7 @@ import { ArrowLeft, MessageSquareText } from "lucide-react";
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
 import { PageLanguage } from "../i18n/page-language";
+import { formatPublicOperator, getPublicSiteInfo } from "../site/public-site-info";
 import styles from "./page.module.css";
 
 type Locale = "en" | "zh-CN";
@@ -36,11 +37,6 @@ const chineseDeletionItems = [
   "参与者想删除自己的提交时，请联系日程组织者，并避免公开发送自己的编辑链接。"
 ];
 
-function getSupportEmail() {
-  const value = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
-  return value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : undefined;
-}
-
 function routeHref(locale: Locale, route: SupportRoute) {
   const prefix = locale === "zh-CN" ? "/zh" : "";
   return `${prefix}/${route}`;
@@ -52,7 +48,9 @@ interface SupportPageViewProps {
 }
 
 export function SupportPageView({ locale, route }: SupportPageViewProps) {
-  const supportEmail = getSupportEmail();
+  const publicSiteInfo = getPublicSiteInfo();
+  const supportEmail = publicSiteInfo.supportEmail;
+  const operatorLine = formatPublicOperator(publicSiteInfo, locale);
   const isChinese = locale === "zh-CN";
   const englishHref = routeHref("en", route);
   const chineseHref = routeHref("zh-CN", route);
@@ -154,6 +152,12 @@ export function SupportPageView({ locale, route }: SupportPageViewProps) {
             <div>
               <h2>{copy.contactTitle}</h2>
               {copy.contactBody}
+              {operatorLine ? (
+                <p className={styles.metaLine}>
+                  {isChinese ? "公开运营主体：" : "Public operator: "}
+                  <strong>{operatorLine}</strong>
+                </p>
+              ) : null}
             </div>
           </section>
 

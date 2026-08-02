@@ -364,6 +364,7 @@ describe("checkDisplayAdsConfig", () => {
       NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS: "schedule.tonimakes.com",
       NEXT_PUBLIC_DISPLAY_ADS_ENABLED: "true",
       NEXT_PUBLIC_DISPLAY_ADS_PROVIDER: "adsense",
+      NEXT_PUBLIC_SITE_OPERATOR_NAME: "Toni Makes",
       NEXT_PUBLIC_SUPPORT_EMAIL: "support@example.com",
       ...overrides
     };
@@ -386,6 +387,18 @@ describe("checkDisplayAdsConfig", () => {
 
     assert.equal(check.level, "error");
     assert.equal(check.status, "missing-support-email");
+  });
+
+  it("requires a public operator before real AdSense deployment", () => {
+    const check = checkDisplayAdsConfig(
+      realAdsEnvironment({
+        NEXT_PUBLIC_SITE_OPERATOR_NAME: ""
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "missing-site-operator");
   });
 
   it("requires ad privacy disclosure attestation before real AdSense deployment", () => {

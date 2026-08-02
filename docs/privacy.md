@@ -92,7 +92,7 @@ MVP 不会把核心填写流程中的数据用于广告定向、第三方营销�
 - 数据用途。
 - 链接权限模型。
 - 默认保留时间。
-- 联系方式或反馈入口；当前公开联系邮箱为 `hello@tonimakes.com`，入口为 `/contact`。
+- 联系方式或反馈入口；当前公开联系邮箱为 `hello@tonimakes.com`，入口为 `/contact`，公开运营主体可通过 `NEXT_PUBLIC_SITE_OPERATOR_NAME` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 配置展示。
 - 关于页、联系页、使用条款、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 这类广告审核公开资产的当前状态。
 - 广告平台可能使用 cookie、web beacon、IP 地址、设备信息、浏览器信息、页面 URL、广告展示和互动数据，但产品不会主动发送日程内容、上传图片或识别明细做广告定向。
 - 图片识别当前不公开开放；如果用户未来主动使用，图片会发送给配置的 AI provider 生成可编辑预览，用户确认前不会保存为最终可用时间。
@@ -100,7 +100,7 @@ MVP 不会把核心填写流程中的数据用于广告定向、第三方营销�
 
 ## 后续待办
 
-- 明确运营主体；公开联系邮箱已通过 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com` 配置到生产环境，不硬编码进页面。
+- 明确实际运营主体，并通过 `NEXT_PUBLIC_SITE_OPERATOR_NAME` 和可选 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 配置到生产环境；公开联系邮箱已通过 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com` 配置到生产环境，不硬编码进页面。
 - 明确生产数据库所在地区。
 - 明确备份保留周期。
 - 披露并监控过期日程自动清理策略：默认过期天数、自动归档时间、归档后硬删除宽限期、级联删除范围，以及 AI 额度和识别尝试元数据的保留期。

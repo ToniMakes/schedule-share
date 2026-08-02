@@ -90,6 +90,14 @@
   margin: 0;
 }
 
+.notice .metaLine {
+  margin-top: 12px;
+}
+
+.metaLine strong {
+  color: var(--foreground);
+}
+
 .section {
   border-top: 1px solid var(--border);
   padding: 24px 0;
