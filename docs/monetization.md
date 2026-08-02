@@ -76,7 +76,7 @@
 
 当前实现状态：
 
-- `DisplayAd` / `AdPageChrome` 已接入首页、创建页、公开日程页、管理页、编辑页、隐私页和反馈页。
+- `DisplayAd` / `AdPageChrome` 已接入首页、创建页、公开日程页、管理页、编辑页、关于页、隐私页、反馈页、条款页和英文公开说明页。
 - 默认关闭；本地可用 `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW=true` 和 `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS=true` 查看布局占位。
 - provider 为 `placeholder` 时只显示一方占位；provider 为 `adsense` 时还需要 client ID、slot ID、域名白名单和第三方脚本安全检查。
 - 管理页和编辑页传入 `thirdPartyAllowed=false`，带 `?key=` 的敏感页面不会加载第三方广告脚本。
@@ -113,12 +113,31 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 - 本地、Vercel Preview、自动化测试、站长自测和内部 QA 不加载真实广告，避免无效流量。
 - `deployment:config` 已把真实 AdSense 开启前置条件变成硬闸门：公开支持邮箱、`ADS_TXT_PUBLISHER_ID`、`ADS_PRIVACY_DISCLOSURE_READY`、`ADS_POLICY_REVIEW_READY`、`ADS_CONSENT_STRATEGY_READY`、client ID、slot ID、生产域名白名单和非 test mode 缺一不可。
 
+### 账号、收款和税务资料时机
+
+当前阶段不建议先填写广告平台的个人或公司收款资料。先完成公开页面、隐私/条款、联系渠道、语言覆盖、广告禁区和真实广告上线硬闸门，再进入 AdSense 账号资料步骤。
+
+推荐时机：
+
+1. 公开资产准备阶段：只维护站点内容，不提交个人/公司身份资料；确认 `/about`、`/privacy`、`/feedback`、`/terms`、`/en`、`/en/about`、`/en/privacy`、`/en/feedback` 和 `/en/terms` 可从生产域名访问。
+2. 申请 AdSense 前：先决定收款主体是个人还是公司。个人路径通常更简单；公司路径更适合把广告收入、域名、服务器、工具和后续支出纳入公司账，但会牵涉公司名称、地址、税号或注册资料、公司银行账户和后续申报。
+3. 站点审核提交时：按广告平台要求填写账号所在地、收款人或公司名称、地址、联系方式、网站域名和公开政策页面。不要填写临时邮箱、私人密钥、数据库 URL、OpenAI key 或 Vercel/Neon 凭证。
+4. 收款门槛接近时：再处理身份验证、地址验证、税务信息和银行账户。银行账户名称应和广告平台的付款资料主体一致，避免后续打款失败或税务记录混乱。
+
+原则：
+
+- 如果短期只是个人试水、公司零申报且不想增加公司税务复杂度，第一版广告账号倾向个人更省事。
+- 如果明确要用公司长期运营、收入进入公司账户、并希望以后把云服务、域名、工具和广告成本纳入公司账，才选择公司主体。
+- 一旦选择账号类型和付款资料，后续修改通常比一开始填对更麻烦；提交前应先把主体选择单独确认。
+- 任何真实广告上线前，`deployment:config` 必须通过，且生产环境不能使用 AdSense test mode 或本地/Preview 流量制造真实广告请求。
+
 广告审核前需要确认这些公开资产：
 
 - `/about`：已接入基础产品定位、适合人群和核心功能说明；正式上线前补联系方式或运营主体。
 - `/privacy`：已接入隐私说明基础版，并补充广告 cookie、第三方广告技术和 AI 图片识别处理边界；真实广告前继续补实际第三方广告供应商、个性化广告退出和 consent。
 - `/feedback`：已接入反馈和删除请求说明；页面支持 `NEXT_PUBLIC_SUPPORT_EMAIL`，正式上线前补专用邮箱或站内表单并重新部署。
 - `/terms`：已接入基础使用条款草案；正式上线前做法律审阅。
+- `/en`、`/en/about`、`/en/privacy`、`/en/feedback` 和 `/en/terms`：已接入英文公开说明页，用于海外用户理解产品和给广告审核提供英文可读内容；核心创建/填写/管理 UI 的完整中英双语仍需继续补。
 - `/ads.txt`：路由已接入；拿到 AdSense publisher ID 后配置生产环境变量。
 - `robots.txt` 和 `sitemap.xml`：已接入；继续避免密钥页进入索引。
 

@@ -1,0 +1,36 @@
+.switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  margin-bottom: 20px;
+  padding: 4px;
+}
+
+.link,
+.active {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.link {
+  color: var(--muted);
+}
+
+.link:hover {
+  color: var(--accent-strong);
+}
+
+.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}

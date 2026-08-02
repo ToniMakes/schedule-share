@@ -2,6 +2,7 @@ import { ArrowLeft, CalendarPlus } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
+import { LanguageSwitcher } from "../i18n/language-switcher";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -47,6 +48,7 @@ export default function AboutPage() {
             <ArrowLeft aria-hidden="true" size={17} />
             返回首页
           </a>
+          <LanguageSwitcher chineseHref="/about" current="zh-CN" englishHref="/en/about" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>About</p>
@@ -108,6 +110,7 @@ export default function AboutPage() {
           <footer className={styles.footer}>
             <a href="/terms">使用条款</a>
             <a href="/feedback">反馈与删除请求</a>
+            <a href="/en/about">English</a>
           </footer>
 
           <DisplayAd pageContext="about" placement="bottom-banner" />

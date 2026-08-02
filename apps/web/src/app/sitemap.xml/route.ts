@@ -1,6 +1,18 @@
 export const dynamic = "force-dynamic";
 
-const publicRoutes = ["/", "/new", "/about", "/privacy", "/feedback", "/terms"] as const;
+const publicRoutes = [
+  "/",
+  "/new",
+  "/about",
+  "/privacy",
+  "/feedback",
+  "/terms",
+  "/en",
+  "/en/about",
+  "/en/privacy",
+  "/en/feedback",
+  "/en/terms"
+] as const;
 
 export function GET(): Response {
   const origin = getSiteOrigin();

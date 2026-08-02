@@ -21,6 +21,18 @@ const publicPages = [
     path: "/terms"
   },
   {
+    expectedText: "Find the time everyone can make",
+    path: "/en"
+  },
+  {
+    expectedText: "Privacy and Data Retention",
+    path: "/en/privacy"
+  },
+  {
+    expectedText: "Terms of Use",
+    path: "/en/terms"
+  },
+  {
     expectedText: "User-agent: *",
     path: "/robots.txt"
   },

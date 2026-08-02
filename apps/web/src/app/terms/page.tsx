@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
+import { LanguageSwitcher } from "../i18n/language-switcher";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default function TermsPage() {
             <ArrowLeft aria-hidden="true" size={17} />
             返回首页
           </a>
+          <LanguageSwitcher chineseHref="/terms" current="zh-CN" englishHref="/en/terms" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>Terms</p>
@@ -119,6 +121,7 @@ export default function TermsPage() {
           <footer className={styles.footer}>
             <a href="/about">关于本工具</a>
             <a href="/privacy">隐私与数据保留说明</a>
+            <a href="/en/terms">English</a>
           </footer>
 
           <DisplayAd pageContext="terms" placement="bottom-banner" />

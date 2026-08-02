@@ -1,6 +1,7 @@
 import { CalendarPlus } from "lucide-react";
 
 import { AdPageChrome, DisplayAd } from "./ads/display-ad";
+import { LanguageSwitcher } from "./i18n/language-switcher";
 import styles from "./page.module.css";
 
 const workflowSteps = [
@@ -23,6 +24,7 @@ export default function HomePage() {
     <main className={styles.page}>
       <AdPageChrome pageContext="home">
         <div className={styles.shell}>
+          <LanguageSwitcher chineseHref="/" current="zh-CN" englishHref="/en" />
           <p className={styles.eyebrow}>Schedule Share MVP</p>
           <h1 className={styles.title}>快速找出大家都有空的时间</h1>
           <p className={styles.intro}>
@@ -54,6 +56,7 @@ export default function HomePage() {
             <a href="/privacy">隐私与数据保留说明</a>
             <a href="/feedback">反馈与删除请求</a>
             <a href="/terms">使用条款</a>
+            <a href="/en">English</a>
           </footer>
 
           <DisplayAd pageContext="home" placement="bottom-banner" />

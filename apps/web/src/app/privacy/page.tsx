@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
+import { LanguageSwitcher } from "../i18n/language-switcher";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default function PrivacyPage() {
             <ArrowLeft aria-hidden="true" size={17} />
             返回首页
           </a>
+          <LanguageSwitcher chineseHref="/privacy" current="zh-CN" englishHref="/en/privacy" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>Privacy</p>
@@ -141,7 +143,8 @@ export default function PrivacyPage() {
             <h2>相关页面</h2>
             <p>
               你也可以查看 <a href="/about">关于本工具</a>、<a href="/terms">使用条款</a> 和{" "}
-              <a href="/feedback">反馈与删除请求</a>。
+              <a href="/feedback">反馈与删除请求</a>。 English version:{" "}
+              <a href="/en/privacy">Privacy Policy</a>.
             </p>
           </section>
           <DisplayAd pageContext="privacy" placement="bottom-banner" />

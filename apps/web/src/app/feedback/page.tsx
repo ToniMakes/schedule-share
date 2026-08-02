@@ -2,6 +2,7 @@ import { ArrowLeft, MessageSquareText } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
+import { LanguageSwitcher } from "../i18n/language-switcher";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default function FeedbackPage() {
             <ArrowLeft aria-hidden="true" size={17} />
             返回首页
           </a>
+          <LanguageSwitcher chineseHref="/feedback" current="zh-CN" englishHref="/en/feedback" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>Feedback</p>
@@ -100,6 +102,7 @@ export default function FeedbackPage() {
             <a href="/about">关于本工具</a>
             <a href="/privacy">查看隐私与数据保留说明</a>
             <a href="/terms">使用条款</a>
+            <a href="/en/feedback">English</a>
           </footer>
           <DisplayAd pageContext="feedback" placement="bottom-banner" />
         </div>
