@@ -111,6 +111,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 - `/ads.txt` 路由已接入；拿到 publisher ID 后设置 `ADS_TXT_PUBLISHER_ID` 并确认根域可抓取。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
 - `robots.txt` 和 `sitemap.xml` 已接入，公开说明页可抓取；动态日程页、API 和带密钥 URL 首期不进入 sitemap。
 - 本地、Vercel Preview、自动化测试、站长自测和内部 QA 不加载真实广告，避免无效流量。
+- `deployment:config` 已把真实 AdSense 开启前置条件变成硬闸门：公开支持邮箱、`ADS_TXT_PUBLISHER_ID`、`ADS_PRIVACY_DISCLOSURE_READY`、`ADS_POLICY_REVIEW_READY`、`ADS_CONSENT_STRATEGY_READY`、client ID、slot ID、生产域名白名单和非 test mode 缺一不可。
 
 广告审核前需要确认这些公开资产：
 
@@ -340,23 +341,26 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 常驻展示广告：
 
-| 变量                                      | 说明                                                                            |
-| ----------------------------------------- | ------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`         | 是否启用常驻展示广告。默认 false；真实广告上线前保持关闭。                      |
-| `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW`         | 本地或 Preview 检查广告位布局用；可配合占位展示。                               |
-| `NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`        | 常驻广告提供商：`placeholder` 或 `adsense`。                                    |
-| `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS`    | 是否显示一方占位广告框，不加载第三方脚本。                                      |
-| `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`  | 带管理/编辑密钥页面的广告模式：`off`、`internal` 或 `full`。生产不应设 `full`。 |
-| `NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`   | 允许加载真实 AdSense 脚本的生产域名白名单。                                     |
-| `NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE`       | 是否使用广告平台测试模式；本地、Preview、自动化测试应避免真实请求。             |
-| `NEXT_PUBLIC_ADSENSE_CLIENT_ID`           | AdSense client ID，例如 `ca-pub-...`。                                          |
-| `NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER`     | 顶部横幅广告位 ID。                                                             |
-| `NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM_BANNER`  | 底部横幅广告位 ID。                                                             |
-| `NEXT_PUBLIC_ADSENSE_SLOT_INLINE_RESULTS` | 结果或说明内容间广告位 ID。                                                     |
-| `NEXT_PUBLIC_ADSENSE_SLOT_POST_SUBMIT`    | 提交成功后广告位 ID。                                                           |
-| `NEXT_PUBLIC_ADSENSE_SLOT_DESKTOP_RAIL`   | 桌面左右侧栏广告位 ID。                                                         |
-| `NEXT_PUBLIC_ADSENSE_SLOT_MOBILE_ANCHOR`  | 移动端可关闭底部 anchor 广告位 ID。                                             |
-| `ADS_TXT_PUBLISHER_ID`                    | 生成 `/ads.txt` 时使用的广告发布商 ID。                                         |
+| 变量                                      | 说明                                                                                                       |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`         | 是否启用常驻展示广告。默认 false；真实广告上线前保持关闭。                                                 |
+| `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW`         | 本地或 Preview 检查广告位布局用；可配合占位展示。                                                          |
+| `NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`        | 常驻广告提供商：`placeholder` 或 `adsense`。                                                               |
+| `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS`    | 是否显示一方占位广告框，不加载第三方脚本。                                                                 |
+| `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`  | 带管理/编辑密钥页面的广告模式：`off`、`internal` 或 `full`。生产不应设 `full`。                            |
+| `NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`   | 允许加载真实 AdSense 脚本的生产域名白名单。                                                                |
+| `NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE`       | 是否使用广告平台测试模式；本地、Preview、自动化测试应避免真实请求。                                        |
+| `NEXT_PUBLIC_ADSENSE_CLIENT_ID`           | AdSense client ID，例如 `ca-pub-...`。                                                                     |
+| `NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER`     | 顶部横幅广告位 ID。                                                                                        |
+| `NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM_BANNER`  | 底部横幅广告位 ID。                                                                                        |
+| `NEXT_PUBLIC_ADSENSE_SLOT_INLINE_RESULTS` | 结果或说明内容间广告位 ID。                                                                                |
+| `NEXT_PUBLIC_ADSENSE_SLOT_POST_SUBMIT`    | 提交成功后广告位 ID。                                                                                      |
+| `NEXT_PUBLIC_ADSENSE_SLOT_DESKTOP_RAIL`   | 桌面左右侧栏广告位 ID。                                                                                    |
+| `NEXT_PUBLIC_ADSENSE_SLOT_MOBILE_ANCHOR`  | 移动端可关闭底部 anchor 广告位 ID。                                                                        |
+| `ADS_TXT_PUBLISHER_ID`                    | 生成 `/ads.txt` 时使用的广告发布商 ID。                                                                    |
+| `ADS_PRIVACY_DISCLOSURE_READY`            | 真实广告上线确认项。公开隐私页补实际广告供应商、cookie/广告请求数据、退出方式和 AI 处理边界后才设 `true`。 |
+| `ADS_POLICY_REVIEW_READY`                 | 真实广告上线确认项。完成广告平台政策、无效流量、广告位置和测试计划审阅后才设 `true`。                      |
+| `ADS_CONSENT_STRATEGY_READY`              | 真实广告上线确认项。明确目标地区 cookie/consent、拒绝、退出或撤回策略后才设 `true`。                       |
 
 以下变量仍属于后续激励广告和额度系统计划，当前代码尚未读取，不需要在 Vercel 里立即配置：
 
@@ -448,7 +452,7 @@ AI 图片识别和激励广告：
 
 - 广告平台账号、站点审核、广告位置和政策要求已经确认。
 - 公开首页、`/about`、`/privacy`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已能从生产根域访问；拿到 publisher ID 后 `/ads.txt` 返回正式记录。
-- 生产环境有 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`、`NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`、`NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`、`NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`、`NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE` 和必要的 AdSense client / slot ID；`deployment:config` 不报错。
+- 生产环境有 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`、`NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`、`NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`、`NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`、`NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE=false`、`NEXT_PUBLIC_SUPPORT_EMAIL`、`ADS_TXT_PUBLISHER_ID`、`ADS_PRIVACY_DISCLOSURE_READY=true`、`ADS_POLICY_REVIEW_READY=true`、`ADS_CONSENT_STRATEGY_READY=true` 和必要的 AdSense client / slot ID；`deployment:config` 不报错。
 - 创建、填写、编辑、上传预览和密钥页面可以有外围广告，但不会被广告遮挡、诱导误触或泄露完整密钥 URL；带 `?key=` 页面不加载第三方广告脚本。
 - 隐私说明已经补充广告请求数据、广告 cookie、第三方广告技术、AI 图片识别处理边界和不诱导点击广告规则；真实广告前还需补实际广告平台、个性化广告退出方式和用户同意/拒绝规则。
 - 有创建率、填写完成率、广告收入、广告加载失败和布局稳定性监控。

@@ -247,6 +247,22 @@ describe("checkImageImportConfig", () => {
 });
 
 describe("checkDisplayAdsConfig", () => {
+  function realAdsEnvironment(overrides = {}) {
+    return {
+      ADS_CONSENT_STRATEGY_READY: "true",
+      ADS_POLICY_REVIEW_READY: "true",
+      ADS_PRIVACY_DISCLOSURE_READY: "true",
+      ADS_TXT_PUBLISHER_ID: "pub-123",
+      NEXT_PUBLIC_ADSENSE_CLIENT_ID: "ca-pub-123",
+      NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER: "123456",
+      NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS: "schedule.tonimakes.com",
+      NEXT_PUBLIC_DISPLAY_ADS_ENABLED: "true",
+      NEXT_PUBLIC_DISPLAY_ADS_PROVIDER: "adsense",
+      NEXT_PUBLIC_SUPPORT_EMAIL: "support@example.com",
+      ...overrides
+    };
+  }
+
   it("keeps display ads disabled by default", () => {
     const check = checkDisplayAdsConfig({});
 
@@ -254,12 +270,83 @@ describe("checkDisplayAdsConfig", () => {
     assert.equal(check.status, "disabled");
   });
 
+  it("requires a public support email before real AdSense deployment", () => {
+    const check = checkDisplayAdsConfig(
+      realAdsEnvironment({
+        NEXT_PUBLIC_SUPPORT_EMAIL: ""
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "missing-support-email");
+  });
+
+  it("requires ad privacy disclosure attestation before real AdSense deployment", () => {
+    const check = checkDisplayAdsConfig(
+      realAdsEnvironment({
+        ADS_PRIVACY_DISCLOSURE_READY: "false"
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "privacy-disclosure-not-ready");
+  });
+
+  it("requires ad policy review before real AdSense deployment", () => {
+    const check = checkDisplayAdsConfig(
+      realAdsEnvironment({
+        ADS_POLICY_REVIEW_READY: "false"
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "policy-review-not-ready");
+  });
+
+  it("requires consent strategy review before real AdSense deployment", () => {
+    const check = checkDisplayAdsConfig(
+      realAdsEnvironment({
+        ADS_CONSENT_STRATEGY_READY: "false"
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "consent-strategy-not-ready");
+  });
+
+  it("requires ads.txt publisher ID before real AdSense deployment", () => {
+    const check = checkDisplayAdsConfig(
+      realAdsEnvironment({
+        ADS_TXT_PUBLISHER_ID: ""
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "missing-ads-txt-publisher-id");
+  });
+
+  it("blocks AdSense test mode for real production deployment", () => {
+    const check = checkDisplayAdsConfig(
+      realAdsEnvironment({
+        NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE: "true"
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "adsense-test-mode-production");
+  });
+
   it("requires an AdSense client when AdSense is enabled for deployment", () => {
     const check = checkDisplayAdsConfig(
-      {
-        NEXT_PUBLIC_DISPLAY_ADS_ENABLED: "true",
-        NEXT_PUBLIC_DISPLAY_ADS_PROVIDER: "adsense"
-      },
+      realAdsEnvironment({
+        NEXT_PUBLIC_ADSENSE_CLIENT_ID: ""
+      }),
       { requireProductionSafe: true }
     );
 
@@ -268,16 +355,7 @@ describe("checkDisplayAdsConfig", () => {
   });
 
   it("accepts AdSense when the client, a slot, and an allowed host are configured", () => {
-    const check = checkDisplayAdsConfig(
-      {
-        NEXT_PUBLIC_ADSENSE_CLIENT_ID: "ca-pub-123",
-        NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER: "123456",
-        NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS: "schedule.tonimakes.com",
-        NEXT_PUBLIC_DISPLAY_ADS_ENABLED: "true",
-        NEXT_PUBLIC_DISPLAY_ADS_PROVIDER: "adsense"
-      },
-      { requireProductionSafe: true }
-    );
+    const check = checkDisplayAdsConfig(realAdsEnvironment(), { requireProductionSafe: true });
 
     assert.equal(check.level, "ok");
     assert.equal(check.status, "adsense-ready");

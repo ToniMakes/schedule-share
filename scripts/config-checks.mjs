@@ -318,6 +318,11 @@ export function checkDisplayAdsConfig(environment = {}, options = {}) {
   const keyedUrlMode =
     normalizeOptionalString(environment.NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE) || "internal";
   const allowedHosts = parseCsv(environment.NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS);
+  const adsTxtPublisherId = normalizeOptionalString(environment.ADS_TXT_PUBLISHER_ID);
+  const consentStrategyReady = parseBooleanFlag(environment.ADS_CONSENT_STRATEGY_READY);
+  const policyReviewReady = parseBooleanFlag(environment.ADS_POLICY_REVIEW_READY);
+  const privacyDisclosureReady = parseBooleanFlag(environment.ADS_PRIVACY_DISCLOSURE_READY);
+  const supportEmail = normalizeDisplayString(environment.NEXT_PUBLIC_SUPPORT_EMAIL);
   const testMode = parseBooleanFlag(environment.NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE);
   const configuredSlotIds = [
     environment.NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER,
@@ -372,6 +377,75 @@ export function checkDisplayAdsConfig(environment = {}, options = {}) {
       level: requireProductionSafe ? "error" : "warn",
       name: "DISPLAY_ADS",
       status: "unsafe-keyed-url-mode"
+    };
+  }
+
+  if (requireProductionSafe && testMode) {
+    return {
+      detail:
+        "NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE must be false before real production AdSense traffic.",
+      level: "error",
+      name: "DISPLAY_ADS",
+      status: "adsense-test-mode-production"
+    };
+  }
+
+  if (supportEmail.length === 0) {
+    return {
+      detail:
+        "Real display ads require NEXT_PUBLIC_SUPPORT_EMAIL for public feedback and deletion requests.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "missing-support-email"
+    };
+  }
+
+  if (!isValidEmailAddress(supportEmail)) {
+    return {
+      detail: "NEXT_PUBLIC_SUPPORT_EMAIL must be a valid public support email address.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "invalid-support-email"
+    };
+  }
+
+  if (requireProductionSafe && !privacyDisclosureReady) {
+    return {
+      detail:
+        "Set ADS_PRIVACY_DISCLOSURE_READY=true only after the public privacy page names the actual ad providers, cookie/ad request data, opt-out path, and AI processing boundary.",
+      level: "error",
+      name: "DISPLAY_ADS",
+      status: "privacy-disclosure-not-ready"
+    };
+  }
+
+  if (requireProductionSafe && !policyReviewReady) {
+    return {
+      detail:
+        "Set ADS_POLICY_REVIEW_READY=true only after reviewing the ad platform policies, invalid traffic rules, placement rules, and production test plan.",
+      level: "error",
+      name: "DISPLAY_ADS",
+      status: "policy-review-not-ready"
+    };
+  }
+
+  if (requireProductionSafe && !consentStrategyReady) {
+    return {
+      detail:
+        "Set ADS_CONSENT_STRATEGY_READY=true only after deciding the cookie/consent flow for target regions, including opt-out or consent messaging when required.",
+      level: "error",
+      name: "DISPLAY_ADS",
+      status: "consent-strategy-not-ready"
+    };
+  }
+
+  if (requireProductionSafe && adsTxtPublisherId.length === 0) {
+    return {
+      detail:
+        "Real AdSense traffic requires ADS_TXT_PUBLISHER_ID so /ads.txt returns an authorized seller record.",
+      level: "error",
+      name: "DISPLAY_ADS",
+      status: "missing-ads-txt-publisher-id"
     };
   }
 
@@ -469,6 +543,14 @@ function parseBooleanFlag(value) {
 
 function normalizeOptionalString(value) {
   return value?.trim().toLowerCase() ?? "";
+}
+
+function normalizeDisplayString(value) {
+  return value?.trim() ?? "";
+}
+
+function isValidEmailAddress(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function parseCsv(value) {

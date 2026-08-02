@@ -11,7 +11,7 @@
 
 下一阶段的产品差异化决策已经补充到 `docs/adr/0008-availability-import-and-templates.md` 和 `docs/adr/0009-multiple-availability-entry-methods.md`：优先把课表/排班导入、登录用户长期可用模板、When2meet 风格手动拖拽网格和 Doodle/Rallly 风格候选时间投票纳入“多种可用时间添加方式”策略。除手动拖拽外，这些能力只生成预填建议，不绕过用户确认，也不替代当前匿名主流程。
 
-常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、广告/AI 基础隐私披露和可配置公开支持邮箱入口；真实广告仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
+常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、真实广告上线硬闸门、广告/AI 基础隐私披露和可配置公开支持邮箱入口；真实广告仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
 
 当前本机限制：
 
@@ -102,7 +102,7 @@
 - 广告审核基础公开资产：`/about`、`/terms`、`/robots.txt` 和 `/sitemap.xml` 已接入；首页 footer 已连接关于、隐私、反馈和条款页面。
 - 公开隐私和条款披露已补充：真实广告当前关闭、广告平台可能使用 cookie / web beacon / IP / 设备 / 浏览器 / 页面 URL / 展示互动数据、普通广告不发放奖励、不要诱导广告点击、图片识别只生成可编辑预览且公开模式继续受闸门阻断。
 - `/ads.txt` 路由已接入；未设置 `ADS_TXT_PUBLISHER_ID` 时返回未配置注释，拿到广告平台 publisher ID 后可通过环境变量生成正式记录。
-- 部署配置预检已覆盖常驻展示广告：真实 AdSense 开启时必须配置 client、slot、生产域名白名单，并阻断 `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE=full`。
+- 部署配置预检已覆盖常驻展示广告：真实 AdSense 开启时必须配置公开支持邮箱、`ADS_TXT_PUBLISHER_ID`、隐私披露确认、广告政策审阅确认、consent 策略确认、client、slot、生产域名白名单，并阻断 `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE=full` 和生产 test mode。
 - GitHub 远程仓库 `https://github.com/isToniLiu/schedule-share.git` 已接入，本地 `main` 已推送到 `origin/main`。
 - Vercel project 已连接 GitHub 仓库 `isToniLiu/schedule-share`，后续 push 到 `main` 可触发自动部署。
 - 常驻展示广告、AI 图片识别成本与激励广告换额度方案文档：`docs/monetization.md`。
@@ -134,7 +134,7 @@ corepack pnpm build
 corepack pnpm db:setup
 ```
 
-当前测试总数：446。
+当前测试总数：452。
 
 真实数据库验证：
 
@@ -221,7 +221,7 @@ corepack pnpm db:setup
 - 尚未配置生产日志、监控、告警和备份演练。
 - 隐私与数据保留说明仍需正式法律审阅，正式反馈联系渠道和删除请求处理时限尚未确定。
 - 尚未做微信小程序版。
-- 尚未开放真实广告、激励广告、额度账本、商业化或支付能力；默认关闭的常驻展示广告位框架、公开审核资产、基础广告/AI 隐私披露和 `/ads.txt` 路由已实现，仍缺正式法律审阅、实际公开联系邮箱或表单、实际广告供应商披露、publisher / slot ID、AdSense 审核通过、真实广告平台接入验收、密钥 URL 迁移、广告 consent、真实广告监控、额度账本、广告服务端验证、成本护栏和前端兑换流程。
+- 尚未开放真实广告、激励广告、额度账本、商业化或支付能力；默认关闭的常驻展示广告位框架、公开审核资产、基础广告/AI 隐私披露、真实广告上线硬闸门和 `/ads.txt` 路由已实现，仍缺正式法律审阅、实际公开联系邮箱或表单、实际广告供应商披露、publisher / slot ID、AdSense 审核通过、真实广告平台接入验收、密钥 URL 迁移、广告 consent、真实广告监控、额度账本、广告服务端验证、成本护栏和前端兑换流程。
 - 图片课表/排班导入已接入基础 provider，但公开模式被代码层阻断；本地或内测需要配置 `OPENAI_API_KEY`、功能开关、release mode 和必要 token 后才能真实识别截图，仍缺少真实课表/排班样本调优。
 - 文本粘贴导入目前支持常见结构化时间文本、英文月份日期、日期/星期逗号上下文保留、英文 `from/to/until/till/between ... and ...` 自然句、英文 `noon/midnight` 时间词、结束时间 am/pm 反推开始时间、开始时间加数字时长、列表/编号和忙碌状态前缀、基础课表/排班表格粘贴、复制自合并日期表头的多行表头、日期/星期 + 时间双层表头、`Start/End` 拆分表头行、左右并排区域独立时间列、`Date/Start/End/Title`、`Date/Time/Title`、`Day/Time/Activity`、`Day of Week/Period/Activity` 这类行式排班表格、空白日期/时间继承、独立备注续行、常见导出标题/汇总/说明/页脚跳过、带明确钟点的课程节次、用户粘贴的自定义节次表、裸数字自定义节次定义、`Period/节次` 列裸数字范围和无明确钟点课程节次默认作息表预填；更复杂自然语言、更多学校特殊节次格式、更多深层分组表头和非结构化多行说明待真实样本评估。
 - `.ics` 日历导入已支持基础事件、`VFREEBUSY` 忙闲区间、常见 Windows 时区别名、`DTSTART` + `DURATION`（含周、日、时、分、秒，秒级时长向上折算到分钟）、全天事件（含缺少 `DTEND` 的 date-only `DTSTART`）、常见每日重复事件、常见每周重复事件、常见月度重复事件（含指定月份、月内日期、月末、每月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、常见年度重复事件（含同月同日、指定月份、指定月内日期、每年某月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、有限重复、`RDATE` 额外日期或 `VALUE=PERIOD` 额外时段、例外日期和同 `UID` 的 `RECURRENCE-ID` 单次取消/改期；更复杂 recurrence、更多非 IANA 时区和真实日历样本仍待补充验证。

@@ -35,29 +35,33 @@
 
 这些变量里 `NEXT_PUBLIC_*` 会进入前端 bundle，不要写任何 secret；AdSense client / slot ID 不是密钥，但仍建议只在正式准备启用时配置。
 
-| 变量                                      | 必填 | 默认          | 说明                                                                             |
-| ----------------------------------------- | ---- | ------------- | -------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`         | 否   | `false`       | 常驻展示广告总开关。生产上线真实广告前保持 false。                               |
-| `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW`         | 否   | `false`       | 本地或 Preview 看广告位布局用；会显示占位，不代表真实广告可用。                  |
-| `NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`        | 否   | `placeholder` | `placeholder` 或 `adsense`。默认只渲染一方占位，不加载第三方脚本。               |
-| `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS`    | 否   | `false`       | 是否显示占位广告框，适合本地视觉检查和内部布局验收。                             |
-| `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`  | 否   | `internal`    | 带管理/编辑密钥 URL 的广告策略：`off`、`internal` 或 `full`。生产不应设 `full`。 |
-| `NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`   | 否   | 空            | 允许加载真实 AdSense 脚本的域名白名单，例如 `schedule.tonimakes.com`。           |
-| `NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE`       | 否   | `false`       | 广告平台测试模式。本地、Preview 和自动化测试不要产生真实广告请求。               |
-| `NEXT_PUBLIC_ADSENSE_CLIENT_ID`           | 否   | 空            | AdSense client ID，例如 `ca-pub-...`。仅 provider 为 `adsense` 时使用。          |
-| `NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER`     | 否   | 空            | 顶部横幅广告位 ID。                                                              |
-| `NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM_BANNER`  | 否   | 空            | 底部横幅广告位 ID。                                                              |
-| `NEXT_PUBLIC_ADSENSE_SLOT_INLINE_RESULTS` | 否   | 空            | 结果或说明内容间广告位 ID。                                                      |
-| `NEXT_PUBLIC_ADSENSE_SLOT_POST_SUBMIT`    | 否   | 空            | 提交成功后的广告位 ID。                                                          |
-| `NEXT_PUBLIC_ADSENSE_SLOT_DESKTOP_RAIL`   | 否   | 空            | 桌面左右侧栏广告位 ID。                                                          |
-| `NEXT_PUBLIC_ADSENSE_SLOT_MOBILE_ANCHOR`  | 否   | 空            | 移动端可关闭底部 anchor 广告位 ID。                                              |
-| `ADS_TXT_PUBLISHER_ID`                    | 否   | 空            | 生成 `/ads.txt` 的 publisher ID。不设置时 `/ads.txt` 返回未配置注释。            |
+| 变量                                      | 必填 | 默认          | 说明                                                                                                               |
+| ----------------------------------------- | ---- | ------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`         | 否   | `false`       | 常驻展示广告总开关。生产上线真实广告前保持 false。                                                                 |
+| `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW`         | 否   | `false`       | 本地或 Preview 看广告位布局用；会显示占位，不代表真实广告可用。                                                    |
+| `NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`        | 否   | `placeholder` | `placeholder` 或 `adsense`。默认只渲染一方占位，不加载第三方脚本。                                                 |
+| `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS`    | 否   | `false`       | 是否显示占位广告框，适合本地视觉检查和内部布局验收。                                                               |
+| `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`  | 否   | `internal`    | 带管理/编辑密钥 URL 的广告策略：`off`、`internal` 或 `full`。生产不应设 `full`。                                   |
+| `NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`   | 否   | 空            | 允许加载真实 AdSense 脚本的域名白名单，例如 `schedule.tonimakes.com`。                                             |
+| `NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE`       | 否   | `false`       | 广告平台测试模式。本地、Preview 和自动化测试不要产生真实广告请求。                                                 |
+| `NEXT_PUBLIC_ADSENSE_CLIENT_ID`           | 否   | 空            | AdSense client ID，例如 `ca-pub-...`。仅 provider 为 `adsense` 时使用。                                            |
+| `NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER`     | 否   | 空            | 顶部横幅广告位 ID。                                                                                                |
+| `NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM_BANNER`  | 否   | 空            | 底部横幅广告位 ID。                                                                                                |
+| `NEXT_PUBLIC_ADSENSE_SLOT_INLINE_RESULTS` | 否   | 空            | 结果或说明内容间广告位 ID。                                                                                        |
+| `NEXT_PUBLIC_ADSENSE_SLOT_POST_SUBMIT`    | 否   | 空            | 提交成功后的广告位 ID。                                                                                            |
+| `NEXT_PUBLIC_ADSENSE_SLOT_DESKTOP_RAIL`   | 否   | 空            | 桌面左右侧栏广告位 ID。                                                                                            |
+| `NEXT_PUBLIC_ADSENSE_SLOT_MOBILE_ANCHOR`  | 否   | 空            | 移动端可关闭底部 anchor 广告位 ID。                                                                                |
+| `ADS_TXT_PUBLISHER_ID`                    | 否   | 空            | 生成 `/ads.txt` 的 publisher ID。不设置时 `/ads.txt` 返回未配置注释。                                              |
+| `ADS_PRIVACY_DISCLOSURE_READY`            | 否   | `false`       | 真实广告上线确认项。只有公开隐私页写明实际广告供应商、cookie/广告请求数据、退出方式和 AI 处理边界后才设为 `true`。 |
+| `ADS_POLICY_REVIEW_READY`                 | 否   | `false`       | 真实广告上线确认项。只有完成广告平台政策、无效流量、广告位置和测试计划审阅后才设为 `true`。                        |
+| `ADS_CONSENT_STRATEGY_READY`              | 否   | `false`       | 真实广告上线确认项。只有明确目标地区 cookie/consent、拒绝、退出或撤回策略后才设为 `true`。                         |
 
 当前页面位置策略：
 
 - 首页、隐私页、反馈页可以显示顶部、内容间、底部、桌面 rail 和移动 anchor。
 - 创建、填写和编辑这类高摩擦页面只在外围或提交后显示广告，不插入表单、时间格、上传预览、候选投票按钮、提交按钮附近。
 - 管理页和编辑页这类带 `?key=` 的页面传入 `thirdPartyAllowed=false`；即使将 provider 改成 `adsense`，也不会在这些页面加载第三方广告脚本。
+- `deployment:config` 会在真实 AdSense 开启时要求公开支持邮箱、`/ads.txt` publisher ID、隐私披露确认、广告政策审阅确认和 consent 策略确认；缺任一项都会阻断生产部署验证。
 
 ## 计划中的 AI 图片识别额度和激励广告变量
 
