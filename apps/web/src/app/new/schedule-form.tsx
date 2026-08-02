@@ -563,8 +563,8 @@ export function NewScheduleForm({ locale = "zh-CN" }: { readonly locale?: NewSch
             copy={copy.copy}
             copiedLabel={copy.copied}
             label={copy.managerLink}
-            onCopy={() => copyLink("owner", submitState.result.ownerUrl)}
-            value={submitState.result.ownerUrl}
+            onCopy={() => copyLink("owner", toLocalizedOwnerUrl(submitState.result.ownerUrl, copy))}
+            value={toLocalizedOwnerUrl(submitState.result.ownerUrl, copy)}
           />
           <DisplayAd pageContext="create" placement="post-submit" />
         </section>
@@ -711,5 +711,22 @@ function toLocalizedShareUrl(shareUrl: string, copy: NewScheduleFormCopy): strin
     return parsedUrl.toString();
   } catch {
     return shareUrl;
+  }
+}
+
+function toLocalizedOwnerUrl(ownerUrl: string, copy: NewScheduleFormCopy): string {
+  try {
+    const parsedUrl = new URL(ownerUrl);
+    const match = parsedUrl.pathname.match(/^\/s\/([^/]+)\/manage$/);
+    const publicId = match?.[1];
+
+    if (publicId === undefined) {
+      return ownerUrl;
+    }
+
+    parsedUrl.pathname = `${copy.managerSchedulePathPrefix}${publicId}/manage`;
+    return parsedUrl.toString();
+  } catch {
+    return ownerUrl;
   }
 }

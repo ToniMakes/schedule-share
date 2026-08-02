@@ -15,10 +15,7 @@ import { LanguageSwitcher } from "../../../../i18n/language-switcher";
 import { PageLanguage } from "../../../../i18n/page-language";
 import { EditAvailabilityForm } from "./edit-availability-form";
 import styles from "../../page.module.css";
-import {
-  schedulePageCopy,
-  type SchedulePageLocale
-} from "../../schedule-page-copy";
+import { schedulePageCopy, type SchedulePageLocale } from "../../schedule-page-copy";
 
 export interface ParticipantEditPageProps {
   readonly params: Promise<{

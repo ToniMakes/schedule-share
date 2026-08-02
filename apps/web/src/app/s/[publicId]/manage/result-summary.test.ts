@@ -158,6 +158,34 @@ describe("buildManageResultSummary", () => {
     expect(summary).toContain("开放网格：等待参与者提交可用时间。");
   });
 
+  it("summarizes ranked slots in English", () => {
+    const summary = buildManageResultSummary(
+      buildScheduleResponse({
+        results: {
+          totalParticipantCount: 3,
+          slotResults: [],
+          everyoneAvailableSlots: [],
+          everyoneAvailableBlocks: [],
+          rankedSlots: [
+            buildSlot({
+              localStartTime: "09:00",
+              availableParticipantCount: 2,
+              availableParticipantIds: ["participant-1", "participant-3"]
+            })
+          ]
+        }
+      }),
+      "en"
+    );
+
+    expect(summary).toContain("Schedule: Team dinner");
+    expect(summary).toContain("Status: Open · Participants: 3");
+    expect(summary).toContain("No time works for everyone yet. Stronger current slots (top 3):");
+    expect(summary).toContain(
+      "1. 2026-08-01 09:00-09:30: 2/3 people available (Ada, Lin); not selected: Grace"
+    );
+  });
+
   it("includes the confirmed final time when one has been selected", () => {
     const summary = buildManageResultSummary(
       buildScheduleResponse({
@@ -213,6 +241,30 @@ describe("buildManageRankedSlotCopyText", () => {
 
     expect(text).toContain("方便：Ada、Grace");
     expect(text).not.toContain("未选此时间");
+  });
+
+  it("builds English shareable copy for a ranked availability-grid slot", () => {
+    const text = buildManageRankedSlotCopyText({
+      locale: "en",
+      participants,
+      scheduleTitle: "Team dinner",
+      slot: buildSlot({
+        localStartTime: "09:00",
+        availableParticipantCount: 2,
+        availableParticipantIds: ["participant-1", "participant-3"]
+      }),
+      totalParticipantCount: 3
+    });
+
+    expect(text).toBe(
+      [
+        "Schedule: Team dinner",
+        "Candidate time: 2026-08-01 09:00-09:30",
+        "Available: 2/3 people",
+        "Available: Ada, Lin",
+        "Not selected for this time: Grace"
+      ].join("\n")
+    );
   });
 });
 

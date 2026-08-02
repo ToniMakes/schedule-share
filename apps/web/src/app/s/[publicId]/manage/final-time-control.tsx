@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { ApiClientError, confirmFinalTime, type ScheduleDetail } from "@schedule-share/api-client";
 
+import { confirmFinalTimeButtonCopy, type ConfirmFinalTimeButtonCopy } from "./manage-copy";
 import styles from "../page.module.css";
 
 export interface ConfirmableFinalTime {
@@ -14,6 +15,7 @@ export interface ConfirmableFinalTime {
 }
 
 interface ConfirmFinalTimeButtonProps {
+  readonly copy?: ConfirmFinalTimeButtonCopy;
   readonly isSelected: boolean;
   readonly ownerKey: string;
   readonly publicId: string;
@@ -27,6 +29,7 @@ type SubmitState =
   | { readonly status: "error"; readonly message: string };
 
 export function ConfirmFinalTimeButton({
+  copy = confirmFinalTimeButtonCopy["zh-CN"],
   isSelected,
   ownerKey,
   publicId,
@@ -53,7 +56,7 @@ export function ConfirmFinalTimeButton({
     } catch (error) {
       setSubmitState({
         status: "error",
-        message: toErrorMessage(error)
+        message: toErrorMessage(error, copy)
       });
     }
   }
@@ -71,7 +74,7 @@ export function ConfirmFinalTimeButton({
         ) : (
           <CalendarCheck aria-hidden="true" size={15} />
         )}
-        {isSelected ? "已设为最终" : "设为最终"}
+        {isSelected ? copy.selected : copy.select}
       </button>
       {submitState.status === "error" ? (
         <span className={styles.inlineActionError} role="alert">
@@ -82,22 +85,22 @@ export function ConfirmFinalTimeButton({
   );
 }
 
-function toErrorMessage(error: unknown): string {
+function toErrorMessage(error: unknown, copy: ConfirmFinalTimeButtonCopy): string {
   if (error instanceof ApiClientError) {
     if (error.code === "INVALID_OWNER_KEY") {
-      return "管理密钥无效。";
+      return copy.errorInvalidOwnerKey;
     }
 
     if (error.code === "VALIDATION_ERROR") {
-      return "只能选择当前可确认的时间。";
+      return copy.errorValidation;
     }
 
     if (error.code === "SCHEDULE_LOCKED") {
-      return "归档后不能再设置。";
+      return copy.errorArchived;
     }
 
     return error.message;
   }
 
-  return "设置失败。";
+  return copy.errorDefault;
 }

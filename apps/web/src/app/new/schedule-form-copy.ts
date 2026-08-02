@@ -46,6 +46,7 @@ export interface NewScheduleFormCopy {
   readonly titlePlaceholder: string;
   readonly timezone: string;
   readonly timeRange: string;
+  readonly managerSchedulePathPrefix: string;
   readonly publicSchedulePathPrefix: string;
   readonly candidatePlaceholder: (index: number) => string;
   readonly coreErrorTitle: string;
@@ -107,6 +108,7 @@ export const newScheduleFormCopy: Record<NewScheduleFormLocale, NewScheduleFormC
     titlePlaceholder: "周末聚餐",
     timezone: "时区",
     timeRange: "时间范围",
+    managerSchedulePathPrefix: "/s/",
     publicSchedulePathPrefix: "/s/",
     candidatePlaceholder: (index) => `候选 ${index + 1}`,
     coreErrorTitle: "请检查候选时间",
@@ -167,6 +169,7 @@ export const newScheduleFormCopy: Record<NewScheduleFormLocale, NewScheduleFormC
     titlePlaceholder: "Weekend dinner",
     timezone: "Time Zone",
     timeRange: "Time Range",
+    managerSchedulePathPrefix: "/en/s/",
     publicSchedulePathPrefix: "/en/s/",
     candidatePlaceholder: (index) => `Option ${index + 1}`,
     coreErrorTitle: "Check Candidate Times",

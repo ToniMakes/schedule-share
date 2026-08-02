@@ -8,10 +8,14 @@ import styles from "../page.module.css";
 type CopyState = "idle" | "copied" | "failed";
 
 export function CopyRankedSlotButton({
+  copiedLabel = "已复制",
+  copyFailedLabel = "无法自动复制，可手动选中文本。",
   fallbackAriaLabel = "备选时间复制文本",
   idleLabel = "复制此备选",
   text
 }: {
+  readonly copiedLabel?: string;
+  readonly copyFailedLabel?: string;
   readonly fallbackAriaLabel?: string;
   readonly idleLabel?: string;
   readonly text: string;
@@ -35,12 +39,12 @@ export function CopyRankedSlotButton({
         ) : (
           <Clipboard aria-hidden="true" size={15} />
         )}
-        {copyState === "copied" ? "已复制" : idleLabel}
+        {copyState === "copied" ? copiedLabel : idleLabel}
       </button>
       {copyState === "failed" ? (
         <>
           <span className={styles.inlineActionError} role="alert">
-            无法自动复制，可手动选中文本。
+            {copyFailedLabel}
           </span>
           <textarea
             aria-label={fallbackAriaLabel}

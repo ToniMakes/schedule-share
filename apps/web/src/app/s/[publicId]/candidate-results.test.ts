@@ -252,6 +252,40 @@ describe("buildCandidatePollResultCopyText", () => {
     expect(text).not.toContain("不方便/未选：");
   });
 
+  it("builds English shareable copy for organizer pages", () => {
+    const [result] = buildCandidatePollResults({
+      locale: "en",
+      participants,
+      slots: [
+        buildSlot({
+          label: "Option B",
+          startUtc: "2026-08-04T09:00:00.000Z",
+          availableParticipantCount: 1,
+          availableParticipantIds: ["participant-1"],
+          firstPreferenceParticipantCount: 1,
+          firstPreferenceParticipantIds: ["participant-1"],
+          maybeParticipantCount: 1,
+          maybeParticipantIds: ["participant-2"],
+          preferenceRankCount: 2,
+          preferenceRankSum: 3
+        })
+      ]
+    });
+
+    const text = buildCandidatePollResultCopyText({
+      locale: "en",
+      result: result!,
+      scheduleTitle: "Team dinner",
+      totalParticipantCount: participants.length
+    });
+
+    expect(text).toContain("Schedule: Team dinner");
+    expect(text).toContain("Votes: 1/3 yes · 1 maybe, Weighted support 50%");
+    expect(text).toContain("Preference: 1 first-choice, avg rank #1.5");
+    expect(text).toContain("Gaps: 1 no/not selected; 2 more yes needed; 1 maybe; 1 first-choice");
+    expect(text).toContain("No/not selected: Lin");
+  });
+
   it("includes comparison details when a lead candidate is provided", () => {
     const results = buildComparisonResults();
     const leadResult = results[0]!;

@@ -76,7 +76,7 @@
 
 当前实现状态：
 
-- `DisplayAd` / `AdPageChrome` 已接入首页、创建页、公开日程页、管理页、编辑页、关于页、隐私页、反馈页、条款页和英文公开说明页。
+- `DisplayAd` / `AdPageChrome` 已接入首页、创建页、公开日程页、管理页、编辑页、关于页、隐私页、反馈页、条款页、英文公开说明页和英文动态日程主流程。
 - 默认关闭；本地可用 `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW=true` 和 `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS=true` 查看布局占位。
 - provider 为 `placeholder` 时只显示一方占位；provider 为 `adsense` 时还需要 client ID、slot ID、域名白名单和第三方脚本安全检查。
 - 管理页和编辑页传入 `thirdPartyAllowed=false`，带 `?key=` 的敏感页面不会加载第三方广告脚本。
@@ -137,7 +137,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 - `/privacy`：已接入隐私说明基础版，并补充广告 cookie、第三方广告技术和 AI 图片识别处理边界；真实广告前继续补实际第三方广告供应商、个性化广告退出和 consent。
 - `/feedback`：已接入反馈和删除请求说明；页面支持 `NEXT_PUBLIC_SUPPORT_EMAIL`，正式上线前补专用邮箱或站内表单并重新部署。
 - `/terms`：已接入基础使用条款草案；正式上线前做法律审阅。
-- `/en`、`/en/new`、`/en/about`、`/en/privacy`、`/en/feedback` 和 `/en/terms`：已接入英文公开说明页和英文创建页，用于海外用户理解产品、进入核心创建流程，并给广告审核提供英文可读内容；`/en/s/:publicId` 已覆盖公开日程的开放网格手动填写、基础结果热力图、候选投票填写和候选投票结果面板，`/en/s/:publicId/edit/:participantId` 已覆盖参与者修改普通可用时间和候选投票。动态日程页仍不作为广告审核主要内容，图片/文件预填、管理 UI 和部分动态错误提示的完整中英双语仍需继续补。
+- `/en`、`/en/new`、`/en/about`、`/en/privacy`、`/en/feedback` 和 `/en/terms`：已接入英文公开说明页和英文创建页，用于海外用户理解产品、进入核心创建流程，并给广告审核提供英文可读内容；`/en/s/:publicId` 已覆盖公开日程的开放网格手动填写、基础结果热力图、候选投票填写和候选投票结果面板，`/en/s/:publicId/edit/:participantId` 已覆盖参与者修改普通可用时间和候选投票，`/en/s/:publicId/manage` 已覆盖组织者管理、分享链接、结果摘要、导出、复制和最终时间确认。动态日程页仍不作为广告审核主要内容，图片/文件预填和部分动态错误提示的完整中英双语仍需继续补。
 - `/ads.txt`：路由已接入；拿到 AdSense publisher ID 后配置生产环境变量。
 - `robots.txt` 和 `sitemap.xml`：已接入；继续避免密钥页进入索引。
 

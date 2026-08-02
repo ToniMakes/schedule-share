@@ -11,9 +11,12 @@ import {
   type ScheduleDetail
 } from "@schedule-share/api-client";
 
+import { lockScheduleControlCopy, type LockScheduleControlCopy } from "./manage-copy";
+import type { SchedulePageLocale } from "../schedule-page-copy";
 import styles from "../page.module.css";
 
 interface LockScheduleControlProps {
+  readonly locale?: SchedulePageLocale;
   readonly ownerKey: string;
   readonly publicId: string;
   readonly status: ScheduleDetail["status"];
@@ -25,7 +28,13 @@ type SubmitState =
   | { readonly status: "success" }
   | { readonly status: "error"; readonly message: string };
 
-export function LockScheduleControl({ ownerKey, publicId, status }: LockScheduleControlProps) {
+export function LockScheduleControl({
+  locale = "zh-CN",
+  ownerKey,
+  publicId,
+  status
+}: LockScheduleControlProps) {
+  const copy = lockScheduleControlCopy[locale];
   const router = useRouter();
   const [lockState, setLockState] = useState<SubmitState>({ status: "idle" });
   const [archiveState, setArchiveState] = useState<SubmitState>({ status: "idle" });
@@ -56,7 +65,7 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
     } catch (error) {
       setLockState({
         status: "error",
-        message: toErrorMessage(error)
+        message: toErrorMessage(error, copy)
       });
     }
   }
@@ -71,7 +80,7 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
     } catch (error) {
       setArchiveState({
         status: "error",
-        message: toErrorMessage(error)
+        message: toErrorMessage(error, copy)
       });
     }
   }
@@ -79,22 +88,22 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
   return (
     <section className={styles.formSection} aria-labelledby="manage-actions-heading">
       <div className={styles.sectionHeader}>
-        <h2 id="manage-actions-heading">管理操作</h2>
-        <span>{statusLabel(status)}</span>
+        <h2 id="manage-actions-heading">{copy.heading}</h2>
+        <span>{copy.statusLabel(status)}</span>
       </div>
       <div className={styles.actionPanel}>
         <div>
-          <strong>{actionTitle(status)}</strong>
-          <p>{actionDescription(status)}</p>
+          <strong>{copy.actionTitle(status)}</strong>
+          <p>{copy.actionDescription(status)}</p>
         </div>
         <div className={styles.managementActions}>
           <a className={styles.secondaryButton} href={exportCsvUrl}>
             <Download aria-hidden="true" size={18} />
-            导出 CSV
+            {copy.exportCsv}
           </a>
           <a className={styles.secondaryButton} href={exportIcsUrl}>
             <Calendar aria-hidden="true" size={18} />
-            导出日历
+            {copy.exportCalendar}
           </a>
           <button
             className={styles.dangerButton}
@@ -107,7 +116,7 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
             ) : (
               <Lock aria-hidden="true" size={18} />
             )}
-            锁定
+            {copy.lock}
           </button>
           <button
             className={styles.secondaryButton}
@@ -120,7 +129,7 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
             ) : (
               <Archive aria-hidden="true" size={18} />
             )}
-            归档
+            {copy.archive}
           </button>
         </div>
       </div>
@@ -136,74 +145,38 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
       ) : null}
       {lockState.status === "success" ? (
         <div className={styles.success} aria-live="polite">
-          <strong>已锁定</strong>
+          <strong>{copy.lockedSuccess}</strong>
         </div>
       ) : null}
       {archiveState.status === "success" ? (
         <div className={styles.success} aria-live="polite">
-          <strong>已归档</strong>
+          <strong>{copy.archivedSuccess}</strong>
         </div>
       ) : null}
     </section>
   );
 }
 
-function actionTitle(status: ScheduleDetail["status"]): string {
-  if (status === "archived") {
-    return "日程已经归档";
-  }
-
-  if (status === "locked") {
-    return "日程已经锁定";
-  }
-
-  return "管理日程";
-}
-
-function actionDescription(status: ScheduleDetail["status"]): string {
-  if (status === "archived") {
-    return "归档后参与者不能再提交或修改时间。";
-  }
-
-  if (status === "locked") {
-    return "参与者不能再提交或修改时间，你仍可以导出结果或归档日程。";
-  }
-
-  return "锁定会停止参与者提交；归档会把日程标记为已结束。";
-}
-
-function statusLabel(status: ScheduleDetail["status"]): string {
-  if (status === "open") {
-    return "开放中";
-  }
-
-  if (status === "locked") {
-    return "已锁定";
-  }
-
-  return "已归档";
-}
-
-function toErrorMessage(error: unknown): string {
+function toErrorMessage(error: unknown, copy: LockScheduleControlCopy): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
-      return "数据库尚未配置。";
+      return copy.errorDatabase;
     }
 
     if (error.code === "INVALID_OWNER_KEY") {
-      return "管理链接无效或缺少密钥。";
+      return copy.errorInvalidOwnerKey;
     }
 
     if (error.code === "SCHEDULE_NOT_FOUND") {
-      return "这个日程不存在或链接有误。";
+      return copy.errorNotFound;
     }
 
     return error.message;
   }
 
   if (error instanceof Error && error.name === "ZodError") {
-    return "请检查管理密钥。";
+    return copy.errorValidation;
   }
 
-  return "锁定失败。";
+  return copy.errorDefault;
 }

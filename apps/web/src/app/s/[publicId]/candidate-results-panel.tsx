@@ -24,6 +24,7 @@ import {
 } from "./candidate-results";
 import { CopyRankedSlotButton } from "./manage/copy-ranked-slot-button";
 import { ConfirmFinalTimeButton } from "./manage/final-time-control";
+import { confirmFinalTimeButtonCopy } from "./manage/manage-copy";
 import styles from "./page.module.css";
 
 interface CandidatePollResultsPanelCopy {
@@ -34,7 +35,9 @@ interface CandidatePollResultsPanelCopy {
   readonly comparisonAria: string;
   readonly comparisonTitle: string;
   readonly copyFallbackAriaLabel: string;
+  readonly copyFailedLabel: string;
   readonly copyIdleLabel: string;
+  readonly copiedLabel: string;
   readonly currentBest: string;
   readonly dateSeparator: string;
   readonly detailAria: string;
@@ -67,7 +70,9 @@ const candidatePollResultsPanelCopy: Record<CandidateResultLocale, CandidatePoll
       comparisonAria: "候选对比",
       comparisonTitle: "对比最佳",
       copyFallbackAriaLabel: "候选时间复制文本",
+      copyFailedLabel: "无法自动复制，可手动选中文本。",
       copyIdleLabel: "复制此候选",
+      copiedLabel: "已复制",
       currentBest: "当前最佳候选",
       dateSeparator: " 至 ",
       detailAria: "候选缺口",
@@ -98,7 +103,9 @@ const candidatePollResultsPanelCopy: Record<CandidateResultLocale, CandidatePoll
       comparisonAria: "Candidate comparison",
       comparisonTitle: "Compared with best",
       copyFallbackAriaLabel: "Copy candidate time summary",
+      copyFailedLabel: "Automatic copy failed. Select the text manually.",
       copyIdleLabel: "Copy this option",
+      copiedLabel: "Copied",
       currentBest: "Current Best",
       dateSeparator: " to ",
       detailAria: "Candidate gaps",
@@ -137,7 +144,7 @@ export function CandidatePollResultsPanel({
 }) {
   const copy = candidatePollResultsPanelCopy[locale];
   const reasonCopy = candidateResultReasonCopy[locale];
-  const results = buildCandidatePollResults({ participants, slots });
+  const results = buildCandidatePollResults({ locale, participants, slots });
   const totalParticipantCount = participants.length;
   const bestResults = results.filter((result) => result.isBest);
   const leadResult = results[0];
@@ -188,6 +195,7 @@ export function CandidatePollResultsPanel({
                   `${result.slot.startUtc}-${result.slot.endUtc}`
                 }
                 leadResult={leadResult}
+                locale={locale}
                 reasonCopy={reasonCopy}
                 result={result}
                 scheduleTitle={scheduleTitle}
@@ -212,6 +220,7 @@ function CandidatePollResultRow({
   copy,
   finalTimeControls,
   leadResult,
+  locale,
   reasonCopy,
   result,
   scheduleTitle,
@@ -220,6 +229,7 @@ function CandidatePollResultRow({
   readonly copy: CandidatePollResultsPanelCopy;
   readonly finalTimeControls?: CandidateFinalTimeControls;
   readonly leadResult?: CandidatePollResultItem;
+  readonly locale: CandidateResultLocale;
   readonly reasonCopy: CandidateResultReasonCopy;
   readonly result: CandidatePollResultItem;
   readonly scheduleTitle?: string;
@@ -239,6 +249,7 @@ function CandidatePollResultRow({
       ? undefined
       : buildCandidatePollResultCopyText({
           leadResult,
+          locale,
           result,
           scheduleTitle,
           totalParticipantCount
@@ -265,6 +276,8 @@ function CandidatePollResultRow({
               <>
                 {copyText === undefined ? null : (
                   <CopyRankedSlotButton
+                    copiedLabel={copy.copiedLabel}
+                    copyFailedLabel={copy.copyFailedLabel}
                     fallbackAriaLabel={copy.copyFallbackAriaLabel}
                     idleLabel={copy.copyIdleLabel}
                     text={copyText}
@@ -276,6 +289,7 @@ function CandidatePollResultRow({
                   publicId={finalTimeControls.publicId}
                   status={finalTimeControls.status}
                   time={result.slot}
+                  copy={confirmFinalTimeButtonCopy[locale]}
                 />
               </>
             )}

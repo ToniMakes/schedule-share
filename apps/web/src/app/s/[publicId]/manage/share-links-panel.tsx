@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Clipboard, KeyRound, Share2, type LucideIcon } from "lucide-react";
 
+import { manageShareLinksPanelCopy, type ManageShareLinksPanelCopy } from "./manage-copy";
 import styles from "../page.module.css";
 
 type CopyTarget = "owner" | "share";
@@ -12,18 +13,22 @@ type CopyState =
   | { readonly status: "failed" };
 
 export function ManageShareLinksPanel({
+  copy = manageShareLinksPanelCopy["zh-CN"],
   ownerKey,
   publicId
 }: {
+  readonly copy?: ManageShareLinksPanelCopy;
   readonly ownerKey: string;
   readonly publicId: string;
 }) {
   const [origin, setOrigin] = useState("");
   const [copyState, setCopyState] = useState<CopyState>({ status: "idle" });
-  const sharePath = `/s/${encodeURIComponent(publicId)}`;
-  const ownerPath = `/s/${encodeURIComponent(publicId)}/manage?${new URLSearchParams({
-    key: ownerKey
-  }).toString()}`;
+  const sharePath = `${copy.publicPathPrefix}${encodeURIComponent(publicId)}`;
+  const ownerPath = `${copy.managerPathPrefix}${encodeURIComponent(publicId)}/manage?${new URLSearchParams(
+    {
+      key: ownerKey
+    }
+  ).toString()}`;
   const shareUrl = toDisplayUrl(sharePath, origin);
   const ownerUrl = toDisplayUrl(ownerPath, origin);
 
@@ -41,28 +46,32 @@ export function ManageShareLinksPanel({
   }
 
   return (
-    <section className={styles.section} aria-label="分享与管理链接">
+    <section className={styles.section} aria-label={copy.ariaLabel}>
       <div className={styles.sectionHeader}>
-        <h2>分享链接</h2>
-        <span>可随时复制</span>
+        <h2>{copy.title}</h2>
+        <span>{copy.subtitle}</span>
       </div>
       <div className={styles.shareLinkPanel}>
         <LinkRow
+          copiedLabel={copy.copied}
+          copyLabel={copy.copy}
           copied={copyState.status === "copied" && copyState.target === "share"}
           icon={Share2}
-          label="公开填写链接"
+          label={copy.shareLabel}
           onCopy={() => copyLink("share", shareUrl)}
           value={shareUrl}
         />
         <LinkRow
+          copiedLabel={copy.copied}
+          copyLabel={copy.copy}
           copied={copyState.status === "copied" && copyState.target === "owner"}
           icon={KeyRound}
-          label="管理链接"
+          label={copy.ownerLabel}
           onCopy={() => copyLink("owner", ownerUrl)}
           value={ownerUrl}
         />
         {copyState.status === "failed" ? (
-          <p className={styles.inlineWarning}>无法自动复制，可以手动选中链接。</p>
+          <p className={styles.inlineWarning}>{copy.copyFailed}</p>
         ) : null}
       </div>
     </section>
@@ -71,12 +80,16 @@ export function ManageShareLinksPanel({
 
 function LinkRow({
   copied,
+  copiedLabel,
+  copyLabel,
   icon: Icon,
   label,
   onCopy,
   value
 }: {
   readonly copied: boolean;
+  readonly copiedLabel: string;
+  readonly copyLabel: string;
   readonly icon: LucideIcon;
   readonly label: string;
   readonly onCopy: () => void;
@@ -93,7 +106,7 @@ function LinkRow({
       </label>
       <button className={styles.copyButton} onClick={onCopy} type="button">
         <Clipboard aria-hidden="true" size={17} />
-        {copied ? "已复制" : "复制"}
+        {copied ? copiedLabel : copyLabel}
       </button>
     </div>
   );
