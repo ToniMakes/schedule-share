@@ -34,6 +34,11 @@ import {
 import styles from "../../page.module.css";
 import { rememberParticipantEditLink } from "../../participant-edit-link-memory";
 import { rememberParticipantDisplayName } from "../../participant-name-memory";
+import {
+  schedulePageCopy,
+  type AvailabilityFormCopy,
+  type SchedulePageLocale
+} from "../../schedule-page-copy";
 
 interface EditAvailabilityFormProps {
   readonly editKey: string;
@@ -41,8 +46,10 @@ interface EditAvailabilityFormProps {
   readonly initialAvailableSlots: readonly AvailabilitySlotInput[];
   readonly initialCandidateVotes?: readonly CandidateVoteInput[];
   readonly initialDisplayName: string;
+  readonly locale?: SchedulePageLocale;
   readonly participantId: string;
   readonly publicId: string;
+  readonly quickImportVisible?: boolean;
   readonly scheduleMode: ScheduleDetail["scheduleMode"];
   readonly scheduleStatus: ScheduleDetail["status"];
   readonly scheduleTimezone: string;
@@ -55,19 +62,59 @@ type SubmitState =
   | { readonly status: "success" }
   | { readonly status: "error"; readonly message: string };
 
+interface EditAvailabilityFormCopy {
+  readonly closedBody: string;
+  readonly closedTitle: string;
+  readonly errorInvalidEditKey: string;
+  readonly saveChanges: string;
+  readonly savedBody: string;
+  readonly savedTitle: string;
+  readonly titleAvailability: string;
+  readonly titleCandidate: string;
+}
+
+const editAvailabilityFormCopy: Record<SchedulePageLocale, EditAvailabilityFormCopy> = {
+  "zh-CN": {
+    closedBody: "组织者锁定或归档后，参与者不能再更新可用时间。",
+    closedTitle: "这个日程已经停止接收修改",
+    errorInvalidEditKey: "编辑链接无效或缺少密钥。",
+    saveChanges: "保存修改",
+    savedBody: "这条编辑链接仍然有效，可以继续用于调整可用时间。",
+    savedTitle: "已保存修改",
+    titleAvailability: "修改可用时间",
+    titleCandidate: "修改候选投票"
+  },
+  en: {
+    closedBody:
+      "After the organizer locks or archives the schedule, participants can no longer update availability.",
+    closedTitle: "This schedule is no longer accepting edits",
+    errorInvalidEditKey: "The edit link is invalid or missing its key.",
+    saveChanges: "Save Changes",
+    savedBody: "This edit link is still valid if you need to adjust your response again.",
+    savedTitle: "Changes Saved",
+    titleAvailability: "Edit Availability",
+    titleCandidate: "Edit Candidate Vote"
+  }
+};
+
 export function EditAvailabilityForm({
   editKey,
   imageImportVisible,
   initialAvailableSlots,
   initialCandidateVotes = [],
   initialDisplayName,
+  locale = "zh-CN",
   participantId,
   publicId,
+  quickImportVisible = true,
   scheduleMode,
   scheduleStatus,
   scheduleTimezone,
   slots
 }: EditAvailabilityFormProps) {
+  const copySet = schedulePageCopy[locale];
+  const copy = copySet.availabilityForm;
+  const editCopy = editAvailabilityFormCopy[locale];
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [selectedSlotKeys, setSelectedSlotKeys] = useState<Set<string>>(
@@ -83,6 +130,7 @@ export function EditAvailabilityForm({
   const isClosed = scheduleStatus !== "open";
   const isCandidatePoll = scheduleMode === "candidate_poll";
   const isSubmitting = submitState.status === "submitting";
+  const showQuickImport = quickImportVisible && !isCandidatePoll;
   const candidateVoteCounts = countCandidateVotes(slots, candidateResponsesBySlotKey);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -124,7 +172,7 @@ export function EditAvailabilityForm({
     } catch (error) {
       setSubmitState({
         status: "error",
-        message: toErrorMessage(error)
+        message: toErrorMessage(error, copy, editCopy)
       });
     }
   }
@@ -178,12 +226,14 @@ export function EditAvailabilityForm({
     return (
       <section className={styles.formSection} aria-labelledby="edit-availability-heading">
         <div className={styles.sectionHeader}>
-          <h2 id="edit-availability-heading">修改可用时间</h2>
-          <span>已关闭</span>
+          <h2 id="edit-availability-heading">
+            {isCandidatePoll ? editCopy.titleCandidate : editCopy.titleAvailability}
+          </h2>
+          <span>{copy.closedBadge}</span>
         </div>
         <div className={styles.emptyState}>
-          <strong>这个日程已经停止接收修改</strong>
-          <p>组织者锁定或归档后，参与者不能再更新可用时间。</p>
+          <strong>{editCopy.closedTitle}</strong>
+          <p>{editCopy.closedBody}</p>
         </div>
       </section>
     );
@@ -192,17 +242,19 @@ export function EditAvailabilityForm({
   return (
     <section className={styles.formSection} aria-labelledby="edit-availability-heading">
       <div className={styles.sectionHeader}>
-        <h2 id="edit-availability-heading">{isCandidatePoll ? "修改候选投票" : "修改可用时间"}</h2>
+        <h2 id="edit-availability-heading">
+          {isCandidatePoll ? editCopy.titleCandidate : editCopy.titleAvailability}
+        </h2>
         <span>
           {isCandidatePoll
-            ? `${candidateVoteCounts.available} 方便 · ${candidateVoteCounts.maybe} 也许`
-            : `${selectedSlotKeys.size} 个已选`}
+            ? copy.candidateCountSummary(candidateVoteCounts.available, candidateVoteCounts.maybe)
+            : copy.selectedCountSummary(selectedSlotKeys.size)}
         </span>
       </div>
 
       <form className={styles.availabilityForm} onSubmit={handleSubmit}>
         <label className={styles.participantField}>
-          <span>你的名字</span>
+          <span>{copy.displayName}</span>
           <input
             required
             maxLength={80}
@@ -211,7 +263,7 @@ export function EditAvailabilityForm({
           />
         </label>
 
-        {!isCandidatePoll ? (
+        {showQuickImport ? (
           <AvailabilityImportPanel
             imageImportVisible={imageImportVisible}
             onPreviewApplied={setSelectedSlotKeys}
@@ -222,6 +274,8 @@ export function EditAvailabilityForm({
 
         {isCandidatePoll ? (
           <CandidateVoteList
+            ariaLabel={copy.candidateHeading}
+            copy={copySet.candidateVoteList}
             onChange={setCandidateResponse}
             onPreferenceMove={moveCandidatePreference}
             onPreferenceReorder={reorderCandidatePreference}
@@ -231,6 +285,8 @@ export function EditAvailabilityForm({
           />
         ) : (
           <AvailabilitySlotGrid
+            ariaLabel={copy.availabilityAria}
+            copy={copySet.availabilitySlotGrid}
             selectedSlotKeys={selectedSlotKeys}
             setSelectedSlotKeys={setSelectedSlotKeys}
             slots={slots as readonly AvailabilityGridSlot[]}
@@ -245,8 +301,8 @@ export function EditAvailabilityForm({
 
         {submitState.status === "success" ? (
           <div className={styles.success} aria-live="polite">
-            <strong>已保存修改</strong>
-            <p>这条编辑链接仍然有效，可以继续用于调整可用时间。</p>
+            <strong>{editCopy.savedTitle}</strong>
+            <p>{editCopy.savedBody}</p>
           </div>
         ) : null}
 
@@ -261,7 +317,7 @@ export function EditAvailabilityForm({
             ) : (
               <Save aria-hidden="true" size={18} />
             )}
-            保存修改
+            {editCopy.saveChanges}
           </button>
         </div>
       </form>
@@ -269,32 +325,36 @@ export function EditAvailabilityForm({
   );
 }
 
-function toErrorMessage(error: unknown): string {
+function toErrorMessage(
+  error: unknown,
+  copy: AvailabilityFormCopy,
+  editCopy: EditAvailabilityFormCopy
+): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
-      return "数据库尚未配置。";
+      return copy.errorDatabase;
     }
 
     if (error.code === "INVALID_EDIT_KEY") {
-      return "编辑链接无效或缺少密钥。";
+      return editCopy.errorInvalidEditKey;
     }
 
     if (error.code === "SCHEDULE_LOCKED") {
-      return "这个日程已经停止接收修改。";
+      return copy.errorLocked;
     }
 
     if (error.code === "SLOT_OUT_OF_RANGE") {
-      return "提交的时间不在这个日程范围内。";
+      return copy.errorSlotOutOfRange;
     }
 
     return error.message;
   }
 
   if (error instanceof Error && error.name === "ZodError") {
-    return "请检查填写内容。";
+    return copy.errorValidation;
   }
 
-  return "保存失败。";
+  return copy.errorDefault;
 }
 
 function buildInitialCandidateResponses(

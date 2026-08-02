@@ -54,7 +54,11 @@ interface AvailabilityFormProps {
 type SubmitState =
   | { readonly status: "idle" }
   | { readonly status: "submitting" }
-  | { readonly status: "success"; readonly result: CreateParticipantAvailabilityResponse }
+  | {
+      readonly status: "success";
+      readonly editUrl: string;
+      readonly result: CreateParticipantAvailabilityResponse;
+    }
   | { readonly status: "error"; readonly message: string };
 
 type CopyState = "idle" | "copied" | "failed";
@@ -125,15 +129,17 @@ export function AvailabilityForm({
               })),
         ...(candidateVotes === undefined ? {} : { candidateVotes })
       });
+      const editUrl = localizeEditUrl(result.editUrl, locale);
 
       setSubmitState({
         status: "success",
+        editUrl,
         result
       });
       rememberParticipantDisplayName(window.localStorage, result.participant.displayName);
       rememberParticipantEditLink(window.localStorage, {
         displayName: result.participant.displayName,
-        editUrl: result.editUrl,
+        editUrl,
         participantId: result.participant.id,
         publicId
       });
@@ -369,10 +375,10 @@ export function AvailabilityForm({
             <strong>{copy.successTitle}</strong>
             <p>{copy.successBody}</p>
             <div className={styles.copyLinkRow}>
-              <input aria-label={copy.editLinkAria} readOnly value={submitState.result.editUrl} />
+              <input aria-label={copy.editLinkAria} readOnly value={submitState.editUrl} />
               <button
                 className={styles.copyButton}
-                onClick={() => copyEditLink(submitState.result.editUrl)}
+                onClick={() => copyEditLink(submitState.editUrl)}
                 type="button"
               >
                 <Clipboard aria-hidden="true" size={17} />
@@ -415,6 +421,28 @@ function toErrorMessage(error: unknown, copy: AvailabilityFormCopy): string {
   }
 
   return copy.errorDefault;
+}
+
+function localizeEditUrl(editUrl: string, locale: SchedulePageLocale): string {
+  if (locale !== "en") {
+    return editUrl;
+  }
+
+  try {
+    const url = new URL(editUrl);
+
+    if (url.pathname.startsWith("/s/")) {
+      url.pathname = `/en${url.pathname}`;
+    }
+
+    return url.toString();
+  } catch {
+    if (editUrl.startsWith("/s/")) {
+      return `/en${editUrl}`;
+    }
+
+    return editUrl;
+  }
 }
 
 function buildCandidateVotes(
