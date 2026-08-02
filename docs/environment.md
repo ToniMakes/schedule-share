@@ -15,6 +15,9 @@
 | `DATABASE_MIGRATION_URL`                 | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。                   |
 | `APP_BASE_URL`                           | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                                          |
 | `NEXT_PUBLIC_SUPPORT_EMAIL`              | 否   | Web 页面                                              | `support@example.com`                       | 公开反馈和删除请求邮箱。会进入前端 bundle；只填写准备公开展示的支持邮箱，不要填写私人邮箱或内部密钥。                                              |
+| `CRON_SECRET`                            | 是   | Vercel Cron、Web API、`deployment:config`             | `random-long-secret`                        | 保护 `/api/maintenance/cleanup-expired-schedules`。Vercel Cron 会用 `Authorization: Bearer <CRON_SECRET>` 调用；生产和 Preview 需要设置。          |
+| `SCHEDULE_HARD_DELETE_GRACE_DAYS`        | 否   | Web API、`deployment:config`                          | `30`                                        | 已归档日程在 `expires_at` 后继续保留多少天再硬删除。默认 30，允许 1 到 365。                                                                       |
+| `SCHEDULE_CLEANUP_BATCH_SIZE`            | 否   | Web API、`deployment:config`                          | `100`                                       | 每次清理任务最多归档和硬删除的日程数量。默认 100，允许 1 到 1000。                                                                                 |
 | `OPENAI_API_KEY`                         | 否   | Web API                                               | `sk-...`                                    | 图片课表/排班导入识别的 OpenAI 凭证。这个 key 本身不会开放功能；还必须通过 `AI_IMAGE_IMPORT_ENABLED` 和 release mode。未配置时图片导入返回不可用。 |
 | `OPENAI_IMAGE_IMPORT_MODEL`              | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                                    |
 | `AI_IMAGE_IMPORT_ENABLED`                | 否   | Web API                                               | `false`                                     | 图片识别总开关。默认 false；即使配置了 `OPENAI_API_KEY`，这里不是 true 也不会调用 OpenAI。                                                         |
@@ -32,6 +35,17 @@
 | `AI_IMAGE_CREDITS_ENFORCED`              | 否   | Web API                                               | `false`                                     | 是否强制 `image_import` 先消耗额度。设为 true 时无额度会返回 `AI_CREDIT_REQUIRED`；公开开放前仍保持 false，直到免费额度和广告兑换入口完成。        |
 | `AI_IMAGE_COST_GUARDRAIL_ENABLED`        | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的成本护栏确认。当前仅作为硬闸门条件之一，实际全站成本上限和紧急关闭实现前保持 false。                                           |
 | `SMOKE_BASE_URL`                         | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                                          |
+
+## 日程清理变量
+
+`vercel.json` 已配置每日调用 `/api/maintenance/cleanup-expired-schedules`。该接口只接受带 `Authorization: Bearer <CRON_SECRET>` 的请求；未配置或传错 secret 时不会清理数据。
+
+清理策略：
+
+- 已过 `expires_at` 的 `open` / `locked` 日程会先自动归档。
+- 已经 `archived` 且 `expires_at` 早于当前时间减去 `SCHEDULE_HARD_DELETE_GRACE_DAYS` 的日程会硬删除。
+- 硬删除会先清理该日程关联的 AI 图片识别尝试和额度记录，再删除日程；参与者、可用时间、候选项和投票通过数据库级联一起删除。
+- 默认每天最多归档 100 条、硬删除 100 条；如后续流量变大，可调大 `SCHEDULE_CLEANUP_BATCH_SIZE`。
 
 ## 常驻展示广告变量
 
@@ -151,6 +165,7 @@ corepack pnpm dev
 DATABASE_URL=postgres://...
 DATABASE_MIGRATION_URL=postgres://...
 APP_BASE_URL=https://schedule.tonimakes.com
+CRON_SECRET=<generate-a-long-random-secret>
 AI_IMAGE_IMPORT_ENABLED=false
 AI_IMAGE_IMPORT_RELEASE_MODE=off
 ```

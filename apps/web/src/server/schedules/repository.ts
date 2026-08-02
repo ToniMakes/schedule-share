@@ -1,4 +1,6 @@
 import {
+  aiRecognitionAttempts,
+  aiRecognitionCreditGrants,
   availabilitySlots,
   candidateTimeOptions as candidateTimeOptionsTable,
   candidateVotes as candidateVotesTable,
@@ -10,7 +12,7 @@ import {
   type ScheduleStatus,
   type StoredDailyWindow
 } from "@schedule-share/db";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, lte, ne } from "drizzle-orm";
 
 export interface CreateScheduleRecord {
   readonly publicId: string;
@@ -164,6 +166,10 @@ export interface ArchivedScheduleRecord {
   readonly status: "archived";
 }
 
+export interface ScheduleMaintenanceMutationResult {
+  readonly count: number;
+}
+
 export interface CreateScheduleRepository {
   createSchedule(record: CreateScheduleRecord): Promise<CreatedScheduleRecord>;
 }
@@ -212,6 +218,18 @@ export interface ArchiveScheduleRepository extends ReadOwnerScheduleRepository {
   archiveSchedule(scheduleId: string): Promise<ArchivedScheduleRecord | undefined>;
 }
 
+export interface ScheduleMaintenanceRepository {
+  archiveExpiredSchedules(input: {
+    readonly expiresAtOrBefore: Date;
+    readonly limit: number;
+    readonly now: Date;
+  }): Promise<ScheduleMaintenanceMutationResult>;
+  hardDeleteArchivedSchedules(input: {
+    readonly expiresAtOrBefore: Date;
+    readonly limit: number;
+  }): Promise<ScheduleMaintenanceMutationResult>;
+}
+
 export interface ScheduleRepository
   extends
     CreateScheduleRepository,
@@ -222,7 +240,8 @@ export interface ScheduleRepository
     ReadOwnerScheduleRepository,
     LockScheduleRepository,
     ConfirmFinalTimeRepository,
-    ArchiveScheduleRepository {}
+    ArchiveScheduleRepository,
+    ScheduleMaintenanceRepository {}
 
 export class DrizzleScheduleRepository implements ScheduleRepository {
   constructor(private readonly database: Database) {}
@@ -727,5 +746,82 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       publicId: updated.publicId,
       status: "archived"
     };
+  }
+
+  async archiveExpiredSchedules(input: {
+    readonly expiresAtOrBefore: Date;
+    readonly limit: number;
+    readonly now: Date;
+  }): Promise<ScheduleMaintenanceMutationResult> {
+    const expiredSchedules = await this.database
+      .select({
+        id: schedules.id
+      })
+      .from(schedules)
+      .where(
+        and(ne(schedules.status, "archived"), lte(schedules.expiresAt, input.expiresAtOrBefore))
+      )
+      .orderBy(asc(schedules.expiresAt), asc(schedules.createdAt))
+      .limit(input.limit);
+
+    const scheduleIds = expiredSchedules.map((schedule) => schedule.id);
+
+    if (scheduleIds.length === 0) {
+      return { count: 0 };
+    }
+
+    const archived = await this.database
+      .update(schedules)
+      .set({
+        status: "archived",
+        updatedAt: input.now
+      })
+      .where(and(inArray(schedules.id, scheduleIds), ne(schedules.status, "archived")))
+      .returning({
+        id: schedules.id
+      });
+
+    return { count: archived.length };
+  }
+
+  async hardDeleteArchivedSchedules(input: {
+    readonly expiresAtOrBefore: Date;
+    readonly limit: number;
+  }): Promise<ScheduleMaintenanceMutationResult> {
+    return await this.database.transaction(async (transaction) => {
+      const expiredArchivedSchedules = await transaction
+        .select({
+          id: schedules.id
+        })
+        .from(schedules)
+        .where(
+          and(eq(schedules.status, "archived"), lte(schedules.expiresAt, input.expiresAtOrBefore))
+        )
+        .orderBy(asc(schedules.expiresAt), asc(schedules.createdAt))
+        .limit(input.limit);
+
+      const scheduleIds = expiredArchivedSchedules.map((schedule) => schedule.id);
+
+      if (scheduleIds.length === 0) {
+        return { count: 0 };
+      }
+
+      await transaction
+        .delete(aiRecognitionAttempts)
+        .where(inArray(aiRecognitionAttempts.scheduleId, scheduleIds));
+
+      await transaction
+        .delete(aiRecognitionCreditGrants)
+        .where(inArray(aiRecognitionCreditGrants.scheduleId, scheduleIds));
+
+      const deleted = await transaction
+        .delete(schedules)
+        .where(and(eq(schedules.status, "archived"), inArray(schedules.id, scheduleIds)))
+        .returning({
+          id: schedules.id
+        });
+
+      return { count: deleted.length };
+    });
   }
 }

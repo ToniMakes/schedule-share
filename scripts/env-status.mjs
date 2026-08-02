@@ -4,6 +4,7 @@ import {
   checkDatabaseUrl,
   checkDisplayAdsConfig,
   checkImageImportConfig,
+  checkMaintenanceCronConfig,
   checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
   hasCheckLevel
@@ -16,6 +17,7 @@ const checks = [
   checkMigrationDatabaseUrl(process.env.DATABASE_MIGRATION_URL, process.env.DATABASE_URL),
   checkSmokeBaseUrl(process.env.SMOKE_BASE_URL),
   checkAppBaseUrl(process.env.APP_BASE_URL),
+  checkMaintenanceCronConfig(process.env),
   checkDisplayAdsConfig(process.env),
   checkImageImportConfig(process.env)
 ];

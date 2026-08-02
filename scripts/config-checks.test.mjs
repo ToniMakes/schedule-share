@@ -6,6 +6,7 @@ import {
   checkDatabaseUrl,
   checkDisplayAdsConfig,
   checkImageImportConfig,
+  checkMaintenanceCronConfig,
   checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
   hasCheckLevel,
@@ -305,6 +306,49 @@ describe("checkImageImportConfig", () => {
 
     assert.equal(check.level, "error");
     assert.equal(check.status, "public-not-supported");
+  });
+});
+
+describe("checkMaintenanceCronConfig", () => {
+  it("warns when CRON_SECRET is missing locally", () => {
+    const check = checkMaintenanceCronConfig({});
+
+    assert.equal(check.level, "warn");
+    assert.equal(check.status, "missing-cron-secret");
+  });
+
+  it("requires CRON_SECRET during deployment preflight", () => {
+    const check = checkMaintenanceCronConfig({}, { requireProductionSafe: true });
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "missing-cron-secret");
+  });
+
+  it("rejects invalid cleanup policy values", () => {
+    const check = checkMaintenanceCronConfig(
+      {
+        CRON_SECRET: "secret",
+        SCHEDULE_HARD_DELETE_GRACE_DAYS: "0"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "invalid-hard-delete-grace-days");
+  });
+
+  it("accepts a protected cleanup cron configuration", () => {
+    const check = checkMaintenanceCronConfig(
+      {
+        CRON_SECRET: "secret",
+        SCHEDULE_CLEANUP_BATCH_SIZE: "250",
+        SCHEDULE_HARD_DELETE_GRACE_DAYS: "45"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "ready");
   });
 });
 

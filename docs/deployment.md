@@ -4,7 +4,7 @@
 
 - Web 应用：运行 `apps/web` 的 Next.js 服务。
 - Postgres 数据库：保存日程、参与者和可用时间。
-- 环境变量：生产环境至少需要设置 `DATABASE_URL`，建议设置 `APP_BASE_URL`。
+- 环境变量：生产环境至少需要设置 `DATABASE_URL` 和 `CRON_SECRET`，建议设置 `APP_BASE_URL`。
 - 域名：先使用托管平台分配的临时域名验证流程，再绑定 `schedule.tonimakes.com`。
 
 ## 当前推荐配置
@@ -25,6 +25,8 @@
 - 生产 Web 运行时必须设置 `DATABASE_URL`。
 - 如果 `DATABASE_URL` 是 Neon pooled 连接串，migration 建议额外设置 `DATABASE_MIGRATION_URL` 为 direct 连接串。
 - 生产 Web 运行时建议设置 `APP_BASE_URL`，用于生成稳定的分享、管理和编辑链接；不设置时会按请求 Host 推断。
+- 生产和 Preview 需要设置 `CRON_SECRET`，用于保护 Vercel Cron 调用的 `/api/maintenance/cleanup-expired-schedules`。
+- `SCHEDULE_HARD_DELETE_GRACE_DAYS` 和 `SCHEDULE_CLEANUP_BATCH_SIZE` 可按流量调整；默认 30 天宽限期、每次 100 条。
 - 本地或部署验证终端需要设置 `DATABASE_URL`，用于 `db:check` 和 `verify:deployment`；migration 会优先使用 `DATABASE_MIGRATION_URL`，缺失时再使用 `DATABASE_URL`。
 - 命令行脚本会自动读取项目根目录的 `.env.local` 和 `.env`；当前 shell 中已设置的变量优先级最高。
 - `SMOKE_BASE_URL` 只用于本地验证脚本，指向要测试的站点地址；不需要作为 Web 应用的生产运行时变量。
@@ -35,7 +37,7 @@
 
 1. 确认 CI 通过：`format`、`lint`、`typecheck`、`test`、`build`。
 2. 创建 Neon Postgres 数据库，区域优先选择 Singapore，并确认备份策略。
-3. 在部署平台设置 `DATABASE_URL`，如果使用 Neon pooled URL，也设置 `DATABASE_MIGRATION_URL` 为 direct URL；建议同时设置 `APP_BASE_URL=https://schedule.tonimakes.com`。
+3. 在部署平台设置 `DATABASE_URL` 和 `CRON_SECRET`，如果使用 Neon pooled URL，也设置 `DATABASE_MIGRATION_URL` 为 direct URL；建议同时设置 `APP_BASE_URL=https://schedule.tonimakes.com`。
 4. 在本地终端运行 `corepack pnpm env:status`，确认连接串指向目标数据库且输出已打码。
 5. 对生产数据库执行初始化：`corepack pnpm db:setup`。它会运行 migration，并在结束后执行 `db:check`。
 6. 部署 Web 应用。
@@ -60,6 +62,16 @@
   }
 }
 ```
+
+## 定时清理
+
+`vercel.json` 已配置每日触发 `/api/maintenance/cleanup-expired-schedules`。该接口使用 `CRON_SECRET` 鉴权：
+
+- 未配置 `CRON_SECRET` 时接口返回 `503`，不会清理。
+- 请求缺少或传错 `Authorization: Bearer <CRON_SECRET>` 时接口返回 `401`，不会清理。
+- 成功时会返回本次自动归档和硬删除数量。
+
+Vercel Production/Preview 添加或修改 `CRON_SECRET` 后，需要重新部署一次，确保运行时和 Cron 调用都拿到最新配置。
 
 ## 部署验证
 

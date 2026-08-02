@@ -4,6 +4,7 @@ import {
   checkDatabaseUrl,
   checkDisplayAdsConfig,
   checkImageImportConfig,
+  checkMaintenanceCronConfig,
   checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
   hasCheckLevel
@@ -18,6 +19,7 @@ const checks = [
   }),
   checkSmokeBaseUrl(process.env.SMOKE_BASE_URL, { requireRemote: true }),
   checkAppBaseUrl(process.env.APP_BASE_URL, { requireRemote: true }),
+  checkMaintenanceCronConfig(process.env, { requireProductionSafe: true }),
   checkDisplayAdsConfig(process.env, { requireProductionSafe: true }),
   checkImageImportConfig(process.env, { requireProductionSafe: true })
 ];

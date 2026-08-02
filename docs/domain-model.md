@@ -26,6 +26,13 @@
 - `updated_at`：UTC 时间。
 - `expires_at`：UTC 时间。
 
+生命周期规则：
+
+- 新建日程默认设置 90 天后的 `expires_at`。
+- 当前已支持组织者手动把日程从 `open` 或 `locked` 归档为 `archived`。
+- 当前已实现受 `CRON_SECRET` 保护的自动维护任务：按 `expires_at` 自动归档过期日程，并在归档宽限期结束后硬删除 archived 日程。
+- 删除日程时，参与者、可用时间、候选时间和投票等从属数据通过数据库级联一起清理；硬删除会先清理该日程关联的 AI 图片识别尝试和日程范围内的 AI 额度记录，再删除日程，避免 `ai_recognition_attempts.credit_grant_id` 的外键限制阻断清理。广告验证记录目前不直接绑定日程，只保存哈希化事件与 scope，需要在真实 rewarded ad provider 接入前继续定义审计保留期。
+
 ### Participant
 
 一个参与者在某个日程中的身份。

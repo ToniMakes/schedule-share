@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "corepack pnpm --filter @schedule-share/web build",
+  "crons": [
+    {
+      "path": "/api/maintenance/cleanup-expired-schedules",
+      "schedule": "0 17 * * *"
+    }
+  ],
   "devCommand": "corepack pnpm dev",
   "framework": "nextjs",
   "installCommand": "corepack pnpm install --frozen-lockfile",

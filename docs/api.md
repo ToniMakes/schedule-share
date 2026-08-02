@@ -43,6 +43,36 @@
 }
 ```
 
+## 维护：清理过期日程
+
+`GET /api/maintenance/cleanup-expired-schedules`
+
+状态：已实现。内部维护接口，不面向普通用户。
+
+运行要求：
+
+- 服务端需要 `DATABASE_URL`。
+- Vercel Cron 已在 `vercel.json` 中配置每日触发。
+- 请求必须带 `Authorization: Bearer <CRON_SECRET>`；未配置或不匹配时不会执行清理。
+- 已过 `expires_at` 的 `open` / `locked` 日程会自动归档。
+- 已经 `archived` 且超过 `SCHEDULE_HARD_DELETE_GRACE_DAYS` 的日程会硬删除；参与者、可用时间、候选项和投票随日程清理，AI 图片识别尝试和日程范围额度记录会在删除日程前清理。
+
+成功响应：`200`
+
+```json
+{
+  "maintenance": {
+    "archivedCount": 2,
+    "batchSize": 100,
+    "deletedCount": 1,
+    "expiresAtCutoff": "2026-08-02T12:00:00.000Z",
+    "hardDeleteCutoff": "2026-07-03T12:00:00.000Z",
+    "hardDeleteGraceDays": 30,
+    "ranAt": "2026-08-02T12:00:00.000Z"
+  }
+}
+```
+
 ## 创建日程
 
 `POST /api/schedules`

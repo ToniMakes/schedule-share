@@ -212,6 +212,58 @@ export function checkAppBaseUrl(rawValue, options = {}) {
   };
 }
 
+export function checkMaintenanceCronConfig(environment = {}, options = {}) {
+  const requireProductionSafe = options.requireProductionSafe ?? false;
+  const level = requireProductionSafe ? "error" : "warn";
+  const cronSecret = normalizeDisplayString(environment.CRON_SECRET);
+
+  if (cronSecret.length === 0) {
+    return {
+      detail:
+        "CRON_SECRET is required because vercel.json schedules /api/maintenance/cleanup-expired-schedules.",
+      level,
+      name: "MAINTENANCE_CRON",
+      status: "missing-cron-secret"
+    };
+  }
+
+  const hardDeleteGraceDays = parseNumericConfig(environment.SCHEDULE_HARD_DELETE_GRACE_DAYS, {
+    defaultValue: 30,
+    integer: true,
+    maxValue: 365,
+    minValue: 1,
+    name: "SCHEDULE_HARD_DELETE_GRACE_DAYS",
+    status: "invalid-hard-delete-grace-days"
+  });
+  const batchSize = parseNumericConfig(environment.SCHEDULE_CLEANUP_BATCH_SIZE, {
+    defaultValue: 100,
+    integer: true,
+    maxValue: 1000,
+    minValue: 1,
+    name: "SCHEDULE_CLEANUP_BATCH_SIZE",
+    status: "invalid-cleanup-batch-size"
+  });
+
+  for (const parsed of [hardDeleteGraceDays, batchSize]) {
+    if (parsed.error !== undefined) {
+      return {
+        detail: parsed.error,
+        level,
+        name: "MAINTENANCE_CRON",
+        status: parsed.status
+      };
+    }
+  }
+
+  return {
+    detail:
+      "Schedule cleanup cron is protected. Expired schedules will be archived before archived records are hard-deleted after the grace period.",
+    level: "ok",
+    name: "MAINTENANCE_CRON",
+    status: "ready"
+  };
+}
+
 export function checkImageImportConfig(environment = {}, options = {}) {
   const requireProductionSafe = options.requireProductionSafe ?? false;
   const apiKey = environment.OPENAI_API_KEY?.trim() ?? "";
