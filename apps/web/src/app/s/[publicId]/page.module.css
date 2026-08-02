@@ -1257,6 +1257,13 @@
   gap: 8px;
 }
 
+.slotPickerActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .slotDayNav {
   min-width: 0;
   display: flex;
@@ -1378,6 +1385,161 @@
   border-color: #16a34a;
   background: #f0fdf4;
   color: #047857;
+}
+
+.availabilityMatrixShell {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgb(15 23 42 / 4%);
+  scrollbar-width: thin;
+}
+
+.availabilityMatrix {
+  isolation: isolate;
+  display: grid;
+  align-items: stretch;
+  background: #d8dee8;
+  user-select: none;
+}
+
+.slotPickerPainting .availabilityMatrix {
+  cursor: cell;
+}
+
+.availabilityMatrixCorner,
+.availabilityMatrixDateHeader,
+.availabilityMatrixTimeHeader {
+  background: #f8fafc;
+}
+
+.availabilityMatrixCorner {
+  position: sticky;
+  z-index: 4;
+  top: 0;
+  left: 0;
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  border-right: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.availabilityMatrixDateHeader {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  min-width: 0;
+  min-height: 58px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  border-right: 1px solid #d8dee8;
+  border-bottom: 1px solid #cbd5e1;
+  color: var(--foreground);
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.availabilityMatrixDateHeader span {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.availabilityMatrixDateHeader strong {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.availabilityMatrixDateHeader em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.availabilityMatrixDateHeaderActive {
+  background: #ecfdf5;
+}
+
+.availabilityMatrixDateHeaderActive span,
+.availabilityMatrixDateHeaderActive strong,
+.availabilityMatrixDateHeaderActive em {
+  color: #047857;
+}
+
+.availabilityMatrixTimeHeader {
+  position: sticky;
+  z-index: 2;
+  left: 0;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-right: 1px solid #cbd5e1;
+  border-bottom: 1px solid #e2e8f0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.availabilityMatrixCell,
+.availabilityMatrixEmptyCell {
+  min-width: 0;
+  min-height: 28px;
+  border: 0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.availabilityMatrixCell {
+  position: relative;
+  background: #fff1f2;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.availabilityMatrixCell:hover {
+  background: #ffe4e6;
+}
+
+.availabilityMatrixCell:focus-visible {
+  z-index: 5;
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.availabilityMatrixCellSelected {
+  background: #16a34a;
+  border-color: #15803d;
+}
+
+.availabilityMatrixCellSelected:hover {
+  background: #15803d;
+}
+
+.availabilityMatrixCellSelected::after {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgb(255 255 255 / 54%);
+  border-radius: 3px;
+  content: "";
+}
+
+.availabilityMatrixEmptyCell {
+  background: #f1f5f9;
 }
 
 .inlineActionStack {
@@ -2030,9 +2192,42 @@
   }
 
   .slotInteractionBar,
+  .slotPickerActions,
   .slotDayActions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .availabilityMatrixShell {
+    max-height: 70vh;
+  }
+
+  .availabilityMatrixCorner,
+  .availabilityMatrixDateHeader {
+    min-height: 54px;
+  }
+
+  .availabilityMatrixDateHeader {
+    padding: 7px 4px;
+  }
+
+  .availabilityMatrixDateHeader span {
+    font-size: 13px;
+  }
+
+  .availabilityMatrixDateHeader strong,
+  .availabilityMatrixDateHeader em {
+    font-size: 11px;
+  }
+
+  .availabilityMatrixTimeHeader,
+  .availabilityMatrixCell,
+  .availabilityMatrixEmptyCell {
+    min-height: 30px;
+  }
+
+  .availabilityMatrixTimeHeader {
+    padding: 0 6px;
   }
 
   .slotChoiceGrid {

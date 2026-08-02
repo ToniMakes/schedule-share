@@ -1,23 +1,24 @@
 "use client";
 
 import {
+  Fragment,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type Dispatch,
   type KeyboardEvent,
   type PointerEvent,
   type SetStateAction
 } from "react";
-import { CheckSquare, Eraser, MousePointerClick, Paintbrush } from "lucide-react";
+import { CheckSquare, Eraser } from "lucide-react";
 
 import type { TimeSlotDto } from "@schedule-share/api-client";
 
 import styles from "./page.module.css";
 
 type PaintMode = "select" | "clear";
-type InteractionMode = "tap" | "paint";
 
 interface ActivePaintState {
   readonly mode: PaintMode;
@@ -29,6 +30,19 @@ export type AvailabilityGridSlot = TimeSlotDto & {
   readonly availableParticipantCount?: number;
 };
 
+export interface AvailabilitySlotMatrixDay {
+  readonly date: string;
+  readonly slots: readonly AvailabilityGridSlot[];
+}
+
+export interface AvailabilitySlotMatrixRow {
+  readonly endTime: string;
+  readonly key: string;
+  readonly label: string;
+  readonly slotsByDate: ReadonlyMap<string, AvailabilityGridSlot>;
+  readonly startTime: string;
+}
+
 interface AvailabilitySlotGridProps {
   readonly ariaLabel?: string;
   readonly selectedSlotKeys: ReadonlySet<string>;
@@ -37,13 +51,7 @@ interface AvailabilitySlotGridProps {
   readonly totalParticipantCount?: number;
 }
 
-const heatClasses = [
-  styles.slotHeat0,
-  styles.slotHeat1,
-  styles.slotHeat2,
-  styles.slotHeat3,
-  styles.slotHeat4
-] as const;
+const weekdayLabels = ["日", "一", "二", "三", "四", "五", "六"] as const;
 
 export function AvailabilitySlotGrid({
   ariaLabel = "可用时间",
@@ -52,25 +60,18 @@ export function AvailabilitySlotGrid({
   slots,
   totalParticipantCount
 }: AvailabilitySlotGridProps) {
-  const [interactionMode, setInteractionMode] = useState<InteractionMode>("paint");
   const [paintMode, setPaintMode] = useState<PaintMode | undefined>(undefined);
   const activePaintRef = useRef<ActivePaintState | undefined>(undefined);
-  const dayRefs = useRef(new Map<string, HTMLDivElement>());
-  const hasInitializedInteractionMode = useRef(false);
-  const slotGroups = useMemo(() => groupSlotsByDate(slots), [slots]);
-  const slotSummary = summarizeSlotGroups(slotGroups, selectedSlotKeys);
-
-  useEffect(() => {
-    if (hasInitializedInteractionMode.current || typeof window === "undefined") {
-      return;
-    }
-
-    hasInitializedInteractionMode.current = true;
-
-    if (window.matchMedia("(max-width: 640px)").matches) {
-      setInteractionMode("tap");
-    }
-  }, []);
+  const suppressNextClickRef = useRef(false);
+  const matrix = useMemo(() => buildAvailabilitySlotMatrix(slots), [slots]);
+  const slotSummary = summarizeSlotGroups(matrix.days, selectedSlotKeys);
+  const matrixStyle = useMemo<CSSProperties>(
+    () => ({
+      gridTemplateColumns: `minmax(68px, 0.72fr) repeat(${matrix.days.length}, minmax(58px, 1fr))`,
+      minWidth: `${Math.max(620, 68 + matrix.days.length * 64)}px`
+    }),
+    [matrix.days.length]
+  );
 
   useEffect(() => {
     if (paintMode === undefined) {
@@ -92,7 +93,7 @@ export function AvailabilitySlotGrid({
   }, [paintMode]);
 
   function beginPainting(key: string, event: PointerEvent<HTMLButtonElement>) {
-    if (interactionMode !== "paint" || event.button !== 0) {
+    if (event.button !== 0) {
       return;
     }
 
@@ -104,21 +105,18 @@ export function AvailabilitySlotGrid({
       mode: nextMode,
       pointerId: event.pointerId
     };
+    suppressNextClickRef.current = true;
     setPaintMode(nextMode);
     applySlotPaint(key, nextMode);
 
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
-      // Some embedded browsers do not expose pointer capture for synthetic pointers.
+      // Pointer capture may be unavailable in a few embedded browser surfaces.
     }
   }
 
   function paintEnteredSlot(key: string) {
-    if (interactionMode !== "paint") {
-      return;
-    }
-
     if (paintMode === undefined) {
       return;
     }
@@ -129,11 +127,7 @@ export function AvailabilitySlotGrid({
   function paintPointedSlot(event: PointerEvent<HTMLButtonElement>) {
     const activePaint = activePaintRef.current;
 
-    if (
-      interactionMode !== "paint" ||
-      activePaint === undefined ||
-      activePaint.pointerId !== event.pointerId
-    ) {
+    if (activePaint === undefined || activePaint.pointerId !== event.pointerId) {
       return;
     }
 
@@ -156,10 +150,22 @@ export function AvailabilitySlotGrid({
 
     activePaintRef.current = undefined;
     setPaintMode(undefined);
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }
 
   function applySlotPaint(key: string, mode: PaintMode) {
     setSelectedSlotKeys((currentKeys) => {
+      if (mode === "select" && currentKeys.has(key)) {
+        return currentKeys;
+      }
+
+      if (mode === "clear" && !currentKeys.has(key)) {
+        return currentKeys;
+      }
+
       const nextKeys = new Set(currentKeys);
 
       if (mode === "select") {
@@ -187,18 +193,19 @@ export function AvailabilitySlotGrid({
   }
 
   function handleSlotClick(key: string) {
-    if (interactionMode !== "tap") {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
       return;
     }
 
     toggleSlot(key);
   }
 
-  function selectGroup(groupSlots: readonly AvailabilityGridSlot[]) {
+  function selectSlots(targetSlots: readonly AvailabilityGridSlot[]) {
     setSelectedSlotKeys((currentKeys) => {
       const nextKeys = new Set(currentKeys);
 
-      for (const slot of groupSlots) {
+      for (const slot of targetSlots) {
         nextKeys.add(slotKey(slot));
       }
 
@@ -206,11 +213,11 @@ export function AvailabilitySlotGrid({
     });
   }
 
-  function clearGroup(groupSlots: readonly AvailabilityGridSlot[]) {
+  function clearSlots(targetSlots: readonly AvailabilityGridSlot[]) {
     setSelectedSlotKeys((currentKeys) => {
       const nextKeys = new Set(currentKeys);
 
-      for (const slot of groupSlots) {
+      for (const slot of targetSlots) {
         nextKeys.delete(slotKey(slot));
       }
 
@@ -227,15 +234,21 @@ export function AvailabilitySlotGrid({
     toggleSlot(key);
   }
 
-  function scrollToDay(date: string) {
-    dayRefs.current.get(date)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+  if (matrix.days.length === 0 || matrix.rows.length === 0) {
+    return (
+      <div className={styles.emptyState} role="status">
+        <strong>没有可填写的时间格</strong>
+        <p>创建者还没有为这个日程生成可选时间。</p>
+      </div>
+    );
   }
 
   return (
-    <div className={styles.slotPicker} role="group" aria-label={ariaLabel}>
+    <div
+      className={`${styles.slotPicker} ${paintMode === undefined ? "" : styles.slotPickerPainting}`}
+      role="group"
+      aria-label={ariaLabel}
+    >
       <div className={styles.slotPickerControls}>
         <div className={styles.slotProgressSummary} aria-live="polite">
           <strong>
@@ -245,133 +258,91 @@ export function AvailabilitySlotGrid({
             {slotSummary.activeDayCount}/{slotSummary.dayCount} 天有选择
           </span>
         </div>
-        <div className={styles.slotInteractionBar} role="group" aria-label="选择方式">
-          <button
-            aria-pressed={interactionMode === "tap"}
-            className={`${styles.compactButton} ${
-              interactionMode === "tap" ? styles.compactButtonActive : ""
-            }`}
-            onClick={() => setInteractionMode("tap")}
-            type="button"
-          >
-            <MousePointerClick aria-hidden="true" size={15} />
-            点按
+        <div className={styles.slotPickerActions} role="group" aria-label="批量选择">
+          <button className={styles.compactButton} onClick={() => selectSlots(slots)} type="button">
+            <CheckSquare aria-hidden="true" size={15} />
+            全选
           </button>
-          <button
-            aria-pressed={interactionMode === "paint"}
-            className={`${styles.compactButton} ${
-              interactionMode === "paint" ? styles.compactButtonActive : ""
-            }`}
-            onClick={() => setInteractionMode("paint")}
-            type="button"
-          >
-            <Paintbrush aria-hidden="true" size={15} />
-            涂选
+          <button className={styles.compactButton} onClick={() => clearSlots(slots)} type="button">
+            <Eraser aria-hidden="true" size={15} />
+            清空
           </button>
         </div>
       </div>
-      <nav className={styles.slotDayNav} aria-label="日期快速跳转">
-        {slotGroups.map((group) => {
-          const selectedCount = countSelectedSlots(group.slots, selectedSlotKeys);
 
-          return (
-            <button
-              aria-label={`${group.date}，已选 ${selectedCount}/${group.slots.length}`}
-              className={[
-                styles.slotDayNavButton,
-                selectedCount > 0 ? styles.slotDayNavButtonSelected : undefined
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              key={group.date}
-              onClick={() => scrollToDay(group.date)}
-              type="button"
-            >
-              <span>{compactDateLabel(group.date)}</span>
-              <strong>
-                {selectedCount}/{group.slots.length}
-              </strong>
-            </button>
-          );
-        })}
-      </nav>
-      {slotGroups.map((group, index) => (
-        <div
-          className={styles.slotDay}
-          key={group.date}
-          ref={(node) => {
-            if (node === null) {
-              dayRefs.current.delete(group.date);
-              return;
-            }
+      <div className={styles.availabilityMatrixShell}>
+        <div className={styles.availabilityMatrix} style={matrixStyle}>
+          <div className={styles.availabilityMatrixCorner}>时间</div>
+          {matrix.days.map((day) => {
+            const selectedCount = countSelectedSlots(day.slots, selectedSlotKeys);
 
-            dayRefs.current.set(group.date, node);
-          }}
-        >
-          <div className={styles.slotDayHeader}>
-            <div>
-              <h3>{group.date}</h3>
-              <span className={styles.slotDayCount}>
-                第 {index + 1}/{slotGroups.length} 天 ·{" "}
-                {countSelectedSlots(group.slots, selectedSlotKeys)}/{group.slots.length} 已选
-              </span>
-            </div>
-            <div className={styles.slotDayActions}>
-              <button
-                className={styles.compactButton}
-                onClick={() => selectGroup(group.slots)}
-                type="button"
+            return (
+              <div
+                className={[
+                  styles.availabilityMatrixDateHeader,
+                  selectedCount > 0 ? styles.availabilityMatrixDateHeaderActive : undefined
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                key={day.date}
               >
-                <CheckSquare aria-hidden="true" size={15} />
-                全选
-              </button>
-              <button
-                className={styles.compactButton}
-                onClick={() => clearGroup(group.slots)}
-                type="button"
-              >
-                <Eraser aria-hidden="true" size={15} />
-                清空
-              </button>
-            </div>
-          </div>
-          <div className={styles.slotChoiceGrid}>
-            {group.slots.map((slot) => {
-              const key = slotKey(slot);
-              const selected = selectedSlotKeys.has(key);
+                <span>{compactDateLabel(day.date)}</span>
+                <strong>{weekdayLabel(day.date)}</strong>
+                <em>
+                  {selectedCount}/{day.slots.length}
+                </em>
+              </div>
+            );
+          })}
 
-              return (
-                <button
-                  aria-pressed={selected}
-                  className={slotChoiceClassName(
-                    slot,
-                    selected,
-                    totalParticipantCount,
-                    interactionMode
-                  )}
-                  data-slot-key={key}
-                  key={key}
-                  onClick={() => handleSlotClick(key)}
-                  onKeyDown={(event) => handleSlotKeyDown(key, event)}
-                  onPointerDown={(event) => beginPainting(key, event)}
-                  onPointerEnter={() => paintEnteredSlot(key)}
-                  onPointerMove={(event) => paintPointedSlot(event)}
-                  onPointerUp={(event) => endPainting(event)}
-                  type="button"
-                >
-                  {slot.label ? <span className={styles.slotChoiceLabel}>{slot.label}</span> : null}
-                  <span className={styles.slotChoiceTime}>
-                    {slot.localStartTime}-{slot.localEndTime}
-                  </span>
-                  <span className={styles.slotChoiceMeta}>
-                    {slotMetaText(slot, totalParticipantCount)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {matrix.rows.map((row) => (
+            <Fragment key={row.key}>
+              <div className={styles.availabilityMatrixTimeHeader}>
+                <span>{row.startTime}</span>
+              </div>
+              {matrix.days.map((day) => {
+                const slot = row.slotsByDate.get(day.date);
+
+                if (slot === undefined) {
+                  return (
+                    <div
+                      aria-hidden="true"
+                      className={styles.availabilityMatrixEmptyCell}
+                      key={`${day.date}-${row.key}`}
+                    />
+                  );
+                }
+
+                const key = slotKey(slot);
+                const selected = selectedSlotKeys.has(key);
+
+                return (
+                  <button
+                    aria-label={slotAriaLabel(slot, selected, totalParticipantCount)}
+                    aria-pressed={selected}
+                    className={[
+                      styles.availabilityMatrixCell,
+                      selected ? styles.availabilityMatrixCellSelected : undefined
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    data-slot-key={key}
+                    key={key}
+                    onClick={() => handleSlotClick(key)}
+                    onKeyDown={(event) => handleSlotKeyDown(key, event)}
+                    onPointerDown={(event) => beginPainting(key, event)}
+                    onPointerEnter={() => paintEnteredSlot(key)}
+                    onPointerMove={(event) => paintPointedSlot(event)}
+                    onPointerUp={(event) => endPainting(event)}
+                    title={slotTooltip(slot, selected, totalParticipantCount)}
+                    type="button"
+                  />
+                );
+              })}
+            </Fragment>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -390,7 +361,9 @@ export function countSelectedSlots(
   );
 }
 
-export function groupSlotsByDate(slots: readonly AvailabilityGridSlot[]) {
+export function groupSlotsByDate(
+  slots: readonly AvailabilityGridSlot[]
+): AvailabilitySlotMatrixDay[] {
   const groups = new Map<string, AvailabilityGridSlot[]>();
 
   for (const slot of slots) {
@@ -401,6 +374,44 @@ export function groupSlotsByDate(slots: readonly AvailabilityGridSlot[]) {
     date,
     slots: groupSlots
   }));
+}
+
+export function buildAvailabilitySlotMatrix(slots: readonly AvailabilityGridSlot[]): {
+  readonly days: readonly AvailabilitySlotMatrixDay[];
+  readonly rows: readonly AvailabilitySlotMatrixRow[];
+} {
+  const days = groupSlotsByDate(slots);
+  const rowsByKey = new Map<
+    string,
+    {
+      endTime: string;
+      key: string;
+      label: string;
+      slotsByDate: Map<string, AvailabilityGridSlot>;
+      startTime: string;
+    }
+  >();
+
+  for (const day of days) {
+    for (const slot of day.slots) {
+      const key = slotTimeKey(slot);
+      const row = rowsByKey.get(key) ?? {
+        endTime: slot.localEndTime,
+        key,
+        label: `${slot.localStartTime}-${slot.localEndTime}`,
+        slotsByDate: new Map<string, AvailabilityGridSlot>(),
+        startTime: slot.localStartTime
+      };
+
+      row.slotsByDate.set(day.date, slot);
+      rowsByKey.set(key, row);
+    }
+  }
+
+  return {
+    days,
+    rows: Array.from(rowsByKey.values()).sort(compareMatrixRows)
+  };
 }
 
 export function summarizeSlotGroups(
@@ -440,20 +451,30 @@ export function compactDateLabel(localDate: string): string {
   return `${Number(match[2])}/${Number(match[3])}`;
 }
 
-function slotChoiceClassName(
-  slot: AvailabilityGridSlot,
-  selected: boolean,
-  totalParticipantCount: number | undefined,
-  interactionMode: InteractionMode
-): string {
-  return [
-    styles.slotChoice,
-    heatClasses[slotHeatLevel(slot, totalParticipantCount)],
-    interactionMode === "paint" ? styles.slotChoicePaintMode : undefined,
-    selected ? styles.slotChoiceSelected : undefined
-  ]
-    .filter(Boolean)
-    .join(" ");
+export function weekdayLabel(localDate: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(localDate);
+
+  if (match === null) {
+    return "";
+  }
+
+  const [, year, month, day] = match;
+  const dayIndex = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getUTCDay();
+
+  return weekdayLabels[dayIndex] ?? "";
+}
+
+function compareMatrixRows(
+  first: Pick<AvailabilitySlotMatrixRow, "endTime" | "startTime">,
+  second: Pick<AvailabilitySlotMatrixRow, "endTime" | "startTime">
+): number {
+  return (
+    first.startTime.localeCompare(second.startTime) || first.endTime.localeCompare(second.endTime)
+  );
+}
+
+function slotTimeKey(slot: Pick<AvailabilityGridSlot, "localEndTime" | "localStartTime">): string {
+  return `${slot.localStartTime}/${slot.localEndTime}`;
 }
 
 function slotKeyFromPoint(clientX: number, clientY: number): string | undefined {
@@ -467,34 +488,26 @@ function slotKeyFromPoint(clientX: number, clientY: number): string | undefined 
   return slotElement.dataset.slotKey;
 }
 
-function slotHeatLevel(
+function slotAriaLabel(
   slot: AvailabilityGridSlot,
+  selected: boolean,
   totalParticipantCount: number | undefined
-): 0 | 1 | 2 | 3 | 4 {
-  if (
-    totalParticipantCount === undefined ||
-    totalParticipantCount <= 0 ||
-    slot.availableParticipantCount === undefined ||
-    slot.availableParticipantCount <= 0
-  ) {
-    return 0;
-  }
+): string {
+  return [
+    `${slot.localStartDate} ${slot.localStartTime}-${slot.localEndTime}`,
+    selected ? "已标记可用" : "未标记可用",
+    slotMetaText(slot, totalParticipantCount)
+  ].join("，");
+}
 
-  const ratio = slot.availableParticipantCount / totalParticipantCount;
-
-  if (ratio >= 1) {
-    return 4;
-  }
-
-  if (ratio >= 0.66) {
-    return 3;
-  }
-
-  if (ratio >= 0.33) {
-    return 2;
-  }
-
-  return 1;
+function slotTooltip(
+  slot: AvailabilityGridSlot,
+  selected: boolean,
+  totalParticipantCount: number | undefined
+): string {
+  return `${slot.localStartDate} ${slot.localStartTime}-${slot.localEndTime}\n${
+    selected ? "已标记可用" : "未标记可用"
+  }\n${slotMetaText(slot, totalParticipantCount)}`;
 }
 
 function slotMetaText(

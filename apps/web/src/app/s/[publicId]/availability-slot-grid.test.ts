@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildAvailabilitySlotMatrix,
   compactDateLabel,
   countSelectedSlots,
   groupSlotsByDate,
   slotKey,
   summarizeSlotGroups,
+  weekdayLabel,
   type AvailabilityGridSlot
 } from "./availability-slot-grid";
 
@@ -42,6 +44,32 @@ describe("countSelectedSlots", () => {
     ]);
 
     expect(countSelectedSlots(groupSlots, selectedSlotKeys)).toBe(1);
+  });
+});
+
+describe("buildAvailabilitySlotMatrix", () => {
+  it("builds date columns and time rows for a when2meet-style grid", () => {
+    const mondayNine = buildSlot({
+      localStartDate: "2026-09-07",
+      localStartTime: "09:00"
+    });
+    const tuesdayNine = buildSlot({
+      localStartDate: "2026-09-08",
+      localStartTime: "09:00"
+    });
+    const mondayTen = buildSlot({
+      localStartDate: "2026-09-07",
+      localStartTime: "10:00"
+    });
+
+    const matrix = buildAvailabilitySlotMatrix([mondayNine, tuesdayNine, mondayTen]);
+
+    expect(matrix.days.map((day) => day.date)).toEqual(["2026-09-07", "2026-09-08"]);
+    expect(matrix.rows.map((row) => row.label)).toEqual(["09:00-09:30", "10:00-10:30"]);
+    expect(matrix.rows[0]?.slotsByDate.get("2026-09-07")).toBe(mondayNine);
+    expect(matrix.rows[0]?.slotsByDate.get("2026-09-08")).toBe(tuesdayNine);
+    expect(matrix.rows[1]?.slotsByDate.get("2026-09-07")).toBe(mondayTen);
+    expect(matrix.rows[1]?.slotsByDate.has("2026-09-08")).toBe(false);
   });
 });
 
@@ -94,6 +122,16 @@ describe("compactDateLabel", () => {
 
   it("keeps non-ISO labels unchanged", () => {
     expect(compactDateLabel("next Monday")).toBe("next Monday");
+  });
+});
+
+describe("weekdayLabel", () => {
+  it("formats ISO local dates as Chinese weekday labels", () => {
+    expect(weekdayLabel("2026-09-07")).toBe("一");
+  });
+
+  it("keeps non-ISO labels quiet", () => {
+    expect(weekdayLabel("next Monday")).toBe("");
   });
 });
 
