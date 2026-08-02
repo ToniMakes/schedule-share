@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, CalendarCheck, CalendarDays, Clock, Lock, Users } from "lucide-react";
+import { ArrowLeft, CalendarCheck, CalendarDays, Clock, Lock, Trophy, Users } from "lucide-react";
 
 import type {
   GetScheduleResponse,
@@ -15,6 +15,11 @@ import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 import { ConfirmFinalTimeButton } from "./final-time-control";
 import { LockScheduleControl } from "./lock-schedule-control";
+import {
+  buildAvailabilityRecommendation,
+  type AvailabilityRecommendation,
+  type AvailabilityRecommendationItem
+} from "./availability-recommendation";
 import { CopyRankedSlotButton } from "./copy-ranked-slot-button";
 import { ManageResultSummaryPanel } from "./result-summary-panel";
 import { buildManageRankedSlotCopyText, buildManageResultSummary } from "./result-summary";
@@ -66,6 +71,7 @@ function ManageView({
   const everyoneBlocks = data.results.everyoneAvailableBlocks.slice(0, 6);
   const rankedSlots = data.results.rankedSlots.slice(0, 8);
   const resultSummary = buildManageResultSummary(data);
+  const availabilityRecommendation = buildAvailabilityRecommendation(data);
 
   return (
     <main className={styles.page}>
@@ -137,6 +143,16 @@ function ManageView({
           />
         ) : (
           <>
+            <AvailabilityRecommendationPanel
+              ownerKey={ownerKey}
+              participants={data.participants}
+              publicId={data.schedule.publicId}
+              recommendation={availabilityRecommendation}
+              selectedFinalTime={data.schedule.finalTime}
+              slotMinutes={data.schedule.slotMinutes}
+              status={data.schedule.status}
+            />
+
             <AvailabilityHeatmapPanel
               slots={data.results.slotResults}
               totalParticipantCount={data.results.totalParticipantCount}
@@ -199,6 +215,197 @@ function ManageView({
   );
 }
 
+function AvailabilityRecommendationPanel({
+  ownerKey,
+  participants,
+  publicId,
+  recommendation,
+  selectedFinalTime,
+  slotMinutes,
+  status
+}: {
+  readonly ownerKey: string;
+  readonly participants: GetScheduleResponse["participants"];
+  readonly publicId: string;
+  readonly recommendation: AvailabilityRecommendation;
+  readonly selectedFinalTime: TimeSlotDto | null;
+  readonly slotMinutes: number;
+  readonly status: GetScheduleResponse["schedule"]["status"];
+}) {
+  return (
+    <section className={styles.bestTimeSection}>
+      <div className={styles.sectionHeader}>
+        <h2>系统推荐最佳时间</h2>
+        <span>{recommendationStatusLabel(recommendation)}</span>
+      </div>
+
+      {recommendation.status === "ready" ? (
+        <div className={styles.bestTimePanel}>
+          <RecommendedTimeCard
+            item={recommendation.primary}
+            ownerKey={ownerKey}
+            participants={participants}
+            publicId={publicId}
+            selectedFinalTime={selectedFinalTime}
+            slotMinutes={slotMinutes}
+            status={status}
+            totalParticipantCount={recommendation.totalParticipantCount}
+          />
+
+          {recommendation.alternates.length > 0 ? (
+            <div className={styles.bestTimeAlternates}>
+              <h3>备选推荐</h3>
+              <ul className={styles.bestTimeAlternateList}>
+                {recommendation.alternates.map((item) => (
+                  <RecommendationAlternateItem
+                    item={item}
+                    key={`${item.startUtc}-${item.endUtc}`}
+                    participants={participants}
+                    slotMinutes={slotMinutes}
+                    totalParticipantCount={recommendation.totalParticipantCount}
+                  />
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className={styles.emptyState}>
+          <strong>{recommendationEmptyTitle(recommendation)}</strong>
+          <p>{recommendationEmptyDescription(recommendation)}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RecommendedTimeCard({
+  item,
+  ownerKey,
+  participants,
+  publicId,
+  selectedFinalTime,
+  slotMinutes,
+  status,
+  totalParticipantCount
+}: {
+  readonly item: AvailabilityRecommendationItem;
+  readonly ownerKey: string;
+  readonly participants: GetScheduleResponse["participants"];
+  readonly publicId: string;
+  readonly selectedFinalTime: TimeSlotDto | null;
+  readonly slotMinutes: number;
+  readonly status: GetScheduleResponse["schedule"]["status"];
+  readonly totalParticipantCount: number;
+}) {
+  const availableNames = formatAvailableParticipantNames(
+    item.availableParticipantIds,
+    participants
+  );
+  const unavailableNames = formatUnavailableParticipantNames(
+    item.availableParticipantIds,
+    participants
+  );
+  const canConfirm = item.kind === "all_available";
+  const exportIcsUrl = canConfirm ? availabilityBlockIcsExportUrl(publicId, ownerKey, item) : "";
+
+  return (
+    <article className={styles.bestTimeHero}>
+      <div className={styles.bestTimeIcon}>
+        <Trophy aria-hidden="true" size={22} />
+      </div>
+      <div className={styles.bestTimeHeroBody}>
+        <span className={styles.bestTimeBadge}>{recommendationItemBadge(item)}</span>
+        <h3>
+          {formatLocalDateRange(item)} {formatLocalTimeRange(item)}
+        </h3>
+        <p>{recommendationHeadline(item, totalParticipantCount)}</p>
+
+        <div className={styles.bestTimeMetrics} aria-label="推荐依据">
+          <span className={styles.bestTimeMetric}>
+            <strong>{formatAvailabilityRatio(item, totalParticipantCount)}</strong>
+            <em>可用人数</em>
+          </span>
+          <span className={styles.bestTimeMetric}>
+            <strong>{item.availablePercent}%</strong>
+            <em>覆盖率</em>
+          </span>
+          <span className={styles.bestTimeMetric}>
+            <strong>{formatDuration(item.slotCount, slotMinutes)}</strong>
+            <em>连续时长</em>
+          </span>
+        </div>
+
+        <div className={styles.bestTimePeople}>
+          <p>
+            <strong>可用：</strong>
+            {availableNames.length > 0 ? availableNames : "暂无"}
+          </p>
+          {unavailableNames.length > 0 ? (
+            <p>
+              <strong>未覆盖：</strong>
+              {unavailableNames}
+            </p>
+          ) : null}
+        </div>
+
+        {canConfirm ? (
+          <div className={styles.bestTimeActions}>
+            <ConfirmFinalTimeButton
+              isSelected={isSelectedFinalTime(selectedFinalTime, item)}
+              ownerKey={ownerKey}
+              publicId={publicId}
+              status={status}
+              time={item}
+            />
+            <a className={styles.compactButton} href={exportIcsUrl}>
+              <CalendarDays aria-hidden="true" size={15} />
+              导出此时间
+            </a>
+          </div>
+        ) : (
+          <p className={styles.bestTimePeakNote}>
+            这不是全员可用时间，先作为折中建议展示；最终确认仍需要选择全员可用时间，或让未覆盖的人再调整。
+          </p>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function RecommendationAlternateItem({
+  item,
+  participants,
+  slotMinutes,
+  totalParticipantCount
+}: {
+  readonly item: AvailabilityRecommendationItem;
+  readonly participants: GetScheduleResponse["participants"];
+  readonly slotMinutes: number;
+  readonly totalParticipantCount: number;
+}) {
+  const availableNames = formatAvailableParticipantNames(
+    item.availableParticipantIds,
+    participants
+  );
+
+  return (
+    <li className={styles.bestTimeAlternateItem}>
+      <div>
+        <strong>
+          {formatLocalDateRange(item)} {formatLocalTimeRange(item)}
+        </strong>
+        <span>
+          {formatAvailabilityRatio(item, totalParticipantCount)} ·{" "}
+          {formatDuration(item.slotCount, slotMinutes)}
+          {availableNames.length > 0 ? ` · 可用：${availableNames}` : ""}
+        </span>
+      </div>
+      <span className={styles.bestTimeAlternateBadge}>{recommendationItemBadge(item)}</span>
+    </li>
+  );
+}
+
 function ManageAvailabilityBlockItem({
   block,
   ownerKey,
@@ -213,8 +420,7 @@ function ManageAvailabilityBlockItem({
   readonly status: GetScheduleResponse["schedule"]["status"];
 }) {
   const exportIcsUrl = availabilityBlockIcsExportUrl(publicId, ownerKey, block);
-  const isSelected =
-    selectedFinalTime?.startUtc === block.startUtc && selectedFinalTime.endUtc === block.endUtc;
+  const isSelected = isSelectedFinalTime(selectedFinalTime, block);
 
   return (
     <div className={styles.blockItem}>
@@ -404,6 +610,60 @@ function toPageErrorMessage(error: unknown): string {
   return "服务器暂时无法读取管理页。";
 }
 
+function recommendationStatusLabel(recommendation: AvailabilityRecommendation): string {
+  if (recommendation.status === "ready") {
+    return recommendationItemBadge(recommendation.primary);
+  }
+
+  if (recommendation.status === "waiting") {
+    return "等待填写";
+  }
+
+  return `${recommendation.totalParticipantCount} 人参与`;
+}
+
+function recommendationItemBadge(item: AvailabilityRecommendationItem): string {
+  if (item.kind === "all_available") {
+    return "全员可用";
+  }
+
+  return "最多人可用";
+}
+
+function recommendationHeadline(
+  item: AvailabilityRecommendationItem,
+  totalParticipantCount: number
+): string {
+  if (item.kind === "all_available") {
+    return "这是当前最长的全员共同可用时间，可以直接设为最终时间并导出日历。";
+  }
+
+  return `当前没有全员重叠时间，这一段覆盖 ${formatAvailabilityRatio(
+    item,
+    totalParticipantCount
+  )}，适合作为下一轮协调的首选。`;
+}
+
+function recommendationEmptyTitle(
+  recommendation: Exclude<AvailabilityRecommendation, { status: "ready" }>
+): string {
+  if (recommendation.status === "waiting") {
+    return "还在等待参与者填写";
+  }
+
+  return "还没有可推荐的时间";
+}
+
+function recommendationEmptyDescription(
+  recommendation: Exclude<AvailabilityRecommendation, { status: "ready" }>
+): string {
+  if (recommendation.status === "waiting") {
+    return "有人提交可用时间后，系统会自动挑出覆盖人数最多、连续时长更好的时间段。";
+  }
+
+  return `已有 ${recommendation.totalParticipantCount} 人参与，但还没有任何可用时间槽。`;
+}
+
 function formatLocalDateRange(value: Pick<TimeSlotDto, "localStartDate" | "localEndDate">): string {
   if (value.localStartDate === value.localEndDate) {
     return value.localStartDate;
@@ -416,10 +676,45 @@ function formatLocalTimeRange(value: Pick<TimeSlotDto, "localStartTime" | "local
   return `${value.localStartTime}-${value.localEndTime}`;
 }
 
+function formatAvailabilityRatio(
+  item: Pick<AvailabilityRecommendationItem, "availableParticipantCount">,
+  totalParticipantCount: number
+): string {
+  return `${item.availableParticipantCount}/${totalParticipantCount} 人`;
+}
+
+function formatDuration(slotCount: number, slotMinutes: number): string {
+  const totalMinutes = slotCount * slotMinutes;
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} 分钟`;
+  }
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (minutes === 0) {
+    return `${hours} 小时`;
+  }
+
+  return `${hours} 小时 ${minutes} 分钟`;
+}
+
+function isSelectedFinalTime(
+  selectedFinalTime: TimeSlotDto | null,
+  time: Pick<TimeSlotDto, "startUtc" | "endUtc">
+): boolean {
+  return (
+    selectedFinalTime !== null &&
+    selectedFinalTime.startUtc === time.startUtc &&
+    selectedFinalTime.endUtc === time.endUtc
+  );
+}
+
 function availabilityBlockIcsExportUrl(
   publicId: string,
   ownerKey: string,
-  block: GetScheduleResponse["results"]["everyoneAvailableBlocks"][number]
+  block: Pick<TimeSlotDto, "startUtc" | "endUtc">
 ): string {
   return `/api/schedules/${encodeURIComponent(publicId)}/export?${new URLSearchParams({
     endUtc: block.endUtc,

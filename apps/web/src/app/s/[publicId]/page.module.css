@@ -306,6 +306,199 @@
   box-shadow: 0 0 0 3px rgb(37 99 235 / 14%);
 }
 
+.bestTimeSection {
+  border-top: 1px solid var(--border);
+  padding: 28px 0;
+}
+
+.bestTimePanel {
+  display: grid;
+  gap: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 46%, #f0fdfa 100%);
+  padding: 16px;
+}
+
+.bestTimeHero {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.bestTimeIcon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.bestTimeHeroBody {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.bestTimeBadge,
+.bestTimeAlternateBadge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 4px 8px;
+}
+
+.bestTimeHero h3 {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: var(--foreground);
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.bestTimeHero p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.55;
+}
+
+.bestTimeMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bestTimeMetric {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 78%);
+  padding: 10px;
+}
+
+.bestTimeMetric strong {
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.bestTimeMetric em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.bestTimePeople {
+  display: grid;
+  gap: 6px;
+  border-left: 3px solid #60a5fa;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 68%);
+  padding: 9px 11px;
+}
+
+.bestTimePeople p {
+  overflow-wrap: anywhere;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.bestTimePeople strong {
+  color: var(--foreground);
+}
+
+.bestTimeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.bestTimePeakNote {
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+  background: #fffbeb;
+  color: #92400e !important;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.bestTimeAlternates {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.26);
+  padding-top: 14px;
+}
+
+.bestTimeAlternates h3 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.bestTimeAlternateList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bestTimeAlternateItem {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 72%);
+  padding: 11px 12px;
+}
+
+.bestTimeAlternateItem strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.bestTimeAlternateItem span {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.bestTimeAlternateItem .bestTimeAlternateBadge {
+  display: inline-flex;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+
 .candidateResults {
   display: grid;
   gap: 14px;
@@ -2332,6 +2525,8 @@
   .summaryGrid,
   .actionPanel,
   .resultSummaryHeader,
+  .bestTimeHero,
+  .bestTimeAlternateItem,
   .copyLinkRow,
   .blockItem,
   .slotItem,
@@ -2356,6 +2551,14 @@
   .candidateLeadScore {
     min-width: 0;
     text-align: left;
+  }
+
+  .bestTimeMetrics {
+    grid-template-columns: 1fr;
+  }
+
+  .bestTimeActions {
+    display: grid;
   }
 
   .rememberedEditActions {
