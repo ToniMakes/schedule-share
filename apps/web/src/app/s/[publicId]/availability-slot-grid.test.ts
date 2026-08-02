@@ -5,8 +5,10 @@ import {
   compactDateLabel,
   countSelectedSlots,
   groupSlotsByDate,
+  isWholeHour,
   slotKey,
   summarizeSlotGroups,
+  timeTickLabel,
   weekdayLabel,
   type AvailabilityGridSlot
 } from "./availability-slot-grid";
@@ -132,6 +134,20 @@ describe("weekdayLabel", () => {
 
   it("keeps non-ISO labels quiet", () => {
     expect(weekdayLabel("next Monday")).toBe("");
+  });
+});
+
+describe("timeTickLabel", () => {
+  it("shows labels only on whole-hour rows", () => {
+    expect(timeTickLabel("09:00")).toBe("09:00");
+    expect(timeTickLabel("09:30")).toBe("");
+  });
+});
+
+describe("isWholeHour", () => {
+  it("detects whole-hour local times", () => {
+    expect(isWholeHour("18:00")).toBe(true);
+    expect(isWholeHour("18:15")).toBe(false);
   });
 });
 
