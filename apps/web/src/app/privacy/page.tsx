@@ -27,6 +27,20 @@ const usageItems = [
   "让组织者查看结果、导出 CSV、锁定或归档日程。"
 ];
 
+const plannedAdItems = [
+  "真实展示广告当前默认关闭；开启前会先配置广告平台账号、广告位、生产域名白名单和广告平台要求的 consent 或隐私消息。",
+  "第三方广告供应商未来可能通过广告请求、cookie、web beacon、IP 地址、设备信息、浏览器信息、页面 URL、广告展示和互动数据来投放、衡量或防止无效流量。",
+  "本工具不会主动把日程标题、参与者姓名、可用时间、上传图片、识别文本、管理密钥或编辑密钥作为广告定向字段发送给广告平台。",
+  "带管理密钥或编辑密钥的页面在完成 URL 密钥迁移前不加载第三方广告脚本。"
+];
+
+const aiImportItems = [
+  "图片识别当前不对公众开放；即使配置了 OpenAI API key，也必须同时通过功能开关、release mode、额度账本、成本护栏和广告验证后才会开放。",
+  "如果用户主动使用图片识别，图片会被发送给配置的 AI provider，用来生成可编辑的可用时间预览。",
+  "识别结果只作为草稿，用户确认提交前不会写入该日程。",
+  "默认不保存原始图片、完整 OCR 文本或未确认的识别明细；后续额度系统只记录必要的状态、成本估算、文件类型、文件大小和失败/退款信息。"
+];
+
 export default function PrivacyPage() {
   return (
     <main className={styles.page}>
@@ -69,6 +83,35 @@ export default function PrivacyPage() {
           </section>
 
           <DisplayAd pageContext="privacy" placement="inline-results" />
+
+          <section className={styles.section}>
+            <h2>广告与第三方技术</h2>
+            <p>
+              网站已经预留外围广告位和 <code>/ads.txt</code> 路由，但生产环境真实广告仍保持关闭。
+              如果未来启用 Google AdSense
+              或其他展示广告供应商，将先补齐正式广告配置、地区化同意机制和隐私说明。
+            </p>
+            <ul>
+              {plannedAdItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p>
+              用户不需要点击广告来支持本站；也不应通过自动化、重复刷新或诱导点击来增加广告展示或点击。
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>AI 图片识别</h2>
+            <p>
+              图片课表或排班识别属于可能产生成本的高级入口，当前只保留受闸门保护的代码路径，不作为公开功能开放。
+            </p>
+            <ul>
+              {aiImportItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
 
           <section className={styles.section}>
             <h2>链接就是权限</h2>

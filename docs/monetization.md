@@ -107,7 +107,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 - 首页不能只有空表单，要有可被搜索引擎和广告审核理解的原创内容：这个工具解决什么问题、适合谁、如何处理时区、隐私如何保护、用户如何反馈。
 - 已提供稳定可访问的 `/about`、`/privacy`、`/feedback` 和 `/terms` 基础页面；正式开放广告前仍需要做法律和广告政策审阅。
 - 动态日程页属于用户生成内容和临时链接，不应作为广告审核的主要内容来源；审核重点放在公开首页、说明页、隐私页和真实可用的创建入口。
-- 隐私说明需要明确广告 cookie、Google 和其他第三方广告供应商、个性化广告退出方式、地区化 consent、广告请求会包含哪些设备/网络/页面信息。
+- 隐私说明已补充广告 cookie、第三方广告技术、广告请求可能包含的设备/网络/页面信息、无效流量防护和 AI 图片识别处理边界。真实广告前仍需补实际 Google 或其他第三方广告供应商、个性化广告退出方式、地区化 consent 和正式法律审阅。
 - `/ads.txt` 路由已接入；拿到 publisher ID 后设置 `ADS_TXT_PUBLISHER_ID` 并确认根域可抓取。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
 - `robots.txt` 和 `sitemap.xml` 已接入，公开说明页可抓取；动态日程页、API 和带密钥 URL 首期不进入 sitemap。
 - 本地、Vercel Preview、自动化测试、站长自测和内部 QA 不加载真实广告，避免无效流量。
@@ -115,8 +115,8 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 广告审核前需要确认这些公开资产：
 
 - `/about`：已接入基础产品定位、适合人群和核心功能说明；正式上线前补联系方式或运营主体。
-- `/privacy`：已接入隐私说明基础版；真实广告前补第三方广告供应商、cookie、个性化广告退出和 consent。
-- `/feedback`：已接入反馈和删除请求说明；正式上线前补专用邮箱或站内表单。
+- `/privacy`：已接入隐私说明基础版，并补充广告 cookie、第三方广告技术和 AI 图片识别处理边界；真实广告前继续补实际第三方广告供应商、个性化广告退出和 consent。
+- `/feedback`：已接入反馈和删除请求说明；页面支持 `NEXT_PUBLIC_SUPPORT_EMAIL`，正式上线前补专用邮箱或站内表单并重新部署。
 - `/terms`：已接入基础使用条款草案；正式上线前做法律审阅。
 - `/ads.txt`：路由已接入；拿到 AdSense publisher ID 后配置生产环境变量。
 - `robots.txt` 和 `sitemap.xml`：已接入；继续避免密钥页进入索引。
@@ -394,7 +394,7 @@ AI 图片识别和激励广告：
 - 用户必须主动选择观看激励广告；不能把广告伪装成继续按钮，也不能把广告插入无关流程。
 - 不能承诺点击广告获得更多额度，也不能诱导点击广告。
 - 上线前需要按目标地区和广告平台政策确认 rewarded ad 是否适用于网页、学生场景和匿名用户。
-- 隐私说明页需要补充常驻广告 SDK、rewarded ad、奖励验证、额度记录、AI provider、广告 cookie、第三方供应商和个性化广告退出方式的公开说明。
+- 隐私说明页已补充常驻广告、第三方广告技术、AI provider 处理边界和不要诱导广告点击的基础公开说明；真实广告前仍需补实际广告供应商、rewarded ad provider、奖励验证、额度记录、个性化广告退出方式和地区化 consent。
 - 如果进入需要 cookie / consent 管理的地区，需要在上线前补充同意、拒绝和撤回机制。
 - 真实广告只在生产域名启用；本地开发、Preview 部署、自动化测试和内部 QA 必须关闭真实广告或使用测试模式。
 
@@ -434,7 +434,7 @@ AI 图片识别和激励广告：
 ## 分阶段落地
 
 1. 文档阶段：明确成本、广告、隐私、数据模型和 API 计划，不改现有可用主链路。
-2. 审核准备阶段：基础 `/about`、`/terms`、`/privacy`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已接入；继续补法律审阅、联系方式、广告版隐私披露、publisher / slot ID 和生产域名白名单。
+2. 审核准备阶段：基础 `/about`、`/terms`、`/privacy`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已接入；广告/AI 基础披露和可配置公开邮箱入口已补充；继续补法律审阅、实际联系方式、实际广告供应商、publisher / slot ID、生产域名白名单和地区化 consent。
 3. 常驻广告试水阶段：默认全站外围广告框架已接入且关闭。真实广告开启时，核心操作页只启用顶部、底部、桌面 rail 或移动 anchor；结果页、提交成功页和说明页可以增加内容间广告。带 `?key=` 页面只允许 `off` 或 `internal`。
 4. 密钥安全阶段：如果要在管理/编辑页展示第三方广告，先把 URL 密钥迁移到不暴露给第三方脚本的机制，并增加第三方脚本检查。
 5. 免费额度阶段：做本机或匿名 session 的少量免费图片识别额度和全站限额，不接 rewarded ad。
@@ -450,7 +450,7 @@ AI 图片识别和激励广告：
 - 公开首页、`/about`、`/privacy`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已能从生产根域访问；拿到 publisher ID 后 `/ads.txt` 返回正式记录。
 - 生产环境有 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`、`NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`、`NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`、`NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`、`NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE` 和必要的 AdSense client / slot ID；`deployment:config` 不报错。
 - 创建、填写、编辑、上传预览和密钥页面可以有外围广告，但不会被广告遮挡、诱导误触或泄露完整密钥 URL；带 `?key=` 页面不加载第三方广告脚本。
-- 隐私说明已经补充广告平台、广告请求数据、广告 cookie、个性化广告退出方式和用户同意/拒绝规则。
+- 隐私说明已经补充广告请求数据、广告 cookie、第三方广告技术、AI 图片识别处理边界和不诱导点击广告规则；真实广告前还需补实际广告平台、个性化广告退出方式和用户同意/拒绝规则。
 - 有创建率、填写完成率、广告收入、广告加载失败和布局稳定性监控。
 - 本地、Preview、自动化测试、站长自测和内部 QA 不会产生真实广告请求。
 
@@ -470,5 +470,8 @@ AI 图片识别和激励广告：
 - Google AdSense ad placement policies：`https://support.google.com/adsense/answer/1346295`
 - Google AdSense Program policies：`https://support.google.com/adsense/answer/48182`
 - Google AdSense required privacy policy content：`https://support.google.com/adsense/answer/1348695`
+- Google Publisher Policies：`https://support.google.com/adsense/answer/10502938`
+- Google AdSense invalid traffic：`https://support.google.com/adsense/answer/16737`
 - Google AdSense ads.txt guide：`https://support.google.com/adsense/answer/12171612`
 - Google Publisher Tag rewarded ad sample：`https://developers.google.com/publisher-tag/samples/display-rewarded-ad`
+- OpenAI API data controls：`https://developers.openai.com/api/docs/guides/your-data`

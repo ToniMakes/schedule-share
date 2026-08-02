@@ -14,6 +14,7 @@
 | `DATABASE_URL`                          | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                                                |
 | `DATABASE_MIGRATION_URL`                | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。                   |
 | `APP_BASE_URL`                          | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                                          |
+| `NEXT_PUBLIC_SUPPORT_EMAIL`             | 否   | Web 页面                                              | `support@example.com`                       | 公开反馈和删除请求邮箱。会进入前端 bundle；只填写准备公开展示的支持邮箱，不要填写私人邮箱或内部密钥。                                              |
 | `OPENAI_API_KEY`                        | 否   | Web API                                               | `sk-...`                                    | 图片课表/排班导入识别的 OpenAI 凭证。这个 key 本身不会开放功能；还必须通过 `AI_IMAGE_IMPORT_ENABLED` 和 release mode。未配置时图片导入返回不可用。 |
 | `OPENAI_IMAGE_IMPORT_MODEL`             | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                                    |
 | `AI_IMAGE_IMPORT_ENABLED`               | 否   | Web API                                               | `false`                                     | 图片识别总开关。默认 false；即使配置了 `OPENAI_API_KEY`，这里不是 true 也不会调用 OpenAI。                                                         |
@@ -147,6 +148,12 @@ AI_IMAGE_IMPORT_ENABLED=false
 AI_IMAGE_IMPORT_RELEASE_MODE=off
 ```
 
+正式公开测试前建议额外设置：
+
+```text
+NEXT_PUBLIC_SUPPORT_EMAIL=support@example.com
+```
+
 `OPENAI_API_KEY` 不是当前公开生产必填项。可以先只配置到本地或 Preview 调优；如果已经配置到
 Production，也必须保持 `AI_IMAGE_IMPORT_ENABLED=false` 或 `AI_IMAGE_IMPORT_RELEASE_MODE=off`，避免图片识别公开调用
 OpenAI。
@@ -167,6 +174,7 @@ corepack pnpm verify:deployment
 ## 安全注意
 
 - `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 包含数据库用户名和密码，不能截图、公开贴出或写进 issue。
+- `NEXT_PUBLIC_SUPPORT_EMAIL` 是公开展示变量，只能放准备公开接收反馈的邮箱。
 - `OPENAI_API_KEY` 是第三方 API 密钥，也只能放在本地 `.env.local` 或部署平台环境变量里。
 - `OPENAI_API_KEY` 不等于功能开放；公开开放前必须经过图片识别 release mode、额度账本、广告验证和成本护栏。
 - `ownerUrl` 和 `editUrl` 带有管理或编辑密钥，也不能公开记录。

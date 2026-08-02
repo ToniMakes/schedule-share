@@ -23,7 +23,14 @@ const deletionItems = [
   "参与者想删除自己的提交时，请联系日程组织者，并避免公开发送自己的编辑链接。"
 ];
 
+function getSupportEmail() {
+  const value = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+  return value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : undefined;
+}
+
 export default function FeedbackPage() {
+  const supportEmail = getSupportEmail();
+
   return (
     <main className={styles.page}>
       <AdPageChrome pageContext="feedback">
@@ -46,10 +53,19 @@ export default function FeedbackPage() {
           <section className={styles.notice} aria-label="当前状态">
             <MessageSquareText aria-hidden="true" size={22} />
             <div>
-              <h2>当前还没有公开表单</h2>
-              <p>
-                内测期间请通过组织者提供的私下渠道提交反馈。不要在公开群聊、论坛或评论区发布管理链接、编辑链接或含有密钥的截图。
-              </p>
+              <h2>{supportEmail ? "当前联系渠道" : "当前还没有公开表单"}</h2>
+              {supportEmail ? (
+                <p>
+                  反馈、归档或删除请求可以发送到{" "}
+                  <a href={`mailto:${supportEmail}`}>{supportEmail}</a>。
+                  不要在邮件主题、公开群聊、论坛或评论区发布管理链接、编辑链接或含有密钥的截图。
+                </p>
+              ) : (
+                <p>
+                  内测期间请通过组织者提供的私下渠道提交反馈。正式公开测试前会补充专用联系邮箱或站内表单。
+                  不要在公开群聊、论坛或评论区发布管理链接、编辑链接或含有密钥的截图。
+                </p>
+              )}
             </div>
           </section>
 
