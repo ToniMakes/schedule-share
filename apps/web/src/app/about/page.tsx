@@ -123,20 +123,15 @@ export default function EnglishAboutPage() {
             </p>
           </section>
 
-          <section className={styles.section}>
-            <h2>Operator and Contact</h2>
-            <p>
-              {operatorLine ? (
-                <>
-                  Public operator: <strong>{operatorLine}</strong>.{" "}
-                </>
-              ) : (
-                "The public operator name is not configured yet. "
-              )}
-              Feedback, archive requests, and deletion requests can be sent through the{" "}
-              <a href="/contact">contact page</a>.
-            </p>
-          </section>
+          {operatorLine ? (
+            <section className={styles.section}>
+              <h2>Operator and Contact</h2>
+              <p>
+                Public operator: <strong>{operatorLine}</strong>. Feedback, archive requests, and
+                deletion requests can be sent through the <a href="/contact">contact page</a>.
+              </p>
+            </section>
+          ) : null}
 
           <footer className={styles.footer}>
             <a href="/terms">Terms</a>

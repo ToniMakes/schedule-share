@@ -113,19 +113,15 @@ export default function AboutPage() {
             </p>
           </section>
 
-          <section className={styles.section}>
-            <h2>运营主体与联系</h2>
-            <p>
-              {operatorLine ? (
-                <>
-                  公开运营主体：<strong>{operatorLine}</strong>。{" "}
-                </>
-              ) : (
-                "公开运营主体尚未配置。"
-              )}
-              反馈、归档请求和删除请求可以通过<a href="/zh/contact">联系页面</a>发送。
-            </p>
-          </section>
+          {operatorLine ? (
+            <section className={styles.section}>
+              <h2>运营主体与联系</h2>
+              <p>
+                公开运营主体：<strong>{operatorLine}</strong>。 反馈、归档请求和删除请求可以通过
+                <a href="/zh/contact">联系页面</a>发送。
+              </p>
+            </section>
+          ) : null}
 
           <footer className={styles.footer}>
             <a href="/zh/terms">使用条款</a>

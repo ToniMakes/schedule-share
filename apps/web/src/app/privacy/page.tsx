@@ -151,20 +151,15 @@ export default function EnglishPrivacyPage() {
             </p>
           </section>
 
-          <section className={styles.section}>
-            <h2>Operator and Contact</h2>
-            <p>
-              {operatorLine ? (
-                <>
-                  Public operator: <strong>{operatorLine}</strong>.{" "}
-                </>
-              ) : (
-                "The public operator name is not configured yet. "
-              )}
-              For feedback, archive requests, or deletion requests, use the{" "}
-              <a href="/contact">contact page</a>.
-            </p>
-          </section>
+          {operatorLine ? (
+            <section className={styles.section}>
+              <h2>Operator and Contact</h2>
+              <p>
+                Public operator: <strong>{operatorLine}</strong>. For feedback, archive requests, or
+                deletion requests, use the <a href="/contact">contact page</a>.
+              </p>
+            </section>
+          ) : null}
 
           <section className={styles.section}>
             <h2>Related Pages</h2>

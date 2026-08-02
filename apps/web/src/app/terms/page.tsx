@@ -136,20 +136,15 @@ export default function EnglishTermsPage() {
             </p>
           </section>
 
-          <section className={styles.section}>
-            <h2>Operator and Contact</h2>
-            <p>
-              {operatorLine ? (
-                <>
-                  Public operator: <strong>{operatorLine}</strong>.{" "}
-                </>
-              ) : (
-                "The public operator name is not configured yet. "
-              )}
-              Contact information is available on the{" "}
-              <a href="/contact">contact and deletion requests</a> page.
-            </p>
-          </section>
+          {operatorLine ? (
+            <section className={styles.section}>
+              <h2>Operator and Contact</h2>
+              <p>
+                Public operator: <strong>{operatorLine}</strong>. Contact information is available
+                on the <a href="/contact">contact and deletion requests</a> page.
+              </p>
+            </section>
+          ) : null}
 
           <footer className={styles.footer}>
             <a href="/about">About</a>

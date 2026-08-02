@@ -124,19 +124,15 @@ export default function TermsPage() {
             </p>
           </section>
 
-          <section className={styles.section}>
-            <h2>运营主体与联系</h2>
-            <p>
-              {operatorLine ? (
-                <>
-                  公开运营主体：<strong>{operatorLine}</strong>。{" "}
-                </>
-              ) : (
-                "公开运营主体尚未配置。"
-              )}
-              联系方式可以在<a href="/zh/contact">联系与删除请求</a>页面查看。
-            </p>
-          </section>
+          {operatorLine ? (
+            <section className={styles.section}>
+              <h2>运营主体与联系</h2>
+              <p>
+                公开运营主体：<strong>{operatorLine}</strong>。 联系方式可以在
+                <a href="/zh/contact">联系与删除请求</a>页面查看。
+              </p>
+            </section>
+          ) : null}
 
           <footer className={styles.footer}>
             <a href="/zh/about">关于本工具</a>
