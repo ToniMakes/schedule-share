@@ -20,6 +20,7 @@ import {
   readRememberedScheduleFormDefaults,
   rememberScheduleFormDefaults
 } from "./schedule-form-memory";
+import { DisplayAd } from "../ads/display-ad";
 import styles from "./page.module.css";
 
 const dayOptions = [
@@ -568,6 +569,7 @@ export function NewScheduleForm() {
             onCopy={() => copyLink("owner", submitState.result.ownerUrl)}
             value={submitState.result.ownerUrl}
           />
+          <DisplayAd pageContext="create" placement="post-submit" />
         </section>
       ) : null}
     </form>

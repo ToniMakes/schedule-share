@@ -15,6 +15,7 @@ import { getScheduleView } from "@/server/schedules/get-schedule";
 import { isPublicImageImportVisible } from "@/server/schedules/image-import";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
+import { AdPageChrome, DisplayAd } from "../../ads/display-ad";
 import { AvailabilityForm } from "./availability-form";
 import { AvailabilityHeatmapPanel } from "./availability-heatmap-panel";
 import {
@@ -63,142 +64,153 @@ function ScheduleView({ data }: { readonly data: GetScheduleResponse }) {
 
   return (
     <main className={styles.page}>
-      <div className={styles.shell}>
-        <header className={styles.header}>
-          <Link className={styles.backLink} href="/">
-            <ArrowLeft aria-hidden="true" size={17} />
-            返回首页
-          </Link>
-          <div className={styles.headerText}>
-            <p className={styles.eyebrow}>Shared Schedule</p>
-            <h1 className={styles.title}>{data.schedule.title}</h1>
-            {data.schedule.description ? (
-              <p className={styles.description}>{data.schedule.description}</p>
-            ) : null}
-          </div>
-        </header>
+      <AdPageChrome mobileAnchor={false} pageContext="public-schedule">
+        <div className={styles.shell}>
+          <header className={styles.header}>
+            <Link className={styles.backLink} href="/">
+              <ArrowLeft aria-hidden="true" size={17} />
+              返回首页
+            </Link>
+            <div className={styles.headerText}>
+              <p className={styles.eyebrow}>Shared Schedule</p>
+              <h1 className={styles.title}>{data.schedule.title}</h1>
+              {data.schedule.description ? (
+                <p className={styles.description}>{data.schedule.description}</p>
+              ) : null}
+            </div>
+          </header>
 
-        <section className={styles.summaryGrid} aria-label="日程概览">
-          <SummaryItem
-            icon={<CalendarDays aria-hidden="true" size={18} />}
-            label="日期"
-            value={`${data.schedule.dateRange.start} 至 ${data.schedule.dateRange.end}`}
-          />
-          <SummaryItem
-            icon={<Clock aria-hidden="true" size={18} />}
-            label="时区"
-            value={data.schedule.timezone}
-          />
-          <SummaryItem
-            icon={<ListChecks aria-hidden="true" size={18} />}
-            label={isCandidatePoll ? "模式" : "粒度"}
-            value={isCandidatePoll ? "候选投票" : `${data.schedule.slotMinutes} 分钟`}
-          />
-          <SummaryItem
-            icon={<Users aria-hidden="true" size={18} />}
-            label="参与者"
-            value={`${data.participants.length} 人`}
-          />
-        </section>
-
-        {data.schedule.finalTime ? <FinalTimeNotice finalTime={data.schedule.finalTime} /> : null}
-
-        <RememberedEditLinkPanel
-          publicId={data.schedule.publicId}
-          scheduleStatus={data.schedule.status}
-        />
-
-        <AvailabilityForm
-          publicId={data.schedule.publicId}
-          imageImportVisible={isPublicImageImportVisible()}
-          scheduleMode={data.schedule.scheduleMode}
-          scheduleStatus={data.schedule.status}
-          scheduleTimezone={data.schedule.timezone}
-          slots={data.results.slotResults}
-          totalParticipantCount={data.results.totalParticipantCount}
-        />
-
-        {isCandidatePoll ? (
-          <CandidatePollResultsPanel
-            participants={data.participants}
-            slots={data.results.slotResults}
-          />
-        ) : (
-          <>
-            <AvailabilityHeatmapPanel
-              slots={data.results.slotResults}
-              totalParticipantCount={data.results.totalParticipantCount}
+          <section className={styles.summaryGrid} aria-label="日程概览">
+            <SummaryItem
+              icon={<CalendarDays aria-hidden="true" size={18} />}
+              label="日期"
+              value={`${data.schedule.dateRange.start} 至 ${data.schedule.dateRange.end}`}
             />
+            <SummaryItem
+              icon={<Clock aria-hidden="true" size={18} />}
+              label="时区"
+              value={data.schedule.timezone}
+            />
+            <SummaryItem
+              icon={<ListChecks aria-hidden="true" size={18} />}
+              label={isCandidatePoll ? "模式" : "粒度"}
+              value={isCandidatePoll ? "候选投票" : `${data.schedule.slotMinutes} 分钟`}
+            />
+            <SummaryItem
+              icon={<Users aria-hidden="true" size={18} />}
+              label="参与者"
+              value={`${data.participants.length} 人`}
+            />
+          </section>
 
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2>全员可用时间</h2>
-                <span>{everyoneBlocks.length} 段</span>
-              </div>
-              {everyoneBlocks.length > 0 ? (
-                <div className={styles.blockList}>
-                  {everyoneBlocks.map((block) => (
-                    <AvailabilityBlockItem
-                      block={block}
-                      key={`${block.startUtc}-${block.endUtc}`}
-                    />
-                  ))}
+          {data.schedule.finalTime ? <FinalTimeNotice finalTime={data.schedule.finalTime} /> : null}
+
+          <RememberedEditLinkPanel
+            publicId={data.schedule.publicId}
+            scheduleStatus={data.schedule.status}
+          />
+
+          <DisplayAd pageContext="public-schedule" placement="top-banner" />
+
+          <AvailabilityForm
+            publicId={data.schedule.publicId}
+            imageImportVisible={isPublicImageImportVisible()}
+            scheduleMode={data.schedule.scheduleMode}
+            scheduleStatus={data.schedule.status}
+            scheduleTimezone={data.schedule.timezone}
+            slots={data.results.slotResults}
+            totalParticipantCount={data.results.totalParticipantCount}
+          />
+
+          {isCandidatePoll ? (
+            <>
+              <DisplayAd pageContext="public-schedule" placement="inline-results" />
+              <CandidatePollResultsPanel
+                participants={data.participants}
+                slots={data.results.slotResults}
+              />
+            </>
+          ) : (
+            <>
+              <AvailabilityHeatmapPanel
+                slots={data.results.slotResults}
+                totalParticipantCount={data.results.totalParticipantCount}
+              />
+
+              <DisplayAd pageContext="public-schedule" placement="inline-results" />
+
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h2>全员可用时间</h2>
+                  <span>{everyoneBlocks.length} 段</span>
                 </div>
-              ) : (
-                <EmptyState
-                  title="暂时没有全员都可用的时间"
-                  body={
-                    data.participants.length === 0
-                      ? "等待参与者提交可用时间后，这里会自动汇总。"
-                      : "可以扩大日期范围、调整时间段，或等待更多参与者更新。"
-                  }
-                />
-              )}
-            </section>
-
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2>当前最优时间槽</h2>
-                <span>{data.results.totalParticipantCount} 人参与</span>
-              </div>
-              {rankedSlots.length > 0 ? (
-                <div className={styles.slotList}>
-                  {rankedSlots.map((slot) => (
-                    <RankedSlotItem
-                      key={`${slot.startUtc}-${slot.endUtc}`}
-                      participants={data.participants}
-                      slot={slot}
-                      totalParticipantCount={data.results.totalParticipantCount}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="还没有可排序的时间槽" body="目前没有参与者提交可用时间。" />
-              )}
-            </section>
-
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2>可选时间范围</h2>
-                <span>{data.schedule.dailyWindows.length} 组</span>
-              </div>
-              <div className={styles.windowList}>
-                {data.schedule.dailyWindows.map((window, index) => (
-                  <div
-                    className={styles.windowItem}
-                    key={`${index}-${window.startTime}-${window.endTime}`}
-                  >
-                    <span>{index + 1}</span>
-                    <strong>
-                      {formatDays(window.daysOfWeek)} {window.startTime}-{window.endTime}
-                    </strong>
+                {everyoneBlocks.length > 0 ? (
+                  <div className={styles.blockList}>
+                    {everyoneBlocks.map((block) => (
+                      <AvailabilityBlockItem
+                        block={block}
+                        key={`${block.startUtc}-${block.endUtc}`}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
-      </div>
+                ) : (
+                  <EmptyState
+                    title="暂时没有全员都可用的时间"
+                    body={
+                      data.participants.length === 0
+                        ? "等待参与者提交可用时间后，这里会自动汇总。"
+                        : "可以扩大日期范围、调整时间段，或等待更多参与者更新。"
+                    }
+                  />
+                )}
+              </section>
+
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h2>当前最优时间槽</h2>
+                  <span>{data.results.totalParticipantCount} 人参与</span>
+                </div>
+                {rankedSlots.length > 0 ? (
+                  <div className={styles.slotList}>
+                    {rankedSlots.map((slot) => (
+                      <RankedSlotItem
+                        key={`${slot.startUtc}-${slot.endUtc}`}
+                        participants={data.participants}
+                        slot={slot}
+                        totalParticipantCount={data.results.totalParticipantCount}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState title="还没有可排序的时间槽" body="目前没有参与者提交可用时间。" />
+                )}
+              </section>
+
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h2>可选时间范围</h2>
+                  <span>{data.schedule.dailyWindows.length} 组</span>
+                </div>
+                <div className={styles.windowList}>
+                  {data.schedule.dailyWindows.map((window, index) => (
+                    <div
+                      className={styles.windowItem}
+                      key={`${index}-${window.startTime}-${window.endTime}`}
+                    >
+                      <span>{index + 1}</span>
+                      <strong>
+                        {formatDays(window.daysOfWeek)} {window.startTime}-{window.endTime}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+
+          <DisplayAd pageContext="public-schedule" placement="bottom-banner" />
+        </div>
+      </AdPageChrome>
     </main>
   );
 }

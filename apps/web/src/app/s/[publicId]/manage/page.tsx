@@ -13,6 +13,7 @@ import { HttpError } from "@/server/errors";
 import { getOwnerScheduleView } from "@/server/schedules/get-owner-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
+import { AdPageChrome, DisplayAd } from "../../../ads/display-ad";
 import { ConfirmFinalTimeButton } from "./final-time-control";
 import { LockScheduleControl } from "./lock-schedule-control";
 import {
@@ -75,142 +76,161 @@ function ManageView({
 
   return (
     <main className={styles.page}>
-      <div className={styles.shell}>
-        <header className={styles.header}>
-          <Link className={styles.backLink} href={`/s/${data.schedule.publicId}`}>
-            <ArrowLeft aria-hidden="true" size={17} />
-            返回日程
-          </Link>
-          <div className={styles.headerText}>
-            <p className={styles.eyebrow}>Manage Schedule</p>
-            <h1 className={styles.title}>{data.schedule.title}</h1>
-            <p className={styles.description}>{statusLabel(data.schedule.status)}</p>
-          </div>
-        </header>
+      <AdPageChrome mobileAnchor={false} pageContext="manage-sensitive" thirdPartyAllowed={false}>
+        <div className={styles.shell}>
+          <header className={styles.header}>
+            <Link className={styles.backLink} href={`/s/${data.schedule.publicId}`}>
+              <ArrowLeft aria-hidden="true" size={17} />
+              返回日程
+            </Link>
+            <div className={styles.headerText}>
+              <p className={styles.eyebrow}>Manage Schedule</p>
+              <h1 className={styles.title}>{data.schedule.title}</h1>
+              <p className={styles.description}>{statusLabel(data.schedule.status)}</p>
+            </div>
+          </header>
 
-        <section className={styles.summaryGrid} aria-label="管理概览">
-          <SummaryItem
-            icon={<CalendarDays aria-hidden="true" size={18} />}
-            label="日期"
-            value={`${data.schedule.dateRange.start} 至 ${data.schedule.dateRange.end}`}
-          />
-          <SummaryItem
-            icon={<Clock aria-hidden="true" size={18} />}
-            label="时区"
-            value={data.schedule.timezone}
-          />
-          <SummaryItem
-            icon={<Users aria-hidden="true" size={18} />}
-            label="参与者"
-            value={`${data.participants.length} 人`}
-          />
-          <SummaryItem
-            icon={<Lock aria-hidden="true" size={18} />}
-            label="状态"
-            value={statusLabel(data.schedule.status)}
-          />
-        </section>
+          <section className={styles.summaryGrid} aria-label="管理概览">
+            <SummaryItem
+              icon={<CalendarDays aria-hidden="true" size={18} />}
+              label="日期"
+              value={`${data.schedule.dateRange.start} 至 ${data.schedule.dateRange.end}`}
+            />
+            <SummaryItem
+              icon={<Clock aria-hidden="true" size={18} />}
+              label="时区"
+              value={data.schedule.timezone}
+            />
+            <SummaryItem
+              icon={<Users aria-hidden="true" size={18} />}
+              label="参与者"
+              value={`${data.participants.length} 人`}
+            />
+            <SummaryItem
+              icon={<Lock aria-hidden="true" size={18} />}
+              label="状态"
+              value={statusLabel(data.schedule.status)}
+            />
+          </section>
 
-        {data.schedule.finalTime ? (
-          <FinalTimeNotice
-            finalTime={data.schedule.finalTime}
+          {data.schedule.finalTime ? (
+            <FinalTimeNotice
+              finalTime={data.schedule.finalTime}
+              ownerKey={ownerKey}
+              publicId={data.schedule.publicId}
+            />
+          ) : null}
+
+          <ManageShareLinksPanel ownerKey={ownerKey} publicId={data.schedule.publicId} />
+
+          <LockScheduleControl
             ownerKey={ownerKey}
             publicId={data.schedule.publicId}
+            status={data.schedule.status}
           />
-        ) : null}
 
-        <ManageShareLinksPanel ownerKey={ownerKey} publicId={data.schedule.publicId} />
-
-        <LockScheduleControl
-          ownerKey={ownerKey}
-          publicId={data.schedule.publicId}
-          status={data.schedule.status}
-        />
-
-        <ManageResultSummaryPanel summary={resultSummary} />
-
-        {isCandidatePoll ? (
-          <CandidatePollResultsPanel
-            finalTimeControls={{
-              ownerKey,
-              publicId: data.schedule.publicId,
-              selectedFinalTime: data.schedule.finalTime,
-              status: data.schedule.status
-            }}
-            participants={data.participants}
-            scheduleTitle={data.schedule.title}
-            slots={data.results.slotResults}
+          <DisplayAd
+            pageContext="manage-sensitive"
+            placement="top-banner"
+            thirdPartyAllowed={false}
           />
-        ) : (
-          <>
-            <AvailabilityRecommendationPanel
-              ownerKey={ownerKey}
+
+          <ManageResultSummaryPanel summary={resultSummary} />
+
+          <DisplayAd
+            pageContext="manage-sensitive"
+            placement="inline-results"
+            thirdPartyAllowed={false}
+          />
+
+          {isCandidatePoll ? (
+            <CandidatePollResultsPanel
+              finalTimeControls={{
+                ownerKey,
+                publicId: data.schedule.publicId,
+                selectedFinalTime: data.schedule.finalTime,
+                status: data.schedule.status
+              }}
               participants={data.participants}
-              publicId={data.schedule.publicId}
-              recommendation={availabilityRecommendation}
-              selectedFinalTime={data.schedule.finalTime}
-              slotMinutes={data.schedule.slotMinutes}
-              status={data.schedule.status}
-            />
-
-            <AvailabilityHeatmapPanel
+              scheduleTitle={data.schedule.title}
               slots={data.results.slotResults}
-              totalParticipantCount={data.results.totalParticipantCount}
             />
+          ) : (
+            <>
+              <AvailabilityRecommendationPanel
+                ownerKey={ownerKey}
+                participants={data.participants}
+                publicId={data.schedule.publicId}
+                recommendation={availabilityRecommendation}
+                selectedFinalTime={data.schedule.finalTime}
+                slotMinutes={data.schedule.slotMinutes}
+                status={data.schedule.status}
+              />
 
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2>全员可用时间</h2>
-                <span>{everyoneBlocks.length} 段</span>
-              </div>
-              {everyoneBlocks.length > 0 ? (
-                <div className={styles.blockList}>
-                  {everyoneBlocks.map((block) => (
-                    <ManageAvailabilityBlockItem
-                      block={block}
-                      key={`${block.startUtc}-${block.endUtc}`}
-                      ownerKey={ownerKey}
-                      publicId={data.schedule.publicId}
-                      selectedFinalTime={data.schedule.finalTime}
-                      status={data.schedule.status}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.emptyState}>
-                  <strong>暂时没有全员都可用的时间</strong>
-                  <p>当前参与者提交还没有形成全员共同时间。</p>
-                </div>
-              )}
-            </section>
+              <AvailabilityHeatmapPanel
+                slots={data.results.slotResults}
+                totalParticipantCount={data.results.totalParticipantCount}
+              />
 
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2>当前较优时间槽</h2>
-                <span>{data.results.totalParticipantCount} 人参与</span>
-              </div>
-              {rankedSlots.length > 0 ? (
-                <div className={styles.slotList}>
-                  {rankedSlots.map((slot) => (
-                    <ManageRankedSlotItem
-                      key={`${slot.startUtc}-${slot.endUtc}`}
-                      participants={data.participants}
-                      scheduleTitle={data.schedule.title}
-                      slot={slot}
-                      totalParticipantCount={data.results.totalParticipantCount}
-                    />
-                  ))}
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h2>全员可用时间</h2>
+                  <span>{everyoneBlocks.length} 段</span>
                 </div>
-              ) : (
-                <div className={styles.emptyState}>
-                  <strong>还没有可排序的时间槽</strong>
-                  <p>目前没有参与者提交可用时间。</p>
+                {everyoneBlocks.length > 0 ? (
+                  <div className={styles.blockList}>
+                    {everyoneBlocks.map((block) => (
+                      <ManageAvailabilityBlockItem
+                        block={block}
+                        key={`${block.startUtc}-${block.endUtc}`}
+                        ownerKey={ownerKey}
+                        publicId={data.schedule.publicId}
+                        selectedFinalTime={data.schedule.finalTime}
+                        status={data.schedule.status}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.emptyState}>
+                    <strong>暂时没有全员都可用的时间</strong>
+                    <p>当前参与者提交还没有形成全员共同时间。</p>
+                  </div>
+                )}
+              </section>
+
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h2>当前较优时间槽</h2>
+                  <span>{data.results.totalParticipantCount} 人参与</span>
                 </div>
-              )}
-            </section>
-          </>
-        )}
-      </div>
+                {rankedSlots.length > 0 ? (
+                  <div className={styles.slotList}>
+                    {rankedSlots.map((slot) => (
+                      <ManageRankedSlotItem
+                        key={`${slot.startUtc}-${slot.endUtc}`}
+                        participants={data.participants}
+                        scheduleTitle={data.schedule.title}
+                        slot={slot}
+                        totalParticipantCount={data.results.totalParticipantCount}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.emptyState}>
+                    <strong>还没有可排序的时间槽</strong>
+                    <p>目前没有参与者提交可用时间。</p>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+          <DisplayAd
+            pageContext="manage-sensitive"
+            placement="bottom-banner"
+            thirdPartyAllowed={false}
+          />
+        </div>
+      </AdPageChrome>
     </main>
   );
 }

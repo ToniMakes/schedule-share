@@ -1,6 +1,8 @@
 const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]);
 const defaultDatabaseUrl = "postgres://schedule_share:schedule_share@localhost:5432/schedule_share";
 const defaultSmokeBaseUrl = "http://127.0.0.1:3000";
+const displayAdKeyedUrlModes = new Set(["off", "internal", "full"]);
+const displayAdProviders = new Set(["placeholder", "adsense"]);
 const imageImportReleaseModes = new Set(["off", "local_only", "internal_test", "public"]);
 const publicImageImportReleaseSupported = false;
 
@@ -306,6 +308,111 @@ export function checkImageImportConfig(environment = {}, options = {}) {
   };
 }
 
+export function checkDisplayAdsConfig(environment = {}, options = {}) {
+  const requireProductionSafe = options.requireProductionSafe ?? false;
+  const enabled = parseBooleanFlag(environment.NEXT_PUBLIC_DISPLAY_ADS_ENABLED);
+  const preview = parseBooleanFlag(environment.NEXT_PUBLIC_DISPLAY_ADS_PREVIEW);
+  const provider =
+    normalizeOptionalString(environment.NEXT_PUBLIC_DISPLAY_ADS_PROVIDER) || "placeholder";
+  const clientId = normalizeOptionalString(environment.NEXT_PUBLIC_ADSENSE_CLIENT_ID);
+  const keyedUrlMode =
+    normalizeOptionalString(environment.NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE) || "internal";
+  const allowedHosts = parseCsv(environment.NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS);
+  const testMode = parseBooleanFlag(environment.NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE);
+  const configuredSlotIds = [
+    environment.NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER,
+    environment.NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM_BANNER,
+    environment.NEXT_PUBLIC_ADSENSE_SLOT_INLINE_RESULTS,
+    environment.NEXT_PUBLIC_ADSENSE_SLOT_POST_SUBMIT,
+    environment.NEXT_PUBLIC_ADSENSE_SLOT_DESKTOP_RAIL,
+    environment.NEXT_PUBLIC_ADSENSE_SLOT_MOBILE_ANCHOR
+  ].filter((value) => normalizeOptionalString(value).length > 0);
+
+  if (!displayAdProviders.has(provider)) {
+    return {
+      detail: "NEXT_PUBLIC_DISPLAY_ADS_PROVIDER must be placeholder or adsense.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "invalid-provider"
+    };
+  }
+
+  if (!displayAdKeyedUrlModes.has(keyedUrlMode)) {
+    return {
+      detail: "NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE must be off, internal, or full.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "invalid-keyed-url-mode"
+    };
+  }
+
+  if (!enabled && !preview) {
+    return {
+      detail: "Display ads are closed by default.",
+      level: "ok",
+      name: "DISPLAY_ADS",
+      status: "disabled"
+    };
+  }
+
+  if (provider === "placeholder") {
+    return {
+      detail:
+        "Only first-party placeholder or sponsor slots can render. No third-party ad script is loaded.",
+      level: "ok",
+      name: "DISPLAY_ADS",
+      status: preview ? "placeholder-preview" : "placeholder"
+    };
+  }
+
+  if (keyedUrlMode === "full") {
+    return {
+      detail:
+        "Do not load third-party ads on keyed owner/edit URLs until those keys are no longer exposed in the URL.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "unsafe-keyed-url-mode"
+    };
+  }
+
+  if (clientId.length === 0) {
+    return {
+      detail: "AdSense provider is enabled, but NEXT_PUBLIC_ADSENSE_CLIENT_ID is missing.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "missing-adsense-client"
+    };
+  }
+
+  if (configuredSlotIds.length === 0) {
+    return {
+      detail: "AdSense provider is enabled, but no NEXT_PUBLIC_ADSENSE_SLOT_* value is set.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "missing-adsense-slot"
+    };
+  }
+
+  if (allowedHosts.length === 0 && !testMode) {
+    return {
+      detail:
+        "AdSense provider is enabled without test mode, but NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS is empty.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "DISPLAY_ADS",
+      status: "missing-allowed-hosts"
+    };
+  }
+
+  return {
+    detail: testMode
+      ? "AdSense is configured in test mode. Keep this out of public production traffic."
+      : "AdSense can load only on the configured allowed hosts; keyed URLs stay protected unless explicitly overridden.",
+    level: testMode && requireProductionSafe ? "warn" : "ok",
+    name: "DISPLAY_ADS",
+    status: testMode ? "adsense-test-mode" : "adsense-ready"
+  };
+}
+
 export function hasCheckLevel(checks, level) {
   return checks.some((check) => check.level === level);
 }
@@ -358,4 +465,15 @@ function isPooledPostgresHostname(hostname) {
 
 function parseBooleanFlag(value) {
   return value?.trim().toLowerCase() === "true";
+}
+
+function normalizeOptionalString(value) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function parseCsv(value) {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
 }

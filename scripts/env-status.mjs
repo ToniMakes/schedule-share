@@ -2,6 +2,7 @@ import { loadRootEnv } from "./load-env.mjs";
 import {
   checkAppBaseUrl,
   checkDatabaseUrl,
+  checkDisplayAdsConfig,
   checkImageImportConfig,
   checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
@@ -15,6 +16,7 @@ const checks = [
   checkMigrationDatabaseUrl(process.env.DATABASE_MIGRATION_URL, process.env.DATABASE_URL),
   checkSmokeBaseUrl(process.env.SMOKE_BASE_URL),
   checkAppBaseUrl(process.env.APP_BASE_URL),
+  checkDisplayAdsConfig(process.env),
   checkImageImportConfig(process.env)
 ];
 

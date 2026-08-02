@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   checkAppBaseUrl,
   checkDatabaseUrl,
+  checkDisplayAdsConfig,
   checkImageImportConfig,
   checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
@@ -242,6 +243,61 @@ describe("checkImageImportConfig", () => {
 
     assert.equal(check.level, "error");
     assert.equal(check.status, "public-not-supported");
+  });
+});
+
+describe("checkDisplayAdsConfig", () => {
+  it("keeps display ads disabled by default", () => {
+    const check = checkDisplayAdsConfig({});
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "disabled");
+  });
+
+  it("requires an AdSense client when AdSense is enabled for deployment", () => {
+    const check = checkDisplayAdsConfig(
+      {
+        NEXT_PUBLIC_DISPLAY_ADS_ENABLED: "true",
+        NEXT_PUBLIC_DISPLAY_ADS_PROVIDER: "adsense"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "missing-adsense-client");
+  });
+
+  it("accepts AdSense when the client, a slot, and an allowed host are configured", () => {
+    const check = checkDisplayAdsConfig(
+      {
+        NEXT_PUBLIC_ADSENSE_CLIENT_ID: "ca-pub-123",
+        NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER: "123456",
+        NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS: "schedule.tonimakes.com",
+        NEXT_PUBLIC_DISPLAY_ADS_ENABLED: "true",
+        NEXT_PUBLIC_DISPLAY_ADS_PROVIDER: "adsense"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "adsense-ready");
+  });
+
+  it("blocks full third-party ad mode on keyed URLs for deployment", () => {
+    const check = checkDisplayAdsConfig(
+      {
+        NEXT_PUBLIC_ADSENSE_CLIENT_ID: "ca-pub-123",
+        NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER: "123456",
+        NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS: "schedule.tonimakes.com",
+        NEXT_PUBLIC_DISPLAY_ADS_ENABLED: "true",
+        NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE: "full",
+        NEXT_PUBLIC_DISPLAY_ADS_PROVIDER: "adsense"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "unsafe-keyed-url-mode");
   });
 });
 

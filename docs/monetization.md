@@ -4,9 +4,9 @@
 
 ## 定位
 
-本文件记录网站常驻展示广告、AI 图片识别成本控制、激励广告换额度和后续增值能力的商业化方案。它是计划文档，不代表当前代码已经接入广告、额度账本或付费能力。
+本文件记录网站常驻展示广告、AI 图片识别成本控制、激励广告换额度和后续增值能力的商业化方案。当前代码已经接入默认关闭的常驻展示广告框架和 `/ads.txt` 路由；真实广告、AI 额度账本、激励广告验证和付费能力仍未开放。
 
-当前已经实现的是核心排期主链路、图片导入预览入口和 OpenAI provider 适配器；要让产品长期开放给真实用户，需要同时解决两类问题：
+当前已经实现的是核心排期主链路、图片导入预览入口、OpenAI provider 适配器，以及默认不加载第三方脚本的展示广告位框架；要让产品长期开放给真实用户，需要同时解决两类问题：
 
 - 普通页面浏览和低成本功能需要有被动收入，至少覆盖托管、数据库、域名和日常维护。
 - AI 图片识别每次都会产生成本，需要用免费额度、激励广告或未来付费额度做精细控制。
@@ -74,6 +74,13 @@
 - 移动端底部 anchor ad：可关闭，不能遮挡提交按钮、日期导航、时间格或上传预览；移动端同一时刻只保留一个 sticky 边缘广告。
 - 公开说明页、隐私页、反馈页：可以使用低密度展示广告，但不要把页面做成专门展示广告的内容页。
 
+当前实现状态：
+
+- `DisplayAd` / `AdPageChrome` 已接入首页、创建页、公开日程页、管理页、编辑页、隐私页和反馈页。
+- 默认关闭；本地可用 `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW=true` 和 `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS=true` 查看布局占位。
+- provider 为 `placeholder` 时只显示一方占位；provider 为 `adsense` 时还需要 client ID、slot ID、域名白名单和第三方脚本安全检查。
+- 管理页和编辑页传入 `thirdPartyAllowed=false`，带 `?key=` 的敏感页面不会加载第三方广告脚本。
+
 首期不建议放广告的位置：
 
 - 参与者正在填写的时间格区域。
@@ -88,7 +95,7 @@
 - 不使用“点击广告支持我们”“看广告支持本站”等诱导文案。
 - 不把广告放进浮层脚本、弹窗、下载按钮附近或容易误触的位置。
 - 如果广告显著降低提交率、造成移动端遮挡或让页面布局跳动，应优先降广告密度。
-- 默认以 `DISPLAY_ADS_ENABLED` 和 `DISPLAY_ADS_DEFAULT_ON` 做全站开关，再按页面类型、视口、密钥泄露风险和广告密度决定具体位置。
+- 默认以 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED` 做全站开关，以页面类型、视口、密钥泄露风险和广告密度决定具体位置。
 - 首期关闭 vignette / interstitial 这类全屏或页面跳转间广告，直到创建率、填写完成率和移动端遮挡数据稳定。
 - 如果启用 Auto ads，需要配置 page exclusion 或局部禁用清单，不能让平台自动把广告插入表单、时间格、上传预览、候选按钮和复制/导出区域。
 
@@ -120,7 +127,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 
 - 带 `?key=` 的管理页和编辑页首期不能加载第三方广告脚本。
 - 这类页面可以展示自营推广、无第三方脚本的静态赞助位，或完全不展示广告。
-- `DISPLAY_AD_KEYED_URL_MODE` 默认应为 `off` 或 `internal`，不应默认为 `full`。
+- `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE` 默认应为 `off` 或 `internal`，不应默认为 `full`。
 - 如果未来要在管理/编辑页放第三方广告，先把权限密钥从 URL 迁移到 httpOnly cookie、一次性交换 session、短期服务端状态或其他不暴露给第三方脚本的机制。
 - 即使完成密钥迁移，也仍要设置 `Referrer-Policy: strict-origin-when-cross-origin` 或更严格策略，并监控页面是否引入未批准第三方脚本。
 
@@ -327,34 +334,31 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 - provider 不可用、网络超时或内部错误时可以自动退款。
 - 文件类型、大小、低置信度和用户取消不应绕过既有校验。
 
-## 计划环境变量
+## 环境变量
 
-以下变量是未来接入常驻广告、激励广告和额度系统时使用，不属于当前生产部署必填项：
+以下常驻展示广告变量已被当前代码读取，但默认关闭，不属于当前生产部署必填项。真实广告上线前必须通过广告平台审核、配置生产域名白名单，并跑通 `corepack pnpm deployment:config`：
 
 常驻展示广告：
 
-| 变量                                     | 说明                                                         |
-| ---------------------------------------- | ------------------------------------------------------------ |
-| `DISPLAY_ADS_ENABLED`                    | 是否启用常驻展示广告。                                       |
-| `DISPLAY_ADS_DEFAULT_ON`                 | 是否默认所有页面都尝试展示外围广告。                         |
-| `DISPLAY_AD_PROVIDER`                    | 常驻广告提供商标识，例如 `adsense` 或 `ad_manager`。         |
-| `DISPLAY_AD_CLIENT_ID`                   | 广告 client / publisher ID。                                 |
-| `DISPLAY_AD_AUTO_ADS_ENABLED`            | 是否启用 Auto ads；首期建议 false 或只对说明/结果页开启。    |
-| `DISPLAY_AD_VIGNETTE_ENABLED`            | 是否启用 vignette / interstitial；首期默认 false。           |
-| `DISPLAY_AD_SLOT_RESULTS_INLINE`         | 结果页内联广告位 ID。                                        |
-| `DISPLAY_AD_SLOT_GLOBAL_TOP`             | 全站顶部横幅广告位 ID。                                      |
-| `DISPLAY_AD_SLOT_GLOBAL_BOTTOM`          | 全站底部广告位 ID。                                          |
-| `DISPLAY_AD_SLOT_CORE_PAGE_EDGE`         | 创建、填写和编辑页的外围广告位 ID。                          |
-| `DISPLAY_AD_SLOT_DESKTOP_RAIL`           | 桌面侧栏广告位 ID。                                          |
-| `DISPLAY_AD_SLOT_MOBILE_ANCHOR`          | 移动端底部 anchor ad 或等价广告位 ID。                       |
-| `DISPLAY_AD_SUPPRESS_IN_CORE_ACTIONS`    | 是否在表单、时间格、上传预览、提交和复制/导出区禁用广告。    |
-| `DISPLAY_AD_KEYED_URL_MODE`              | 带管理/编辑密钥页面的广告模式：`off`、`internal` 或 `full`。 |
-| `DISPLAY_AD_MAX_SLOTS_PER_PAGE`          | 单页最大展示广告位数量。                                     |
-| `DISPLAY_AD_ALLOWED_HOSTS`               | 允许加载真实广告的生产域名白名单。                           |
-| `DISPLAY_AD_TEST_MODE`                   | 是否使用广告平台测试模式；本地/Preview/自动化测试应为 true。 |
-| `ADS_TXT_PUBLISHER_ID`                   | 生成 `/ads.txt` 时使用的广告发布商 ID。                      |
-| `ADS_CONSENT_MODE_ENABLED`               | 是否启用广告 consent mode 或等价的地区化同意/拒绝处理。      |
-| `ADS_POLICY_REVIEW_REQUIRED_BEFORE_LIVE` | 是否要求通过人工策略检查后才允许生产展示。默认应为 true。    |
+| 变量                                      | 说明                                                                            |
+| ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`         | 是否启用常驻展示广告。默认 false；真实广告上线前保持关闭。                      |
+| `NEXT_PUBLIC_DISPLAY_ADS_PREVIEW`         | 本地或 Preview 检查广告位布局用；可配合占位展示。                               |
+| `NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`        | 常驻广告提供商：`placeholder` 或 `adsense`。                                    |
+| `NEXT_PUBLIC_DISPLAY_ADS_PLACEHOLDERS`    | 是否显示一方占位广告框，不加载第三方脚本。                                      |
+| `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`  | 带管理/编辑密钥页面的广告模式：`off`、`internal` 或 `full`。生产不应设 `full`。 |
+| `NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`   | 允许加载真实 AdSense 脚本的生产域名白名单。                                     |
+| `NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE`       | 是否使用广告平台测试模式；本地、Preview、自动化测试应避免真实请求。             |
+| `NEXT_PUBLIC_ADSENSE_CLIENT_ID`           | AdSense client ID，例如 `ca-pub-...`。                                          |
+| `NEXT_PUBLIC_ADSENSE_SLOT_TOP_BANNER`     | 顶部横幅广告位 ID。                                                             |
+| `NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM_BANNER`  | 底部横幅广告位 ID。                                                             |
+| `NEXT_PUBLIC_ADSENSE_SLOT_INLINE_RESULTS` | 结果或说明内容间广告位 ID。                                                     |
+| `NEXT_PUBLIC_ADSENSE_SLOT_POST_SUBMIT`    | 提交成功后广告位 ID。                                                           |
+| `NEXT_PUBLIC_ADSENSE_SLOT_DESKTOP_RAIL`   | 桌面左右侧栏广告位 ID。                                                         |
+| `NEXT_PUBLIC_ADSENSE_SLOT_MOBILE_ANCHOR`  | 移动端可关闭底部 anchor 广告位 ID。                                             |
+| `ADS_TXT_PUBLISHER_ID`                    | 生成 `/ads.txt` 时使用的广告发布商 ID。                                         |
+
+以下变量仍属于后续激励广告和额度系统计划，当前代码尚未读取，不需要在 Vercel 里立即配置：
 
 AI 图片识别和激励广告：
 
@@ -444,7 +448,7 @@ AI 图片识别和激励广告：
 
 - 广告平台账号、站点审核、广告位置和政策要求已经确认。
 - 公开首页、`/about`、`/privacy`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 已准备好，拿到 publisher ID 后 `/ads.txt` 可从生产根域访问。
-- 生产环境有 `DISPLAY_ADS_ENABLED`、`DISPLAY_ADS_DEFAULT_ON`、`DISPLAY_AD_ALLOWED_HOSTS`、`DISPLAY_AD_TEST_MODE`、位置禁用清单和单页广告数量上限。
+- 生产环境有 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`、`NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`、`NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`、`NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`、`NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE` 和必要的 AdSense client / slot ID；`deployment:config` 不报错。
 - 创建、填写、编辑、上传预览和密钥页面可以有外围广告，但不会被广告遮挡、诱导误触或泄露完整密钥 URL；带 `?key=` 页面不加载第三方广告脚本。
 - 隐私说明已经补充广告平台、广告请求数据、广告 cookie、个性化广告退出方式和用户同意/拒绝规则。
 - 有创建率、填写完成率、广告收入、广告加载失败和布局稳定性监控。

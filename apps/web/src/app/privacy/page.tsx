@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 
+import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -29,65 +30,72 @@ const usageItems = [
 export default function PrivacyPage() {
   return (
     <main className={styles.page}>
-      <div className={styles.shell}>
-        <a className={styles.backLink} href="/">
-          <ArrowLeft aria-hidden="true" size={17} />
-          返回首页
-        </a>
+      <AdPageChrome pageContext="privacy">
+        <div className={styles.shell}>
+          <a className={styles.backLink} href="/">
+            <ArrowLeft aria-hidden="true" size={17} />
+            返回首页
+          </a>
 
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>Privacy</p>
-          <h1>隐私与数据保留说明</h1>
-          <p>
-            这是海外网页版 MVP
-            的简版说明，用来解释这个工具会保存哪些数据、为什么保存，以及链接权限意味着什么。正式公开上线前仍需要按目标地区做法律审阅。
-          </p>
-        </header>
+          <header className={styles.header}>
+            <p className={styles.eyebrow}>Privacy</p>
+            <h1>隐私与数据保留说明</h1>
+            <p>
+              这是海外网页版 MVP
+              的简版说明，用来解释这个工具会保存哪些数据、为什么保存，以及链接权限意味着什么。正式公开上线前仍需要按目标地区做法律审阅。
+            </p>
+          </header>
 
-        <section className={styles.section}>
-          <h2>我们收集什么</h2>
-          <p>当前版本不要求注册账号，不主动收集邮箱、手机号、微信号或日历账号。</p>
-          <ul>
-            {dataItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
+          <DisplayAd pageContext="privacy" placement="top-banner" />
 
-        <section className={styles.section}>
-          <h2>这些数据用来做什么</h2>
-          <ul>
-            {usageItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <p>当前 MVP 不会把核心填写流程中的数据用于广告定向、第三方营销或训练模型。</p>
-        </section>
+          <section className={styles.section}>
+            <h2>我们收集什么</h2>
+            <p>当前版本不要求注册账号，不主动收集邮箱、手机号、微信号或日历账号。</p>
+            <ul>
+              {dataItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
 
-        <section className={styles.section}>
-          <h2>链接就是权限</h2>
-          <p>
-            拿到公开分享链接的人可以查看日程和提交可用时间；拿到管理链接的人可以导出、锁定或归档日程；拿到编辑链接的人可以修改对应参与者的提交。
-          </p>
-          <p>请不要把管理链接或编辑链接公开发布。</p>
-        </section>
+          <section className={styles.section}>
+            <h2>这些数据用来做什么</h2>
+            <ul>
+              {usageItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p>当前 MVP 不会把核心填写流程中的数据用于广告定向、第三方营销或训练模型。</p>
+          </section>
 
-        <section className={styles.section}>
-          <h2>保留时间</h2>
-          <p>
-            MVP 默认日程在创建后 90
-            天过期。过期日程可先归档，后续再删除。当前版本没有自助删除按钮；需要处理时请查看
-            <a href="/feedback">反馈与删除请求</a>。
-          </p>
-        </section>
+          <DisplayAd pageContext="privacy" placement="inline-results" />
 
-        <section className={styles.section}>
-          <h2>安全原则</h2>
-          <p>
-            数据库存储精确时间统一使用 UTC。服务端只保存管理密钥和编辑密钥的哈希，不保存明文密钥。
-          </p>
-        </section>
-      </div>
+          <section className={styles.section}>
+            <h2>链接就是权限</h2>
+            <p>
+              拿到公开分享链接的人可以查看日程和提交可用时间；拿到管理链接的人可以导出、锁定或归档日程；拿到编辑链接的人可以修改对应参与者的提交。
+            </p>
+            <p>请不要把管理链接或编辑链接公开发布。</p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>保留时间</h2>
+            <p>
+              MVP 默认日程在创建后 90
+              天过期。过期日程可先归档，后续再删除。当前版本没有自助删除按钮；需要处理时请查看
+              <a href="/feedback">反馈与删除请求</a>。
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>安全原则</h2>
+            <p>
+              数据库存储精确时间统一使用 UTC。服务端只保存管理密钥和编辑密钥的哈希，不保存明文密钥。
+            </p>
+          </section>
+          <DisplayAd pageContext="privacy" placement="bottom-banner" />
+        </div>
+      </AdPageChrome>
     </main>
   );
 }

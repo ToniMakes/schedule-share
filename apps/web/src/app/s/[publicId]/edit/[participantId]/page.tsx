@@ -10,6 +10,7 @@ import { getParticipantAvailabilityView } from "@/server/schedules/get-participa
 import { isPublicImageImportVisible } from "@/server/schedules/image-import";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
+import { AdPageChrome, DisplayAd } from "../../../../ads/display-ad";
 import { EditAvailabilityForm } from "./edit-availability-form";
 import styles from "../../page.module.css";
 
@@ -53,51 +54,65 @@ function EditView({
 }) {
   return (
     <main className={styles.page}>
-      <div className={styles.shell}>
-        <header className={styles.header}>
-          <Link className={styles.backLink} href={`/s/${data.schedule.publicId}`}>
-            <ArrowLeft aria-hidden="true" size={17} />
-            返回日程
-          </Link>
-          <div className={styles.headerText}>
-            <p className={styles.eyebrow}>Edit Availability</p>
-            <h1 className={styles.title}>{data.participant.displayName}</h1>
-            <p className={styles.description}>{data.schedule.title}</p>
-          </div>
-        </header>
+      <AdPageChrome mobileAnchor={false} pageContext="edit-sensitive" thirdPartyAllowed={false}>
+        <div className={styles.shell}>
+          <header className={styles.header}>
+            <Link className={styles.backLink} href={`/s/${data.schedule.publicId}`}>
+              <ArrowLeft aria-hidden="true" size={17} />
+              返回日程
+            </Link>
+            <div className={styles.headerText}>
+              <p className={styles.eyebrow}>Edit Availability</p>
+              <h1 className={styles.title}>{data.participant.displayName}</h1>
+              <p className={styles.description}>{data.schedule.title}</p>
+            </div>
+          </header>
 
-        <section className={styles.summaryGrid} aria-label="日程概览">
-          <SummaryItem
-            icon={<CalendarDays aria-hidden="true" size={18} />}
-            label="日期"
-            value={`${data.schedule.dateRange.start} 至 ${data.schedule.dateRange.end}`}
-          />
-          <SummaryItem
-            icon={<Clock aria-hidden="true" size={18} />}
-            label="时区"
-            value={data.schedule.timezone}
-          />
-          <SummaryItem
-            icon={<ListChecks aria-hidden="true" size={18} />}
-            label="粒度"
-            value={`${data.schedule.slotMinutes} 分钟`}
-          />
-        </section>
+          <section className={styles.summaryGrid} aria-label="日程概览">
+            <SummaryItem
+              icon={<CalendarDays aria-hidden="true" size={18} />}
+              label="日期"
+              value={`${data.schedule.dateRange.start} 至 ${data.schedule.dateRange.end}`}
+            />
+            <SummaryItem
+              icon={<Clock aria-hidden="true" size={18} />}
+              label="时区"
+              value={data.schedule.timezone}
+            />
+            <SummaryItem
+              icon={<ListChecks aria-hidden="true" size={18} />}
+              label="粒度"
+              value={`${data.schedule.slotMinutes} 分钟`}
+            />
+          </section>
 
-        <EditAvailabilityForm
-          editKey={editKey}
-          imageImportVisible={isPublicImageImportVisible()}
-          initialAvailableSlots={data.participant.availableSlots}
-          initialCandidateVotes={data.participant.candidateVotes}
-          initialDisplayName={data.participant.displayName}
-          participantId={data.participant.id}
-          publicId={data.schedule.publicId}
-          scheduleMode={data.schedule.scheduleMode}
-          scheduleStatus={data.schedule.status}
-          scheduleTimezone={data.schedule.timezone}
-          slots={data.slots}
-        />
-      </div>
+          <DisplayAd
+            pageContext="edit-sensitive"
+            placement="top-banner"
+            thirdPartyAllowed={false}
+          />
+
+          <EditAvailabilityForm
+            editKey={editKey}
+            imageImportVisible={isPublicImageImportVisible()}
+            initialAvailableSlots={data.participant.availableSlots}
+            initialCandidateVotes={data.participant.candidateVotes}
+            initialDisplayName={data.participant.displayName}
+            participantId={data.participant.id}
+            publicId={data.schedule.publicId}
+            scheduleMode={data.schedule.scheduleMode}
+            scheduleStatus={data.schedule.status}
+            scheduleTimezone={data.schedule.timezone}
+            slots={data.slots}
+          />
+
+          <DisplayAd
+            pageContext="edit-sensitive"
+            placement="bottom-banner"
+            thirdPartyAllowed={false}
+          />
+        </div>
+      </AdPageChrome>
     </main>
   );
 }

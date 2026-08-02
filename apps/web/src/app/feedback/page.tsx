@@ -1,6 +1,7 @@
 import { ArrowLeft, MessageSquareText } from "lucide-react";
 import type { Metadata } from "next";
 
+import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -25,59 +26,66 @@ const deletionItems = [
 export default function FeedbackPage() {
   return (
     <main className={styles.page}>
-      <div className={styles.shell}>
-        <a className={styles.backLink} href="/">
-          <ArrowLeft aria-hidden="true" size={17} />
-          返回首页
-        </a>
+      <AdPageChrome pageContext="feedback">
+        <div className={styles.shell}>
+          <a className={styles.backLink} href="/">
+            <ArrowLeft aria-hidden="true" size={17} />
+            返回首页
+          </a>
 
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>Feedback</p>
-          <h1>反馈与删除请求</h1>
-          <p>
-            这里先作为内测阶段的处理说明。正式公开测试前，应补充专用联系邮箱或站内表单，并明确处理时限。
-          </p>
-        </header>
-
-        <section className={styles.notice} aria-label="当前状态">
-          <MessageSquareText aria-hidden="true" size={22} />
-          <div>
-            <h2>当前还没有公开表单</h2>
+          <header className={styles.header}>
+            <p className={styles.eyebrow}>Feedback</p>
+            <h1>反馈与删除请求</h1>
             <p>
-              内测期间请通过组织者提供的私下渠道提交反馈。不要在公开群聊、论坛或评论区发布管理链接、编辑链接或含有密钥的截图。
+              这里先作为内测阶段的处理说明。正式公开测试前，应补充专用联系邮箱或站内表单，并明确处理时限。
             </p>
-          </div>
-        </section>
+          </header>
 
-        <section className={styles.section}>
-          <h2>提交问题反馈时请包含</h2>
-          <ul>
-            {feedbackItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
+          <DisplayAd pageContext="feedback" placement="top-banner" />
 
-        <section className={styles.section}>
-          <h2>归档或删除请求</h2>
-          <ul>
-            {deletionItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
+          <section className={styles.notice} aria-label="当前状态">
+            <MessageSquareText aria-hidden="true" size={22} />
+            <div>
+              <h2>当前还没有公开表单</h2>
+              <p>
+                内测期间请通过组织者提供的私下渠道提交反馈。不要在公开群聊、论坛或评论区发布管理链接、编辑链接或含有密钥的截图。
+              </p>
+            </div>
+          </section>
 
-        <section className={styles.section}>
-          <h2>请不要发送</h2>
-          <p>
-            不要发送数据库连接、后台配置、与日程无关的身份证件信息，或包含管理链接和编辑链接完整地址的公开截图。
-          </p>
-        </section>
+          <section className={styles.section}>
+            <h2>提交问题反馈时请包含</h2>
+            <ul>
+              {feedbackItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
 
-        <footer className={styles.footer}>
-          <a href="/privacy">查看隐私与数据保留说明</a>
-        </footer>
-      </div>
+          <DisplayAd pageContext="feedback" placement="inline-results" />
+
+          <section className={styles.section}>
+            <h2>归档或删除请求</h2>
+            <ul>
+              {deletionItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className={styles.section}>
+            <h2>请不要发送</h2>
+            <p>
+              不要发送数据库连接、后台配置、与日程无关的身份证件信息，或包含管理链接和编辑链接完整地址的公开截图。
+            </p>
+          </section>
+
+          <footer className={styles.footer}>
+            <a href="/privacy">查看隐私与数据保留说明</a>
+          </footer>
+          <DisplayAd pageContext="feedback" placement="bottom-banner" />
+        </div>
+      </AdPageChrome>
     </main>
   );
 }

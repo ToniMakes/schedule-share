@@ -2,6 +2,7 @@ import { loadRootEnv } from "./load-env.mjs";
 import {
   checkAppBaseUrl,
   checkDatabaseUrl,
+  checkDisplayAdsConfig,
   checkImageImportConfig,
   checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
@@ -17,6 +18,7 @@ const checks = [
   }),
   checkSmokeBaseUrl(process.env.SMOKE_BASE_URL, { requireRemote: true }),
   checkAppBaseUrl(process.env.APP_BASE_URL, { requireRemote: true }),
+  checkDisplayAdsConfig(process.env, { requireProductionSafe: true }),
   checkImageImportConfig(process.env, { requireProductionSafe: true })
 ];
 
