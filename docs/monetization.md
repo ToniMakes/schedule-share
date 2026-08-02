@@ -242,15 +242,15 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 付费对象优先是组织者、社团、老师、小团队或高频活动发起人，而不是普通参与者。
 
-## 数据模型计划
+## 数据模型状态
 
-以下实体属于后续实现计划，当前数据库还没有这些表。
+以下实体已经有数据库表和 migration，但还没有接入图片识别 API、额度发放接口、原子消耗、退款或 rewarded ad 服务端验证流程。
 
 ### AiRecognitionCreditGrant
 
 记录一次 AI 图片识别额度发放。
 
-字段草案：
+当前字段：
 
 - `id`：内部唯一 ID。
 - `scope_type`：额度归属范围，例如 `anonymous_session`、`browser_device`、`user_account`。
@@ -268,7 +268,7 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 记录一次图片识别尝试，用于成本、风控和退款判断。
 
-字段草案：
+当前字段：
 
 - `id`：内部唯一 ID。
 - `schedule_id`：所属日程。
@@ -277,11 +277,11 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 - `entry_method`：固定为 `image_import`。
 - `image_mime_type`：上传图片类型。
 - `image_byte_size`：上传图片大小。
-- `image_width` / `image_height`：可选图片尺寸。
 - `model`：调用的图片识别模型。
 - `estimated_cost_usd`：估算成本，后续可由真实 usage 数据校准。
 - `status`：`started`、`succeeded`、`low_confidence`、`provider_unavailable`、`failed` 或 `refunded`。
 - `created_at`：UTC 时间。
+- `updated_at`：UTC 时间。
 
 `AiRecognitionAttempt` 不保存原始图片、不保存完整 OCR 文本、不保存未确认的识别明细；只保存必要的元数据和成本状态。
 
@@ -289,7 +289,7 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 记录广告完成事件的服务端验证结果。
 
-字段草案：
+当前字段：
 
 - `id`：内部唯一 ID。
 - `provider`：广告平台。

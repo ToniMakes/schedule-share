@@ -1,0 +1,1188 @@
+{
+  "id": "9098508c-341f-4bc0-9817-a9ef0bc8ef0a",
+  "prevId": "c623f5c5-a050-4d98-a651-9daccd117922",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.ai_recognition_attempts": {
+      "name": "ai_recognition_attempts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_id": {
+          "name": "participant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "credit_grant_id": {
+          "name": "credit_grant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entry_method": {
+          "name": "entry_method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'image_import'"
+        },
+        "image_mime_type": {
+          "name": "image_mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_byte_size": {
+          "name": "image_byte_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estimated_cost_usd": {
+          "name": "estimated_cost_usd",
+          "type": "numeric(10, 6)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "ai_recognition_attempt_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'started'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ai_recognition_attempts_schedule_id_idx": {
+          "name": "ai_recognition_attempts_schedule_id_idx",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_recognition_attempts_participant_id_idx": {
+          "name": "ai_recognition_attempts_participant_id_idx",
+          "columns": [
+            {
+              "expression": "participant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_recognition_attempts_credit_grant_id_idx": {
+          "name": "ai_recognition_attempts_credit_grant_id_idx",
+          "columns": [
+            {
+              "expression": "credit_grant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_recognition_attempts_created_at_idx": {
+          "name": "ai_recognition_attempts_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ai_recognition_attempts_schedule_id_schedules_id_fk": {
+          "name": "ai_recognition_attempts_schedule_id_schedules_id_fk",
+          "tableFrom": "ai_recognition_attempts",
+          "tableTo": "schedules",
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ai_recognition_attempts_credit_grant_id_ai_recognition_credit_grants_id_fk": {
+          "name": "ai_recognition_attempts_credit_grant_id_ai_recognition_credit_grants_id_fk",
+          "tableFrom": "ai_recognition_attempts",
+          "tableTo": "ai_recognition_credit_grants",
+          "columnsFrom": ["credit_grant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "ai_recognition_attempts_participant_schedule_fk": {
+          "name": "ai_recognition_attempts_participant_schedule_fk",
+          "tableFrom": "ai_recognition_attempts",
+          "tableTo": "participants",
+          "columnsFrom": ["participant_id", "schedule_id"],
+          "columnsTo": ["id", "schedule_id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "ai_recognition_attempts_entry_method_valid": {
+          "name": "ai_recognition_attempts_entry_method_valid",
+          "value": "\"ai_recognition_attempts\".\"entry_method\" = 'image_import'"
+        },
+        "ai_recognition_attempts_mime_type_not_empty": {
+          "name": "ai_recognition_attempts_mime_type_not_empty",
+          "value": "length(trim(\"ai_recognition_attempts\".\"image_mime_type\")) > 0"
+        },
+        "ai_recognition_attempts_byte_size_positive": {
+          "name": "ai_recognition_attempts_byte_size_positive",
+          "value": "\"ai_recognition_attempts\".\"image_byte_size\" > 0"
+        },
+        "ai_recognition_attempts_model_not_empty": {
+          "name": "ai_recognition_attempts_model_not_empty",
+          "value": "length(trim(\"ai_recognition_attempts\".\"model\")) > 0"
+        },
+        "ai_recognition_attempts_cost_nonnegative": {
+          "name": "ai_recognition_attempts_cost_nonnegative",
+          "value": "\"ai_recognition_attempts\".\"estimated_cost_usd\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ai_recognition_credit_grants": {
+      "name": "ai_recognition_credit_grants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "scope_type": {
+          "name": "scope_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope_id_hash": {
+          "name": "scope_id_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "ai_recognition_credit_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_event_id_hash": {
+          "name": "provider_event_id_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "credits_granted": {
+          "name": "credits_granted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credits_remaining": {
+          "name": "credits_remaining",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ai_credit_grants_scope_idx": {
+          "name": "ai_credit_grants_scope_idx",
+          "columns": [
+            {
+              "expression": "scope_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "scope_id_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_credit_grants_schedule_id_idx": {
+          "name": "ai_credit_grants_schedule_id_idx",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_credit_grants_expires_at_idx": {
+          "name": "ai_credit_grants_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ai_recognition_credit_grants_schedule_id_schedules_id_fk": {
+          "name": "ai_recognition_credit_grants_schedule_id_schedules_id_fk",
+          "tableFrom": "ai_recognition_credit_grants",
+          "tableTo": "schedules",
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ai_credit_grants_provider_event_unique": {
+          "name": "ai_credit_grants_provider_event_unique",
+          "nullsNotDistinct": false,
+          "columns": ["provider", "provider_event_id_hash"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "ai_credit_grants_scope_type_not_empty": {
+          "name": "ai_credit_grants_scope_type_not_empty",
+          "value": "length(trim(\"ai_recognition_credit_grants\".\"scope_type\")) > 0"
+        },
+        "ai_credit_grants_scope_id_hash_not_empty": {
+          "name": "ai_credit_grants_scope_id_hash_not_empty",
+          "value": "length(trim(\"ai_recognition_credit_grants\".\"scope_id_hash\")) > 0"
+        },
+        "ai_credit_grants_provider_not_empty": {
+          "name": "ai_credit_grants_provider_not_empty",
+          "value": "length(trim(\"ai_recognition_credit_grants\".\"provider\")) > 0"
+        },
+        "ai_credit_grants_event_hash_not_empty": {
+          "name": "ai_credit_grants_event_hash_not_empty",
+          "value": "\"ai_recognition_credit_grants\".\"provider_event_id_hash\" IS NULL OR length(trim(\"ai_recognition_credit_grants\".\"provider_event_id_hash\")) > 0"
+        },
+        "ai_credit_grants_positive_credits": {
+          "name": "ai_credit_grants_positive_credits",
+          "value": "\"ai_recognition_credit_grants\".\"credits_granted\" > 0"
+        },
+        "ai_credit_grants_remaining_valid": {
+          "name": "ai_credit_grants_remaining_valid",
+          "value": "\"ai_recognition_credit_grants\".\"credits_remaining\" >= 0 AND \"ai_recognition_credit_grants\".\"credits_remaining\" <= \"ai_recognition_credit_grants\".\"credits_granted\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.availability_slots": {
+      "name": "availability_slots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_id": {
+          "name": "participant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_start_utc": {
+          "name": "slot_start_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_end_utc": {
+          "name": "slot_end_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "availability_slots_schedule_slot_idx": {
+          "name": "availability_slots_schedule_slot_idx",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slot_start_utc",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slot_end_utc",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "availability_slots_participant_id_idx": {
+          "name": "availability_slots_participant_id_idx",
+          "columns": [
+            {
+              "expression": "participant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "availability_slots_schedule_id_schedules_id_fk": {
+          "name": "availability_slots_schedule_id_schedules_id_fk",
+          "tableFrom": "availability_slots",
+          "tableTo": "schedules",
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "availability_slots_participant_schedule_fk": {
+          "name": "availability_slots_participant_schedule_fk",
+          "tableFrom": "availability_slots",
+          "tableTo": "participants",
+          "columnsFrom": ["participant_id", "schedule_id"],
+          "columnsTo": ["id", "schedule_id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "availability_slots_participant_slot_unique": {
+          "name": "availability_slots_participant_slot_unique",
+          "nullsNotDistinct": false,
+          "columns": ["participant_id", "slot_start_utc", "slot_end_utc"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "availability_slots_range_valid": {
+          "name": "availability_slots_range_valid",
+          "value": "\"availability_slots\".\"slot_start_utc\" < \"availability_slots\".\"slot_end_utc\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.candidate_time_options": {
+      "name": "candidate_time_options",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slot_start_utc": {
+          "name": "slot_start_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_end_utc": {
+          "name": "slot_end_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "candidate_time_options_schedule_id_idx": {
+          "name": "candidate_time_options_schedule_id_idx",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "candidate_time_options_schedule_id_schedules_id_fk": {
+          "name": "candidate_time_options_schedule_id_schedules_id_fk",
+          "tableFrom": "candidate_time_options",
+          "tableTo": "schedules",
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "candidate_time_options_schedule_slot_unique": {
+          "name": "candidate_time_options_schedule_slot_unique",
+          "nullsNotDistinct": false,
+          "columns": ["schedule_id", "slot_start_utc", "slot_end_utc"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "candidate_time_options_label_not_empty": {
+          "name": "candidate_time_options_label_not_empty",
+          "value": "\"candidate_time_options\".\"label\" IS NULL OR length(trim(\"candidate_time_options\".\"label\")) > 0"
+        },
+        "candidate_time_options_range_valid": {
+          "name": "candidate_time_options_range_valid",
+          "value": "\"candidate_time_options\".\"slot_start_utc\" < \"candidate_time_options\".\"slot_end_utc\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.candidate_votes": {
+      "name": "candidate_votes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_id": {
+          "name": "participant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "candidate_time_option_id": {
+          "name": "candidate_time_option_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "response": {
+          "name": "response",
+          "type": "candidate_vote_response",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preference_rank": {
+          "name": "preference_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "candidate_votes_schedule_id_idx": {
+          "name": "candidate_votes_schedule_id_idx",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "candidate_votes_participant_id_idx": {
+          "name": "candidate_votes_participant_id_idx",
+          "columns": [
+            {
+              "expression": "participant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "candidate_votes_candidate_time_option_id_idx": {
+          "name": "candidate_votes_candidate_time_option_id_idx",
+          "columns": [
+            {
+              "expression": "candidate_time_option_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "candidate_votes_schedule_id_schedules_id_fk": {
+          "name": "candidate_votes_schedule_id_schedules_id_fk",
+          "tableFrom": "candidate_votes",
+          "tableTo": "schedules",
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "candidate_votes_candidate_time_option_id_candidate_time_options_id_fk": {
+          "name": "candidate_votes_candidate_time_option_id_candidate_time_options_id_fk",
+          "tableFrom": "candidate_votes",
+          "tableTo": "candidate_time_options",
+          "columnsFrom": ["candidate_time_option_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "candidate_votes_participant_schedule_fk": {
+          "name": "candidate_votes_participant_schedule_fk",
+          "tableFrom": "candidate_votes",
+          "tableTo": "participants",
+          "columnsFrom": ["participant_id", "schedule_id"],
+          "columnsTo": ["id", "schedule_id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "candidate_votes_participant_option_unique": {
+          "name": "candidate_votes_participant_option_unique",
+          "nullsNotDistinct": false,
+          "columns": ["participant_id", "candidate_time_option_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "candidate_votes_preference_rank_valid": {
+          "name": "candidate_votes_preference_rank_valid",
+          "value": "\"candidate_votes\".\"preference_rank\" IS NULL OR (\"candidate_votes\".\"preference_rank\" >= 1 AND \"candidate_votes\".\"preference_rank\" <= 50)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.participants": {
+      "name": "participants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "edit_key_hash": {
+          "name": "edit_key_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "participants_schedule_id_idx": {
+          "name": "participants_schedule_id_idx",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "participants_schedule_id_schedules_id_fk": {
+          "name": "participants_schedule_id_schedules_id_fk",
+          "tableFrom": "participants",
+          "tableTo": "schedules",
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "participants_id_schedule_id_unique": {
+          "name": "participants_id_schedule_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["id", "schedule_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "participants_display_name_not_empty": {
+          "name": "participants_display_name_not_empty",
+          "value": "length(trim(\"participants\".\"display_name\")) > 0"
+        },
+        "participants_edit_key_hash_not_empty": {
+          "name": "participants_edit_key_hash_not_empty",
+          "value": "length(trim(\"participants\".\"edit_key_hash\")) > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.rewarded_ad_verifications": {
+      "name": "rewarded_ad_verifications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ad_unit_id": {
+          "name": "ad_unit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reward_event_id_hash": {
+          "name": "reward_event_id_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope_id_hash": {
+          "name": "scope_id_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verification_status": {
+          "name": "verification_status",
+          "type": "rewarded_ad_verification_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "gross_revenue_usd": {
+          "name": "gross_revenue_usd",
+          "type": "numeric(10, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "rewarded_ad_verifications_scope_idx": {
+          "name": "rewarded_ad_verifications_scope_idx",
+          "columns": [
+            {
+              "expression": "scope_id_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "rewarded_ad_verifications_status_idx": {
+          "name": "rewarded_ad_verifications_status_idx",
+          "columns": [
+            {
+              "expression": "verification_status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "rewarded_ad_verifications_event_unique": {
+          "name": "rewarded_ad_verifications_event_unique",
+          "nullsNotDistinct": false,
+          "columns": ["provider", "ad_unit_id", "reward_event_id_hash"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "rewarded_ad_verifications_provider_not_empty": {
+          "name": "rewarded_ad_verifications_provider_not_empty",
+          "value": "length(trim(\"rewarded_ad_verifications\".\"provider\")) > 0"
+        },
+        "rewarded_ad_verifications_ad_unit_not_empty": {
+          "name": "rewarded_ad_verifications_ad_unit_not_empty",
+          "value": "length(trim(\"rewarded_ad_verifications\".\"ad_unit_id\")) > 0"
+        },
+        "rewarded_ad_verifications_event_hash_not_empty": {
+          "name": "rewarded_ad_verifications_event_hash_not_empty",
+          "value": "length(trim(\"rewarded_ad_verifications\".\"reward_event_id_hash\")) > 0"
+        },
+        "rewarded_ad_verifications_scope_hash_not_empty": {
+          "name": "rewarded_ad_verifications_scope_hash_not_empty",
+          "value": "length(trim(\"rewarded_ad_verifications\".\"scope_id_hash\")) > 0"
+        },
+        "rewarded_ad_verifications_revenue_nonnegative": {
+          "name": "rewarded_ad_verifications_revenue_nonnegative",
+          "value": "\"rewarded_ad_verifications\".\"gross_revenue_usd\" IS NULL OR \"rewarded_ad_verifications\".\"gross_revenue_usd\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.schedules": {
+      "name": "schedules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_range_start": {
+          "name": "date_range_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_range_end": {
+          "name": "date_range_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_minutes": {
+          "name": "slot_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "daily_windows": {
+          "name": "daily_windows",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_mode": {
+          "name": "schedule_mode",
+          "type": "schedule_mode",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'availability_grid'"
+        },
+        "final_start_utc": {
+          "name": "final_start_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "final_end_utc": {
+          "name": "final_end_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_key_hash": {
+          "name": "owner_key_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "schedule_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "schedules_expires_at_idx": {
+          "name": "schedules_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "schedules_public_id_unique": {
+          "name": "schedules_public_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["public_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "schedules_title_not_empty": {
+          "name": "schedules_title_not_empty",
+          "value": "length(trim(\"schedules\".\"title\")) > 0"
+        },
+        "schedules_public_id_not_empty": {
+          "name": "schedules_public_id_not_empty",
+          "value": "length(trim(\"schedules\".\"public_id\")) > 0"
+        },
+        "schedules_timezone_not_empty": {
+          "name": "schedules_timezone_not_empty",
+          "value": "length(trim(\"schedules\".\"timezone\")) > 0"
+        },
+        "schedules_owner_key_hash_not_empty": {
+          "name": "schedules_owner_key_hash_not_empty",
+          "value": "length(trim(\"schedules\".\"owner_key_hash\")) > 0"
+        },
+        "schedules_date_range_valid": {
+          "name": "schedules_date_range_valid",
+          "value": "\"schedules\".\"date_range_start\" <= \"schedules\".\"date_range_end\""
+        },
+        "schedules_slot_minutes_supported": {
+          "name": "schedules_slot_minutes_supported",
+          "value": "\"schedules\".\"slot_minutes\" IN (15, 30, 60)"
+        },
+        "schedules_final_time_valid": {
+          "name": "schedules_final_time_valid",
+          "value": "(\"schedules\".\"final_start_utc\" IS NULL AND \"schedules\".\"final_end_utc\" IS NULL) OR (\"schedules\".\"final_start_utc\" IS NOT NULL AND \"schedules\".\"final_end_utc\" IS NOT NULL AND \"schedules\".\"final_start_utc\" < \"schedules\".\"final_end_utc\")"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.ai_recognition_attempt_status": {
+      "name": "ai_recognition_attempt_status",
+      "schema": "public",
+      "values": [
+        "started",
+        "succeeded",
+        "low_confidence",
+        "provider_unavailable",
+        "failed",
+        "refunded"
+      ]
+    },
+    "public.ai_recognition_credit_source": {
+      "name": "ai_recognition_credit_source",
+      "schema": "public",
+      "values": ["free_quota", "rewarded_ad", "admin", "refund"]
+    },
+    "public.candidate_vote_response": {
+      "name": "candidate_vote_response",
+      "schema": "public",
+      "values": ["available", "maybe", "unavailable"]
+    },
+    "public.rewarded_ad_verification_status": {
+      "name": "rewarded_ad_verification_status",
+      "schema": "public",
+      "values": ["pending", "verified", "rejected", "duplicate"]
+    },
+    "public.schedule_mode": {
+      "name": "schedule_mode",
+      "schema": "public",
+      "values": ["availability_grid", "candidate_poll"]
+    },
+    "public.schedule_status": {
+      "name": "schedule_status",
+      "schema": "public",
+      "values": ["open", "locked", "archived"]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

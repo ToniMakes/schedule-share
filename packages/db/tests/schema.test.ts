@@ -6,11 +6,17 @@ import { getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import {
+  aiRecognitionAttempts,
+  aiRecognitionAttemptStatusValues,
+  aiRecognitionCreditGrants,
+  aiRecognitionCreditSourceValues,
   availabilitySlots,
   candidateTimeOptions,
   candidateVoteResponseValues,
   candidateVotes,
   participants,
+  rewardedAdVerifications,
+  rewardedAdVerificationStatusValues,
   scheduleModeValues,
   schedules,
   scheduleStatusValues
@@ -26,6 +32,9 @@ describe("database schema", () => {
     expect(getTableName(availabilitySlots)).toBe("availability_slots");
     expect(getTableName(candidateTimeOptions)).toBe("candidate_time_options");
     expect(getTableName(candidateVotes)).toBe("candidate_votes");
+    expect(getTableName(aiRecognitionCreditGrants)).toBe("ai_recognition_credit_grants");
+    expect(getTableName(aiRecognitionAttempts)).toBe("ai_recognition_attempts");
+    expect(getTableName(rewardedAdVerifications)).toBe("rewarded_ad_verifications");
   });
 
   it("keeps schedule status values aligned with the domain model", () => {
@@ -38,6 +47,35 @@ describe("database schema", () => {
 
   it("keeps candidate vote response values aligned with the domain model", () => {
     expect(candidateVoteResponseValues).toEqual(["available", "maybe", "unavailable"]);
+  });
+
+  it("keeps AI credit source values aligned with the monetization model", () => {
+    expect(aiRecognitionCreditSourceValues).toEqual([
+      "free_quota",
+      "rewarded_ad",
+      "admin",
+      "refund"
+    ]);
+  });
+
+  it("keeps AI recognition attempt status values aligned with the monetization model", () => {
+    expect(aiRecognitionAttemptStatusValues).toEqual([
+      "started",
+      "succeeded",
+      "low_confidence",
+      "provider_unavailable",
+      "failed",
+      "refunded"
+    ]);
+  });
+
+  it("keeps rewarded ad verification status values aligned with the monetization model", () => {
+    expect(rewardedAdVerificationStatusValues).toEqual([
+      "pending",
+      "verified",
+      "rejected",
+      "duplicate"
+    ]);
   });
 
   it("keeps key constraints in the initial migration", async () => {
@@ -84,6 +122,22 @@ describe("database schema", () => {
 
     expect(migration).toContain('ADD COLUMN "preference_rank" integer');
     expect(migration).toContain('"candidate_votes_preference_rank_valid"');
+  });
+
+  it("keeps AI recognition ledger tables and constraints in the AI ledger migration", async () => {
+    const migration = await readMigration("0005");
+
+    expect(migration).toContain('CREATE TYPE "public"."ai_recognition_credit_source" AS ENUM');
+    expect(migration).toContain('CREATE TYPE "public"."ai_recognition_attempt_status" AS ENUM');
+    expect(migration).toContain('CREATE TYPE "public"."rewarded_ad_verification_status" AS ENUM');
+    expect(migration).toContain('CREATE TABLE "ai_recognition_credit_grants"');
+    expect(migration).toContain('CREATE TABLE "ai_recognition_attempts"');
+    expect(migration).toContain('CREATE TABLE "rewarded_ad_verifications"');
+    expect(migration).toContain('"ai_credit_grants_provider_event_unique"');
+    expect(migration).toContain('"ai_credit_grants_remaining_valid"');
+    expect(migration).toContain('"ai_recognition_attempts_participant_schedule_fk"');
+    expect(migration).toContain('"ai_recognition_attempts_cost_nonnegative"');
+    expect(migration).toContain('"rewarded_ad_verifications_event_unique"');
   });
 });
 

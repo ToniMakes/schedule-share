@@ -8,15 +8,28 @@ loadRootEnv();
 
 const requiredExtensions = ["pgcrypto"];
 const requiredTables = [
+  "ai_recognition_attempts",
+  "ai_recognition_credit_grants",
   "availability_slots",
   "candidate_time_options",
   "candidate_votes",
   "participants",
+  "rewarded_ad_verifications",
   "schedules"
 ];
-const requiredTypes = ["candidate_vote_response", "schedule_mode", "schedule_status"];
+const requiredTypes = [
+  "ai_recognition_attempt_status",
+  "ai_recognition_credit_source",
+  "candidate_vote_response",
+  "rewarded_ad_verification_status",
+  "schedule_mode",
+  "schedule_status"
+];
 const requiredColumnsByTable = {
+  ai_recognition_attempts: ["credit_grant_id", "estimated_cost_usd", "status"],
+  ai_recognition_credit_grants: ["credits_granted", "credits_remaining", "source"],
   candidate_votes: ["preference_rank"],
+  rewarded_ad_verifications: ["reward_event_id_hash", "verification_status"],
   schedules: ["final_start_utc", "final_end_utc"]
 };
 

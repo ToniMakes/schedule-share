@@ -135,9 +135,9 @@
 
 ### AiRecognitionCreditGrant
 
-计划中的 AI 图片识别额度发放记录。用于限制 `image_import` 的成本暴露，并支持免费额度、激励广告奖励、人工发放和失败退款。当前数据库还未实现该实体，详细方案见 `docs/monetization.md`。
+AI 图片识别额度发放记录。用于限制 `image_import` 的成本暴露，并支持免费额度、激励广告奖励、人工发放和失败退款。当前数据库表和 migration 已实现；额度发放、原子消耗、退款和前端兑换流程仍未接入，详细方案见 `docs/monetization.md`。
 
-字段草案：
+当前字段：
 
 - `id`：内部唯一 ID。
 - `scope_type`：额度归属范围，例如匿名 session、浏览器设备或登录用户。
@@ -153,9 +153,9 @@
 
 ### AiRecognitionAttempt
 
-计划中的图片识别尝试记录。用于成本归因、风控、失败退款和效果分析。它不保存原始图片、不保存完整 OCR 文本，也不保存未确认识别明细。
+图片识别尝试记录。用于成本归因、风控、失败退款和效果分析。它不保存原始图片、不保存完整 OCR 文本，也不保存未确认识别明细。当前数据库表和 migration 已实现；图片识别 API 尚未接入额度消耗和尝试状态更新。
 
-字段草案：
+当前字段：
 
 - `id`：内部唯一 ID。
 - `schedule_id`：所属日程。
@@ -168,12 +168,13 @@
 - `estimated_cost_usd`：估算成本。
 - `status`：`started`、`succeeded`、`low_confidence`、`provider_unavailable`、`failed` 或 `refunded`。
 - `created_at`：UTC 时间。
+- `updated_at`：UTC 时间。
 
 ### RewardedAdVerification
 
-计划中的激励广告完成事件验证记录。用于服务端确认广告完成、避免重复发放额度，并把广告收益和 AI 成本做粗略归因。
+激励广告完成事件验证记录。用于服务端确认广告完成、避免重复发放额度，并把广告收益和 AI 成本做粗略归因。当前数据库表和 migration 已实现；真实 rewarded ad provider 和服务端验证流程仍未接入。
 
-字段草案：
+当前字段：
 
 - `id`：内部唯一 ID。
 - `provider`：广告平台。

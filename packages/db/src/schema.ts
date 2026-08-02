@@ -6,6 +6,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -23,10 +24,45 @@ export const candidateVoteResponseEnum = pgEnum(
   "candidate_vote_response",
   candidateVoteResponseValues
 );
+export const aiRecognitionCreditSourceValues = [
+  "free_quota",
+  "rewarded_ad",
+  "admin",
+  "refund"
+] as const;
+export const aiRecognitionCreditSourceEnum = pgEnum(
+  "ai_recognition_credit_source",
+  aiRecognitionCreditSourceValues
+);
+export const aiRecognitionAttemptStatusValues = [
+  "started",
+  "succeeded",
+  "low_confidence",
+  "provider_unavailable",
+  "failed",
+  "refunded"
+] as const;
+export const aiRecognitionAttemptStatusEnum = pgEnum(
+  "ai_recognition_attempt_status",
+  aiRecognitionAttemptStatusValues
+);
+export const rewardedAdVerificationStatusValues = [
+  "pending",
+  "verified",
+  "rejected",
+  "duplicate"
+] as const;
+export const rewardedAdVerificationStatusEnum = pgEnum(
+  "rewarded_ad_verification_status",
+  rewardedAdVerificationStatusValues
+);
 
 export type ScheduleStatus = (typeof scheduleStatusValues)[number];
 export type ScheduleMode = (typeof scheduleModeValues)[number];
 export type CandidateVoteResponse = (typeof candidateVoteResponseValues)[number];
+export type AiRecognitionCreditSource = (typeof aiRecognitionCreditSourceValues)[number];
+export type AiRecognitionAttemptStatus = (typeof aiRecognitionAttemptStatusValues)[number];
+export type RewardedAdVerificationStatus = (typeof rewardedAdVerificationStatusValues)[number];
 
 export interface StoredDailyWindow {
   readonly daysOfWeek?: readonly number[];
@@ -187,11 +223,128 @@ export const candidateVotes = pgTable(
   ]
 );
 
+export const aiRecognitionCreditGrants = pgTable(
+  "ai_recognition_credit_grants",
+  {
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    scopeType: text("scope_type").notNull(),
+    scopeIdHash: text("scope_id_hash").notNull(),
+    scheduleId: uuid("schedule_id").references(() => schedules.id, { onDelete: "cascade" }),
+    source: aiRecognitionCreditSourceEnum("source").notNull(),
+    provider: text("provider").notNull(),
+    providerEventIdHash: text("provider_event_id_hash"),
+    creditsGranted: integer("credits_granted").notNull(),
+    creditsRemaining: integer("credits_remaining").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("ai_credit_grants_scope_idx").on(table.scopeType, table.scopeIdHash),
+    index("ai_credit_grants_schedule_id_idx").on(table.scheduleId),
+    index("ai_credit_grants_expires_at_idx").on(table.expiresAt),
+    unique("ai_credit_grants_provider_event_unique").on(table.provider, table.providerEventIdHash),
+    check("ai_credit_grants_scope_type_not_empty", sql`length(trim(${table.scopeType})) > 0`),
+    check("ai_credit_grants_scope_id_hash_not_empty", sql`length(trim(${table.scopeIdHash})) > 0`),
+    check("ai_credit_grants_provider_not_empty", sql`length(trim(${table.provider})) > 0`),
+    check(
+      "ai_credit_grants_event_hash_not_empty",
+      sql`${table.providerEventIdHash} IS NULL OR length(trim(${table.providerEventIdHash})) > 0`
+    ),
+    check("ai_credit_grants_positive_credits", sql`${table.creditsGranted} > 0`),
+    check(
+      "ai_credit_grants_remaining_valid",
+      sql`${table.creditsRemaining} >= 0 AND ${table.creditsRemaining} <= ${table.creditsGranted}`
+    )
+  ]
+);
+
+export const aiRecognitionAttempts = pgTable(
+  "ai_recognition_attempts",
+  {
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    scheduleId: uuid("schedule_id")
+      .notNull()
+      .references(() => schedules.id, { onDelete: "cascade" }),
+    participantId: uuid("participant_id"),
+    creditGrantId: uuid("credit_grant_id")
+      .notNull()
+      .references(() => aiRecognitionCreditGrants.id, { onDelete: "restrict" }),
+    entryMethod: text("entry_method").default("image_import").notNull(),
+    imageMimeType: text("image_mime_type").notNull(),
+    imageByteSize: integer("image_byte_size").notNull(),
+    model: text("model").notNull(),
+    estimatedCostUsd: numeric("estimated_cost_usd", { precision: 10, scale: 6 }).notNull(),
+    status: aiRecognitionAttemptStatusEnum("status").default("started").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("ai_recognition_attempts_schedule_id_idx").on(table.scheduleId),
+    index("ai_recognition_attempts_participant_id_idx").on(table.participantId),
+    index("ai_recognition_attempts_credit_grant_id_idx").on(table.creditGrantId),
+    index("ai_recognition_attempts_created_at_idx").on(table.createdAt),
+    foreignKey({
+      columns: [table.participantId, table.scheduleId],
+      foreignColumns: [participants.id, participants.scheduleId],
+      name: "ai_recognition_attempts_participant_schedule_fk"
+    }).onDelete("cascade"),
+    check("ai_recognition_attempts_entry_method_valid", sql`${table.entryMethod} = 'image_import'`),
+    check(
+      "ai_recognition_attempts_mime_type_not_empty",
+      sql`length(trim(${table.imageMimeType})) > 0`
+    ),
+    check("ai_recognition_attempts_byte_size_positive", sql`${table.imageByteSize} > 0`),
+    check("ai_recognition_attempts_model_not_empty", sql`length(trim(${table.model})) > 0`),
+    check("ai_recognition_attempts_cost_nonnegative", sql`${table.estimatedCostUsd} >= 0`)
+  ]
+);
+
+export const rewardedAdVerifications = pgTable(
+  "rewarded_ad_verifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    provider: text("provider").notNull(),
+    adUnitId: text("ad_unit_id").notNull(),
+    rewardEventIdHash: text("reward_event_id_hash").notNull(),
+    scopeIdHash: text("scope_id_hash").notNull(),
+    verificationStatus: rewardedAdVerificationStatusEnum("verification_status")
+      .default("pending")
+      .notNull(),
+    grossRevenueUsd: numeric("gross_revenue_usd", { precision: 10, scale: 6 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("rewarded_ad_verifications_scope_idx").on(table.scopeIdHash),
+    index("rewarded_ad_verifications_status_idx").on(table.verificationStatus),
+    unique("rewarded_ad_verifications_event_unique").on(
+      table.provider,
+      table.adUnitId,
+      table.rewardEventIdHash
+    ),
+    check("rewarded_ad_verifications_provider_not_empty", sql`length(trim(${table.provider})) > 0`),
+    check("rewarded_ad_verifications_ad_unit_not_empty", sql`length(trim(${table.adUnitId})) > 0`),
+    check(
+      "rewarded_ad_verifications_event_hash_not_empty",
+      sql`length(trim(${table.rewardEventIdHash})) > 0`
+    ),
+    check(
+      "rewarded_ad_verifications_scope_hash_not_empty",
+      sql`length(trim(${table.scopeIdHash})) > 0`
+    ),
+    check(
+      "rewarded_ad_verifications_revenue_nonnegative",
+      sql`${table.grossRevenueUsd} IS NULL OR ${table.grossRevenueUsd} >= 0`
+    )
+  ]
+);
+
 export const schedulesRelations = relations(schedules, ({ many }) => ({
   candidateTimeOptions: many(candidateTimeOptions),
   participants: many(participants),
   availabilitySlots: many(availabilitySlots),
-  candidateVotes: many(candidateVotes)
+  candidateVotes: many(candidateVotes),
+  aiRecognitionCreditGrants: many(aiRecognitionCreditGrants),
+  aiRecognitionAttempts: many(aiRecognitionAttempts)
 }));
 
 export const candidateTimeOptionsRelations = relations(candidateTimeOptions, ({ many, one }) => ({
@@ -208,7 +361,8 @@ export const participantsRelations = relations(participants, ({ many, one }) => 
     references: [schedules.id]
   }),
   availabilitySlots: many(availabilitySlots),
-  candidateVotes: many(candidateVotes)
+  candidateVotes: many(candidateVotes),
+  aiRecognitionAttempts: many(aiRecognitionAttempts)
 }));
 
 export const availabilitySlotsRelations = relations(availabilitySlots, ({ one }) => ({
@@ -234,5 +388,31 @@ export const candidateVotesRelations = relations(candidateVotes, ({ one }) => ({
   candidateTimeOption: one(candidateTimeOptions, {
     fields: [candidateVotes.candidateTimeOptionId],
     references: [candidateTimeOptions.id]
+  })
+}));
+
+export const aiRecognitionCreditGrantsRelations = relations(
+  aiRecognitionCreditGrants,
+  ({ many, one }) => ({
+    schedule: one(schedules, {
+      fields: [aiRecognitionCreditGrants.scheduleId],
+      references: [schedules.id]
+    }),
+    attempts: many(aiRecognitionAttempts)
+  })
+);
+
+export const aiRecognitionAttemptsRelations = relations(aiRecognitionAttempts, ({ one }) => ({
+  schedule: one(schedules, {
+    fields: [aiRecognitionAttempts.scheduleId],
+    references: [schedules.id]
+  }),
+  participant: one(participants, {
+    fields: [aiRecognitionAttempts.participantId, aiRecognitionAttempts.scheduleId],
+    references: [participants.id, participants.scheduleId]
+  }),
+  creditGrant: one(aiRecognitionCreditGrants, {
+    fields: [aiRecognitionAttempts.creditGrantId],
+    references: [aiRecognitionCreditGrants.id]
   })
 }));
