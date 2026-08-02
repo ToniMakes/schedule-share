@@ -18,9 +18,26 @@
 | `OPENAI_IMAGE_IMPORT_MODEL` | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                  |
 | `SMOKE_BASE_URL`            | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                        |
 
-## 计划中的 AI 图片识别额度和激励广告变量
+## 计划中的广告、AI 图片识别额度和激励广告变量
 
 以下变量属于 `docs/monetization.md` 里的后续方案，当前代码尚未读取，不需要在 Vercel 里立即配置：
+
+常驻展示广告：
+
+| 变量                                     | 说明                                                      |
+| ---------------------------------------- | --------------------------------------------------------- |
+| `DISPLAY_ADS_ENABLED`                    | 是否启用常驻展示广告。                                    |
+| `DISPLAY_AD_PROVIDER`                    | 常驻广告提供商标识，例如 `adsense` 或 `ad_manager`。      |
+| `DISPLAY_AD_CLIENT_ID`                   | 广告 client / publisher ID。                              |
+| `DISPLAY_AD_SLOT_RESULTS_INLINE`         | 结果页内联广告位 ID。                                     |
+| `DISPLAY_AD_SLOT_DESKTOP_RAIL`           | 桌面侧栏广告位 ID。                                       |
+| `DISPLAY_AD_SLOT_MOBILE_ANCHOR`          | 移动端底部 anchor ad 或等价广告位 ID。                    |
+| `DISPLAY_AD_SUPPRESS_ON_EDITING_PAGES`   | 是否在填写、编辑、上传预览和管理密钥页面禁用展示广告。    |
+| `DISPLAY_AD_MAX_SLOTS_PER_PAGE`          | 单页最大展示广告位数量。                                  |
+| `ADS_CONSENT_MODE_ENABLED`               | 是否启用广告 consent mode 或等价的地区化同意/拒绝处理。   |
+| `ADS_POLICY_REVIEW_REQUIRED_BEFORE_LIVE` | 是否要求通过人工策略检查后才允许生产展示。默认应为 true。 |
+
+AI 图片识别和激励广告：
 
 | 变量                                     | 说明                                                    |
 | ---------------------------------------- | ------------------------------------------------------- |
