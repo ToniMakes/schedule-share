@@ -137,6 +137,7 @@ function ScheduleView({
             <>
               <DisplayAd pageContext="public-schedule" placement="inline-results" />
               <CandidatePollResultsPanel
+                locale={locale}
                 participants={data.participants}
                 slots={data.results.slotResults}
               />
