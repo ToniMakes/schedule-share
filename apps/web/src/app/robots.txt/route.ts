@@ -10,6 +10,7 @@ export function GET(): Response {
     "Allow: /feedback$",
     "Allow: /terms$",
     "Allow: /en$",
+    "Allow: /en/new$",
     "Allow: /en/about$",
     "Allow: /en/privacy$",
     "Allow: /en/feedback$",

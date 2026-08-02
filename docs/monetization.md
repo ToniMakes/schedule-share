@@ -137,7 +137,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 - `/privacy`：已接入隐私说明基础版，并补充广告 cookie、第三方广告技术和 AI 图片识别处理边界；真实广告前继续补实际第三方广告供应商、个性化广告退出和 consent。
 - `/feedback`：已接入反馈和删除请求说明；页面支持 `NEXT_PUBLIC_SUPPORT_EMAIL`，正式上线前补专用邮箱或站内表单并重新部署。
 - `/terms`：已接入基础使用条款草案；正式上线前做法律审阅。
-- `/en`、`/en/about`、`/en/privacy`、`/en/feedback` 和 `/en/terms`：已接入英文公开说明页，用于海外用户理解产品和给广告审核提供英文可读内容；核心创建/填写/管理 UI 的完整中英双语仍需继续补。
+- `/en`、`/en/new`、`/en/about`、`/en/privacy`、`/en/feedback` 和 `/en/terms`：已接入英文公开说明页和英文创建页，用于海外用户理解产品、进入核心创建流程，并给广告审核提供英文可读内容；公开日程、填写、编辑和管理 UI 的完整中英双语仍需继续补。
 - `/ads.txt`：路由已接入；拿到 AdSense publisher ID 后配置生产环境变量。
 - `robots.txt` 和 `sitemap.xml`：已接入；继续避免密钥页进入索引。
 

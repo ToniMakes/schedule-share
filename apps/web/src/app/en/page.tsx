@@ -43,7 +43,7 @@ export default function EnglishHomePage() {
             collect availability, compare the group overlap, and export the final time.
           </p>
           <div className={styles.actions}>
-            <a className={styles.primary} href="/new">
+            <a className={styles.primary} href="/en/new">
               <CalendarPlus aria-hidden="true" size={18} />
               Create Schedule
             </a>

@@ -8,6 +8,7 @@ const publicRoutes = [
   "/feedback",
   "/terms",
   "/en",
+  "/en/new",
   "/en/about",
   "/en/privacy",
   "/en/feedback",

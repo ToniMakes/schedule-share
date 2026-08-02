@@ -20,18 +20,14 @@ import {
   readRememberedScheduleFormDefaults,
   rememberScheduleFormDefaults
 } from "./schedule-form-memory";
+import {
+  dayValues,
+  newScheduleFormCopy,
+  type NewScheduleFormCopy,
+  type NewScheduleFormLocale
+} from "./schedule-form-copy";
 import { DisplayAd } from "../ads/display-ad";
 import styles from "./page.module.css";
-
-const dayOptions = [
-  { value: 1, label: "一" },
-  { value: 2, label: "二" },
-  { value: 3, label: "三" },
-  { value: 4, label: "四" },
-  { value: 5, label: "五" },
-  { value: 6, label: "六" },
-  { value: 0, label: "日" }
-] as const;
 
 const timezoneOptions = [
   "Australia/Sydney",
@@ -66,7 +62,8 @@ type SubmitState =
   | { readonly status: "success"; readonly result: CreateScheduleResponse }
   | { readonly status: "error"; readonly error: FormError };
 
-export function NewScheduleForm() {
+export function NewScheduleForm({ locale = "zh-CN" }: { readonly locale?: NewScheduleFormLocale }) {
+  const copy = newScheduleFormCopy[locale];
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [timezone, setTimezone] = useState("Australia/Sydney");
@@ -92,9 +89,7 @@ export function NewScheduleForm() {
       endTime: "15:00"
     }
   ]);
-  const [selectedDays, setSelectedDays] = useState<Set<number>>(
-    () => new Set(dayOptions.map((day) => day.value))
-  );
+  const [selectedDays, setSelectedDays] = useState<Set<number>>(() => new Set<number>(dayValues));
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
   const [saveReadiness, setSaveReadiness] = useState<SaveReadiness>({ status: "checking" });
   const [copiedTarget, setCopiedTarget] = useState<"share" | "owner" | undefined>();
@@ -168,7 +163,7 @@ export function NewScheduleForm() {
   }, []);
 
   const sortedSelectedDays = useMemo(
-    () => dayOptions.map((day) => day.value).filter((day) => selectedDays.has(day)),
+    () => dayValues.filter((day) => selectedDays.has(day)),
     [selectedDays]
   );
 
@@ -183,8 +178,8 @@ export function NewScheduleForm() {
       setSubmitState({
         status: "error",
         error: {
-          title: "请选择可选日期",
-          detail: "至少需要选择一天，系统才能生成候选时间。"
+          title: copy.selectDateErrorTitle,
+          detail: copy.selectDateErrorBody
         }
       });
       return;
@@ -231,9 +226,7 @@ export function NewScheduleForm() {
               dailyWindows: [
                 {
                   daysOfWeek:
-                    sortedSelectedDays.length === dayOptions.length
-                      ? undefined
-                      : sortedSelectedDays,
+                    sortedSelectedDays.length === dayValues.length ? undefined : sortedSelectedDays,
                   startTime: selectedStartTime,
                   endTime: selectedEndTime
                 }
@@ -257,7 +250,7 @@ export function NewScheduleForm() {
     } catch (error) {
       setSubmitState({
         status: "error",
-        error: toFormError(error)
+        error: toFormError(error, copy)
       });
     }
   }
@@ -310,24 +303,24 @@ export function NewScheduleForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <ReadinessNotice saveReadiness={saveReadiness} />
+      <ReadinessNotice copy={copy} saveReadiness={saveReadiness} />
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>基本信息</h2>
+        <h2 className={styles.sectionTitle}>{copy.basicInfo}</h2>
         <div className={styles.grid}>
           <label className={styles.field}>
-            <span>标题</span>
+            <span>{copy.title}</span>
             <input
               required
               maxLength={120}
               name="title"
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="周末聚餐"
+              placeholder={copy.titlePlaceholder}
               value={title}
             />
           </label>
           <label className={styles.field}>
-            <span>时区</span>
+            <span>{copy.timezone}</span>
             <input
               required
               list="timezone-options"
@@ -342,12 +335,12 @@ export function NewScheduleForm() {
             </datalist>
           </label>
           <label className={`${styles.field} ${styles.fullWidth}`}>
-            <span>说明</span>
+            <span>{copy.description}</span>
             <textarea
               maxLength={1000}
               name="description"
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="可选"
+              placeholder={copy.descriptionPlaceholder}
               rows={3}
               value={description}
             />
@@ -356,8 +349,8 @@ export function NewScheduleForm() {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>创建方式</h2>
-        <div className={styles.modeGrid} role="radiogroup" aria-label="创建方式">
+        <h2 className={styles.sectionTitle}>{copy.creationMethod}</h2>
+        <div className={styles.modeGrid} role="radiogroup" aria-label={copy.creationMethodAria}>
           <label className={styles.modeChoice}>
             <input
               checked={scheduleMode === "availability_grid"}
@@ -368,7 +361,7 @@ export function NewScheduleForm() {
             />
             <span>
               <Grid3X3 aria-hidden="true" size={18} />
-              开放网格
+              {copy.gridMode}
             </span>
           </label>
           <label className={styles.modeChoice}>
@@ -381,7 +374,7 @@ export function NewScheduleForm() {
             />
             <span>
               <ListChecks aria-hidden="true" size={18} />
-              候选投票
+              {copy.candidatePoll}
             </span>
           </label>
         </div>
@@ -390,10 +383,10 @@ export function NewScheduleForm() {
       {scheduleMode === "availability_grid" ? (
         <>
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>时间范围</h2>
+            <h2 className={styles.sectionTitle}>{copy.timeRange}</h2>
             <div className={styles.grid}>
               <label className={styles.field}>
-                <span>开始日期</span>
+                <span>{copy.startDate}</span>
                 <input
                   required
                   name="dateStart"
@@ -403,7 +396,7 @@ export function NewScheduleForm() {
                 />
               </label>
               <label className={styles.field}>
-                <span>结束日期</span>
+                <span>{copy.endDate}</span>
                 <input
                   required
                   min={dateStart}
@@ -414,7 +407,7 @@ export function NewScheduleForm() {
                 />
               </label>
               <label className={styles.field}>
-                <span>开始时间</span>
+                <span>{copy.startTime}</span>
                 <input
                   required
                   name="startTime"
@@ -425,7 +418,7 @@ export function NewScheduleForm() {
                 />
               </label>
               <label className={styles.field}>
-                <span>结束时间</span>
+                <span>{copy.endTime}</span>
                 <input
                   required
                   name="endTime"
@@ -439,24 +432,24 @@ export function NewScheduleForm() {
           </section>
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>可选日期</h2>
-            <div className={styles.dayGrid} role="group" aria-label="可选日期">
-              {dayOptions.map((day) => (
-                <label className={styles.dayToggle} key={day.value}>
+            <h2 className={styles.sectionTitle}>{copy.availableDays}</h2>
+            <div className={styles.dayGrid} role="group" aria-label={copy.availableDaysAria}>
+              {dayValues.map((day) => (
+                <label className={styles.dayToggle} key={day}>
                   <input
-                    checked={selectedDays.has(day.value)}
-                    onChange={() => toggleDay(day.value)}
+                    checked={selectedDays.has(day)}
+                    onChange={() => toggleDay(day)}
                     type="checkbox"
                   />
-                  <span>{day.label}</span>
+                  <span>{copy.dayLabels[day]}</span>
                 </label>
               ))}
             </div>
           </section>
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>时间粒度</h2>
-            <div className={styles.segmented} role="radiogroup" aria-label="时间粒度">
+            <h2 className={styles.sectionTitle}>{copy.slotMinutes}</h2>
+            <div className={styles.segmented} role="radiogroup" aria-label={copy.slotMinutesAria}>
               {([15, 30, 60] as const).map((minutes) => (
                 <label className={styles.segment} key={minutes}>
                   <input
@@ -466,7 +459,7 @@ export function NewScheduleForm() {
                     type="radio"
                     value={minutes}
                   />
-                  <span>{minutes} 分钟</span>
+                  <span>{copy.minuteLabel(minutes)}</span>
                 </label>
               ))}
             </div>
@@ -475,26 +468,26 @@ export function NewScheduleForm() {
       ) : (
         <section className={styles.section}>
           <div className={styles.sectionTitleRow}>
-            <h2 className={styles.sectionTitle}>候选时间</h2>
+            <h2 className={styles.sectionTitle}>{copy.candidates}</h2>
             <button className={styles.inlineButton} onClick={addCandidateRow} type="button">
               <Plus aria-hidden="true" size={16} />
-              新增候选
+              {copy.addCandidate}
             </button>
           </div>
           <div className={styles.candidateList}>
             {candidateRows.map((row, index) => (
               <div className={styles.candidateRow} key={row.id}>
                 <label className={styles.field}>
-                  <span>标签</span>
+                  <span>{copy.candidateLabel}</span>
                   <input
                     maxLength={120}
                     onChange={(event) => updateCandidateRow(row.id, { label: event.target.value })}
-                    placeholder={`候选 ${index + 1}`}
+                    placeholder={copy.candidatePlaceholder(index)}
                     value={row.label}
                   />
                 </label>
                 <label className={styles.field}>
-                  <span>日期</span>
+                  <span>{copy.candidateDate}</span>
                   <input
                     required
                     onChange={(event) => updateCandidateRow(row.id, { date: event.target.value })}
@@ -503,7 +496,7 @@ export function NewScheduleForm() {
                   />
                 </label>
                 <label className={styles.field}>
-                  <span>开始</span>
+                  <span>{copy.startTime}</span>
                   <input
                     required
                     onChange={(event) =>
@@ -515,7 +508,7 @@ export function NewScheduleForm() {
                   />
                 </label>
                 <label className={styles.field}>
-                  <span>结束</span>
+                  <span>{copy.candidateEnd}</span>
                   <input
                     required
                     onChange={(event) =>
@@ -527,7 +520,7 @@ export function NewScheduleForm() {
                   />
                 </label>
                 <button
-                  aria-label={`删除候选 ${index + 1}`}
+                  aria-label={copy.deleteCandidateAria(index)}
                   className={styles.iconButton}
                   disabled={candidateRows.length <= 1}
                   onClick={() => removeCandidateRow(row.id)}
@@ -550,22 +543,26 @@ export function NewScheduleForm() {
           ) : (
             <CalendarPlus aria-hidden="true" size={18} />
           )}
-          创建日程
+          {copy.create}
         </button>
       </div>
 
       {submitState.status === "success" ? (
         <section className={styles.result} aria-live="polite">
-          <h2 className={styles.sectionTitle}>已创建</h2>
+          <h2 className={styles.sectionTitle}>{copy.created}</h2>
           <LinkRow
             copied={copiedTarget === "share"}
-            label="分享链接"
+            copy={copy.copy}
+            copiedLabel={copy.copied}
+            label={copy.shareLink}
             onCopy={() => copyLink("share", submitState.result.shareUrl)}
             value={submitState.result.shareUrl}
           />
           <LinkRow
             copied={copiedTarget === "owner"}
-            label="管理链接"
+            copy={copy.copy}
+            copiedLabel={copy.copied}
+            label={copy.managerLink}
             onCopy={() => copyLink("owner", submitState.result.ownerUrl)}
             value={submitState.result.ownerUrl}
           />
@@ -576,7 +573,13 @@ export function NewScheduleForm() {
   );
 }
 
-function ReadinessNotice({ saveReadiness }: { readonly saveReadiness: SaveReadiness }) {
+function ReadinessNotice({
+  copy,
+  saveReadiness
+}: {
+  readonly copy: NewScheduleFormCopy;
+  readonly saveReadiness: SaveReadiness;
+}) {
   if (saveReadiness.status === "checking" || saveReadiness.status === "available") {
     return null;
   }
@@ -584,16 +587,16 @@ function ReadinessNotice({ saveReadiness }: { readonly saveReadiness: SaveReadin
   if (saveReadiness.status === "unknown") {
     return (
       <section className={styles.notice} aria-live="polite">
-        <h2>无法确认保存状态</h2>
-        <p>服务状态检查没有返回预期结果。你仍可以填写表单，提交时会再次确认。</p>
+        <h2>{copy.saveUnknownTitle}</h2>
+        <p>{copy.saveUnknownBody}</p>
       </section>
     );
   }
 
   return (
     <section className={styles.notice} aria-live="polite">
-      <h2>暂时无法保存日程</h2>
-      <p>当前环境还没有连接数据库。页面可以预览，接入 Postgres 后就能创建和分享真实日程。</p>
+      <h2>{copy.saveUnavailableTitle}</h2>
+      <p>{copy.saveUnavailableBody}</p>
     </section>
   );
 }
@@ -609,11 +612,15 @@ function ErrorPanel({ error }: { readonly error: FormError }) {
 
 function LinkRow({
   copied,
+  copiedLabel,
+  copy,
   label,
   onCopy,
   value
 }: {
   readonly copied: boolean;
+  readonly copiedLabel: string;
+  readonly copy: string;
   readonly label: string;
   readonly onCopy: () => void;
   readonly value: string;
@@ -626,16 +633,16 @@ function LinkRow({
       </label>
       <button className={styles.copyButton} onClick={onCopy} type="button">
         <Clipboard aria-hidden="true" size={17} />
-        {copied ? "已复制" : "复制"}
+        {copied ? copiedLabel : copy}
       </button>
     </div>
   );
 }
 
-function toFormError(error: unknown): FormError {
+function toFormError(error: unknown, copy: NewScheduleFormCopy): FormError {
   if (error instanceof CoreError) {
     return {
-      title: "请检查候选时间",
+      title: copy.coreErrorTitle,
       detail: error.message
     };
   }
@@ -643,20 +650,20 @@ function toFormError(error: unknown): FormError {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
       return {
-        title: "暂时无法保存日程",
-        detail: "当前环境还没有连接数据库。接入 Postgres 后就能创建和分享真实日程。"
+        title: copy.databaseErrorTitle,
+        detail: copy.databaseErrorBody
       };
     }
 
     if (error.code === "VALIDATION_ERROR") {
       return {
-        title: "请检查表单内容",
-        detail: "有些输入没有通过校验，请确认日期、时间和标题后再试。"
+        title: copy.submitValidationTitle,
+        detail: copy.submitValidationBody
       };
     }
 
     return {
-      title: "创建失败",
+      title: copy.createFailedTitle,
       detail: error.message
     };
   }
@@ -664,20 +671,20 @@ function toFormError(error: unknown): FormError {
   if (error instanceof Error) {
     if (error.name === "ZodError") {
       return {
-        title: "请检查表单内容",
-        detail: "有些输入没有通过校验，请确认日期、时间和标题后再试。"
+        title: copy.submitValidationTitle,
+        detail: copy.submitValidationBody
       };
     }
 
     return {
-      title: "创建失败",
+      title: copy.createFailedTitle,
       detail: error.message
     };
   }
 
   return {
-    title: "创建失败",
-    detail: "请稍后再试。"
+    title: copy.createFailedTitle,
+    detail: copy.createFailedBody
   };
 }
 

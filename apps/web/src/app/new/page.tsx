@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
+import { LanguageSwitcher } from "../i18n/language-switcher";
 import styles from "./page.module.css";
 import { NewScheduleForm } from "./schedule-form";
 
@@ -9,6 +10,7 @@ export default function NewSchedulePage() {
     <main className={styles.page}>
       <AdPageChrome mobileAnchor={false} pageContext="create">
         <div className={styles.shell}>
+          <LanguageSwitcher chineseHref="/new" current="zh-CN" englishHref="/en/new" />
           <header className={styles.header}>
             <Link className={styles.backLink} href="/">
               返回首页

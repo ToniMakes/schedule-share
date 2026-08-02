@@ -25,6 +25,10 @@ const publicPages = [
     path: "/en"
   },
   {
+    expectedText: "Create Schedule",
+    path: "/en/new"
+  },
+  {
     expectedText: "Privacy and Data Retention",
     path: "/en/privacy"
   },
