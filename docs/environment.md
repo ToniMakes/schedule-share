@@ -27,12 +27,17 @@
 | 变量                                     | 说明                                                      |
 | ---------------------------------------- | --------------------------------------------------------- |
 | `DISPLAY_ADS_ENABLED`                    | 是否启用常驻展示广告。                                    |
+| `DISPLAY_ADS_DEFAULT_ON`                 | 是否默认所有页面都尝试展示外围广告。                      |
 | `DISPLAY_AD_PROVIDER`                    | 常驻广告提供商标识，例如 `adsense` 或 `ad_manager`。      |
 | `DISPLAY_AD_CLIENT_ID`                   | 广告 client / publisher ID。                              |
 | `DISPLAY_AD_SLOT_RESULTS_INLINE`         | 结果页内联广告位 ID。                                     |
+| `DISPLAY_AD_SLOT_GLOBAL_TOP`             | 全站顶部横幅广告位 ID。                                   |
+| `DISPLAY_AD_SLOT_GLOBAL_BOTTOM`          | 全站底部广告位 ID。                                       |
+| `DISPLAY_AD_SLOT_CORE_PAGE_EDGE`         | 创建、填写和编辑页的外围广告位 ID。                       |
 | `DISPLAY_AD_SLOT_DESKTOP_RAIL`           | 桌面侧栏广告位 ID。                                       |
 | `DISPLAY_AD_SLOT_MOBILE_ANCHOR`          | 移动端底部 anchor ad 或等价广告位 ID。                    |
-| `DISPLAY_AD_SUPPRESS_ON_EDITING_PAGES`   | 是否在填写、编辑、上传预览和管理密钥页面禁用展示广告。    |
+| `DISPLAY_AD_SUPPRESS_IN_CORE_ACTIONS`    | 是否在表单、时间格、上传预览、提交和复制/导出区禁用广告。 |
+| `DISPLAY_AD_KEYED_URL_MODE`              | 带管理/编辑密钥页面的广告模式：`off`、`edge` 或 `full`。  |
 | `DISPLAY_AD_MAX_SLOTS_PER_PAGE`          | 单页最大展示广告位数量。                                  |
 | `ADS_CONSENT_MODE_ENABLED`               | 是否启用广告 consent mode 或等价的地区化同意/拒绝处理。   |
 | `ADS_POLICY_REVIEW_REQUIRED_BEFORE_LIVE` | 是否要求通过人工策略检查后才允许生产展示。默认应为 true。 |
