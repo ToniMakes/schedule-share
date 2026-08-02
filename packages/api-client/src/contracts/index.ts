@@ -1,5 +1,15 @@
 export { apiErrorCodeSchema, apiErrorCodes, apiErrorResponseSchema } from "./errors";
 export type { ApiErrorCode, ApiErrorResponse } from "./errors";
+export {
+  aiCreditStatusResponseSchema,
+  aiImageImportStatusSchema,
+  getAiCreditStatusRequestSchema
+} from "./ai-credits";
+export type {
+  AiCreditStatusResponse,
+  AiImageImportStatus,
+  GetAiCreditStatusRequest
+} from "./ai-credits";
 export { healthStatusResponseSchema } from "./health";
 export type { HealthStatusResponse } from "./health";
 export {

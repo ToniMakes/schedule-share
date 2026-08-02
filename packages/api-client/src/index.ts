@@ -1,4 +1,5 @@
 export { ApiClientError } from "./client/errors";
+export { getAiCreditStatus } from "./client/ai-credits";
 export { getHealthStatus } from "./client/health";
 export type { HealthClientOptions } from "./client/health";
 export {
@@ -22,6 +23,8 @@ export type {
   PreviewAvailabilityImageRequest
 } from "./client/schedules";
 export {
+  aiCreditStatusResponseSchema,
+  aiImageImportStatusSchema,
   availabilityBlockSchema,
   availabilityResultsSchema,
   availabilitySlotInputSchema,
@@ -44,6 +47,7 @@ export {
   dailyWindowSchema,
   dateRangeSchema,
   getParticipantAvailabilityResponseSchema,
+  getAiCreditStatusRequestSchema,
   getScheduleResponseSchema,
   healthStatusResponseSchema,
   importedBusyBlockSchema,
@@ -61,6 +65,8 @@ export {
   weeklyAvailabilityWindowSchema
 } from "./contracts";
 export type {
+  AiCreditStatusResponse,
+  AiImageImportStatus,
   ArchiveScheduleRequest,
   ArchiveScheduleResponse,
   AvailabilityEntryMethodDto,
@@ -83,6 +89,7 @@ export type {
   CreateScheduleResponse,
   DailyWindowInput,
   DateRangeInput,
+  GetAiCreditStatusRequest,
   GetParticipantAvailabilityResponse,
   GetScheduleResponse,
   HealthStatusResponse,

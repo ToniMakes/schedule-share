@@ -11,7 +11,7 @@
 
 下一阶段的产品差异化决策已经补充到 `docs/adr/0008-availability-import-and-templates.md` 和 `docs/adr/0009-multiple-availability-entry-methods.md`：优先把课表/排班导入、登录用户长期可用模板、When2meet 风格手动拖拽网格和 Doodle/Rallly 风格候选时间投票纳入“多种可用时间添加方式”策略。除手动拖拽外，这些能力只生成预填建议，不绕过用户确认，也不替代当前匿名主流程。
 
-常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、真实广告上线硬闸门、广告/AI 基础隐私披露、可配置公开支持邮箱入口，以及 AI 额度账本数据库、服务层和 `image_import` 强制额度校验开关；真实广告和图片识别公开入口仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
+常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、真实广告上线硬闸门、广告/AI 基础隐私披露、可配置公开支持邮箱入口，以及 AI 额度账本数据库、服务层、只读额度状态 API 和 `image_import` 强制额度校验开关；真实广告和图片识别公开入口仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
 
 当前本机限制：
 
@@ -85,7 +85,7 @@
 - `POST /api/schedules/:publicId/availability-preview` 的 `template` 内联模板预览 API。
 - 参与者填写页和开放网格编辑页的每周模板预填入口，支持选择星期和起止时间后生成本次日程可用时间草稿，并在本机浏览器记住上次成功使用的模板控件值，也可保存、选择和删除多个本机模板。
 - `schedule_mode`、`candidate_time_options`、`candidate_vote_response`、`candidate_votes` 和 `candidate_votes.preference_rank` 数据库结构及 migration。
-- AI 图片识别额度账本数据库结构、migration 和服务层：`ai_recognition_credit_grants`、`ai_recognition_attempts`、`rewarded_ad_verifications`，以及 `apps/web/src/server/ai-credits.ts` 的额度状态汇总、发放、原子消耗、成功标记、失败标记、退款和广告验证事件去重方法；`image_import` 已在 `AI_IMAGE_CREDITS_ENFORCED=true` 时按日程 scope 先扣额度，成功后标记 succeeded，provider 不可用或内部失败时退款，低置信度只标记 `low_confidence` 不自动退款；当前尚未实现免费额度自动发放、广告服务端验证、动态成本计数或前端兑换入口。
+- AI 图片识别额度账本数据库结构、migration、服务层和只读状态 API：`ai_recognition_credit_grants`、`ai_recognition_attempts`、`rewarded_ad_verifications`，`apps/web/src/server/ai-credits.ts` 的额度状态汇总、发放、原子消耗、成功标记、失败标记、退款和广告验证事件去重方法，以及 `GET /api/ai-credits/status?schedulePublicId=...` 的日程 scope 额度状态查询；`image_import` 已在 `AI_IMAGE_CREDITS_ENFORCED=true` 时按日程 scope 先扣额度，成功后标记 succeeded，provider 不可用或内部失败时退款，低置信度只标记 `low_confidence` 不自动退款；当前尚未实现免费额度自动发放、广告服务端验证、动态成本计数或前端兑换入口。
 - 创建页的候选时间投票模式，支持组织者添加明确候选时间。
 - 参与者页和编辑页的三态候选投票 v1，支持对每个候选项选择方便、也许或不方便，并可为方便/也许的候选项通过按钮或拖拽设置偏好顺位；`available` 继续复用现有提交、编辑、汇总、锁定、归档和导出链路。
 - 公开日程页和管理页的候选投票专门结果视图，支持最佳候选、排序依据、综合支持度、每项支持率、候选项洞察、缺口标签、对比最佳分析、方便名单、也许名单、不方便/未选择名单、首选名单和平均偏好顺位展示。
@@ -135,7 +135,7 @@ corepack pnpm build
 corepack pnpm db:setup
 ```
 
-当前测试总数：477。
+当前测试总数：483。
 
 真实数据库验证：
 

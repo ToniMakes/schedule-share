@@ -870,26 +870,57 @@ Web 端本机多模板保存、选择和删除只使用浏览器 localStorage，
 
 ## AI 图片识别额度与激励广告
 
-以下接口状态均为计划中。它们用于把 `image_import` 的 AI 成本限制在免费额度、激励广告奖励或未来付费额度内；当前底层账本服务已实现，公开 API 和广告验证流程尚未接入。
+以下接口用于把 `image_import` 的 AI 成本限制在免费额度、激励广告奖励或未来付费额度内；当前已实现只读额度状态查询、底层账本服务和图片识别前置额度消耗，公开广告验证、免费额度自动发放和前端兑换流程尚未接入。
 
 详细产品、成本和风控方案见 `docs/monetization.md`。
 
 ### 查询 AI 识别额度
 
-`GET /api/ai-credits/status`
+`GET /api/ai-credits/status?schedulePublicId=abc123`
 
 用途：
 
-- 返回当前匿名 session、浏览器设备或登录用户可用的 AI 图片识别额度。
-- 告诉前端图片识别入口是否可直接使用、是否需要展示激励广告入口，或者是否因为成本护栏临时关闭。
+- 返回指定公开日程 scope 下可用的 AI 图片识别额度。
+- 告诉前端图片识别入口是否可直接使用、是否需要额度，或者是否因为功能开关、成本护栏、日程状态或公开闸门临时关闭。
 - 不返回原始广告标识或图片内容。
 
-响应计划：
+响应：
+
+```json
+{
+  "scope": {
+    "scopeType": "schedule",
+    "schedulePublicId": "abc123"
+  },
+  "scheduleStatus": "open",
+  "creditsRemaining": 1,
+  "activeGrantCount": 1,
+  "nextExpiresAt": "2026-08-03T00:00:00.000Z",
+  "imageImport": {
+    "canUse": false,
+    "requiresCredit": true,
+    "needsCredit": false,
+    "creditsEnforced": true,
+    "rewardedAdsEnabled": false,
+    "maxUploadBytes": 4194304,
+    "blockedReason": "Public image import requires the credit ledger and rewarded ad verification first."
+  }
+}
+```
+
+说明：
+
+- 当前 scope 固定为日程：`schedulePublicId` 必填。
+- `rewardedAdsEnabled` 当前固定为 `false`，直到真实 rewarded ad provider 和服务端验证接入。
+- `canUse=false` 不一定表示没有额度，也可能表示图片识别仍处于关闭、内测、成本护栏失败或日程不再 open 的状态。
+
+旧计划中的匿名 session、浏览器设备或登录用户级额度仍保留为后续方向；当前不作为手动填写、候选投票、文本导入、CSV/ICS 导入的前置条件。
+
+已弃用的旧响应草案：
 
 ```json
 {
   "imageRecognition": {
-    "enabled": true,
     "creditsRemaining": 1,
     "dailyLimitRemaining": 3,
     "requiresRewardedAd": false,
