@@ -8,6 +8,34 @@
       "when": 1784966788162,
       "tag": "0000_strong_dexter_bennett",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785470737083,
+      "tag": "0001_dashing_moonstone",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785474504173,
+      "tag": "0002_handy_bloodscream",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785482324341,
+      "tag": "0003_sharp_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785485980795,
+      "tag": "0004_bumpy_roughhouse",
+      "breakpoints": true
     }
   ]
 }

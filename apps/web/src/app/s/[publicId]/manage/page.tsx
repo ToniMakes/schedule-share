@@ -1,15 +1,30 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, CalendarDays, Clock, Lock, Users } from "lucide-react";
+import { ArrowLeft, CalendarCheck, CalendarDays, Clock, Lock, Users } from "lucide-react";
 
-import type { GetScheduleResponse } from "@schedule-share/api-client";
+import type {
+  GetScheduleResponse,
+  TimeSlotAvailabilityDto,
+  TimeSlotDto
+} from "@schedule-share/api-client";
 
 import { getDatabase } from "@/server/db";
 import { HttpError } from "@/server/errors";
 import { getOwnerScheduleView } from "@/server/schedules/get-owner-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
+import { ConfirmFinalTimeButton } from "./final-time-control";
 import { LockScheduleControl } from "./lock-schedule-control";
+import { CopyRankedSlotButton } from "./copy-ranked-slot-button";
+import { ManageResultSummaryPanel } from "./result-summary-panel";
+import { buildManageRankedSlotCopyText, buildManageResultSummary } from "./result-summary";
+import { ManageShareLinksPanel } from "./share-links-panel";
+import { AvailabilityHeatmapPanel } from "../availability-heatmap-panel";
+import {
+  formatAvailableParticipantNames,
+  formatUnavailableParticipantNames
+} from "../availability-slot-names";
+import { CandidatePollResultsPanel } from "../candidate-results-panel";
 import styles from "../page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +62,10 @@ function ManageView({
   readonly data: GetScheduleResponse;
   readonly ownerKey: string;
 }) {
+  const isCandidatePoll = data.schedule.scheduleMode === "candidate_poll";
   const everyoneBlocks = data.results.everyoneAvailableBlocks.slice(0, 6);
+  const rankedSlots = data.results.rankedSlots.slice(0, 8);
+  const resultSummary = buildManageResultSummary(data);
 
   return (
     <main className={styles.page}>
@@ -87,44 +105,222 @@ function ManageView({
           />
         </section>
 
+        {data.schedule.finalTime ? (
+          <FinalTimeNotice
+            finalTime={data.schedule.finalTime}
+            ownerKey={ownerKey}
+            publicId={data.schedule.publicId}
+          />
+        ) : null}
+
+        <ManageShareLinksPanel ownerKey={ownerKey} publicId={data.schedule.publicId} />
+
         <LockScheduleControl
           ownerKey={ownerKey}
           publicId={data.schedule.publicId}
           status={data.schedule.status}
         />
 
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>全员可用时间</h2>
-            <span>{everyoneBlocks.length} 段</span>
-          </div>
-          {everyoneBlocks.length > 0 ? (
-            <div className={styles.blockList}>
-              {everyoneBlocks.map((block) => (
-                <div className={styles.blockItem} key={`${block.startUtc}-${block.endUtc}`}>
-                  <div>
-                    <span>
-                      {block.localStartDate === block.localEndDate
-                        ? block.localStartDate
-                        : `${block.localStartDate} 至 ${block.localEndDate}`}
-                    </span>
-                    <strong>
-                      {block.localStartTime}-{block.localEndTime}
-                    </strong>
-                  </div>
-                  <p>{block.slotCount} 个连续时间槽</p>
+        <ManageResultSummaryPanel summary={resultSummary} />
+
+        {isCandidatePoll ? (
+          <CandidatePollResultsPanel
+            finalTimeControls={{
+              ownerKey,
+              publicId: data.schedule.publicId,
+              selectedFinalTime: data.schedule.finalTime,
+              status: data.schedule.status
+            }}
+            participants={data.participants}
+            scheduleTitle={data.schedule.title}
+            slots={data.results.slotResults}
+          />
+        ) : (
+          <>
+            <AvailabilityHeatmapPanel
+              slots={data.results.slotResults}
+              totalParticipantCount={data.results.totalParticipantCount}
+            />
+
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>全员可用时间</h2>
+                <span>{everyoneBlocks.length} 段</span>
+              </div>
+              {everyoneBlocks.length > 0 ? (
+                <div className={styles.blockList}>
+                  {everyoneBlocks.map((block) => (
+                    <ManageAvailabilityBlockItem
+                      block={block}
+                      key={`${block.startUtc}-${block.endUtc}`}
+                      ownerKey={ownerKey}
+                      publicId={data.schedule.publicId}
+                      selectedFinalTime={data.schedule.finalTime}
+                      status={data.schedule.status}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className={styles.emptyState}>
-              <strong>暂时没有全员都可用的时间</strong>
-              <p>当前参与者提交还没有形成全员共同时间。</p>
-            </div>
-          )}
-        </section>
+              ) : (
+                <div className={styles.emptyState}>
+                  <strong>暂时没有全员都可用的时间</strong>
+                  <p>当前参与者提交还没有形成全员共同时间。</p>
+                </div>
+              )}
+            </section>
+
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>当前较优时间槽</h2>
+                <span>{data.results.totalParticipantCount} 人参与</span>
+              </div>
+              {rankedSlots.length > 0 ? (
+                <div className={styles.slotList}>
+                  {rankedSlots.map((slot) => (
+                    <ManageRankedSlotItem
+                      key={`${slot.startUtc}-${slot.endUtc}`}
+                      participants={data.participants}
+                      scheduleTitle={data.schedule.title}
+                      slot={slot}
+                      totalParticipantCount={data.results.totalParticipantCount}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.emptyState}>
+                  <strong>还没有可排序的时间槽</strong>
+                  <p>目前没有参与者提交可用时间。</p>
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </main>
+  );
+}
+
+function ManageAvailabilityBlockItem({
+  block,
+  ownerKey,
+  publicId,
+  selectedFinalTime,
+  status
+}: {
+  readonly block: GetScheduleResponse["results"]["everyoneAvailableBlocks"][number];
+  readonly ownerKey: string;
+  readonly publicId: string;
+  readonly selectedFinalTime: TimeSlotDto | null;
+  readonly status: GetScheduleResponse["schedule"]["status"];
+}) {
+  const exportIcsUrl = availabilityBlockIcsExportUrl(publicId, ownerKey, block);
+  const isSelected =
+    selectedFinalTime?.startUtc === block.startUtc && selectedFinalTime.endUtc === block.endUtc;
+
+  return (
+    <div className={styles.blockItem}>
+      <div>
+        <span>
+          {block.localStartDate === block.localEndDate
+            ? block.localStartDate
+            : `${block.localStartDate} 至 ${block.localEndDate}`}
+        </span>
+        <strong>
+          {block.localStartTime}-{block.localEndTime}
+        </strong>
+      </div>
+      <div className={styles.blockItemActions}>
+        <p>{block.slotCount} 个连续时间槽</p>
+        <ConfirmFinalTimeButton
+          isSelected={isSelected}
+          ownerKey={ownerKey}
+          publicId={publicId}
+          status={status}
+          time={block}
+        />
+        <a className={styles.compactButton} href={exportIcsUrl}>
+          <CalendarDays aria-hidden="true" size={15} />
+          导出此时间
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function ManageRankedSlotItem({
+  participants,
+  scheduleTitle,
+  slot,
+  totalParticipantCount
+}: {
+  readonly participants: GetScheduleResponse["participants"];
+  readonly scheduleTitle: string;
+  readonly slot: TimeSlotAvailabilityDto;
+  readonly totalParticipantCount: number;
+}) {
+  const availableNames = formatAvailableParticipantNames(
+    slot.availableParticipantIds,
+    participants
+  );
+  const unavailableNames = formatUnavailableParticipantNames(
+    slot.availableParticipantIds,
+    participants
+  );
+  const copyText = buildManageRankedSlotCopyText({
+    participants,
+    scheduleTitle,
+    slot,
+    totalParticipantCount
+  });
+
+  return (
+    <div className={styles.slotItem}>
+      <div>
+        <span>{formatLocalDateRange(slot)}</span>
+        <strong>{formatLocalTimeRange(slot)}</strong>
+      </div>
+      <div className={styles.slotItemDetails}>
+        <p>
+          {slot.availableParticipantCount}/{totalParticipantCount} 可用
+        </p>
+        {availableNames.length > 0 ? <span>方便：{availableNames}</span> : null}
+        {unavailableNames.length > 0 ? (
+          <span className={styles.slotItemMuted}>未选此时间：{unavailableNames}</span>
+        ) : null}
+        <CopyRankedSlotButton text={copyText} />
+      </div>
+    </div>
+  );
+}
+
+function FinalTimeNotice({
+  finalTime,
+  ownerKey,
+  publicId
+}: {
+  readonly finalTime: TimeSlotDto;
+  readonly ownerKey: string;
+  readonly publicId: string;
+}) {
+  const exportFinalTimeIcsUrl = finalTimeIcsExportUrl(publicId, ownerKey);
+
+  return (
+    <section className={styles.finalTimeNotice} aria-label="已确认最终时间">
+      <div className={styles.finalTimeIcon}>
+        <CalendarCheck aria-hidden="true" size={20} />
+      </div>
+      <div className={styles.finalTimeNoticeBody}>
+        <div>
+          <span>已确认最终时间</span>
+          <strong>
+            {formatLocalDateRange(finalTime)} {formatLocalTimeRange(finalTime)}
+          </strong>
+        </div>
+        <a className={styles.compactButton} href={exportFinalTimeIcsUrl}>
+          <CalendarDays aria-hidden="true" size={15} />
+          导出最终时间
+        </a>
+      </div>
+    </section>
   );
 }
 
@@ -206,4 +402,37 @@ function toPageErrorMessage(error: unknown): string {
   }
 
   return "服务器暂时无法读取管理页。";
+}
+
+function formatLocalDateRange(value: Pick<TimeSlotDto, "localStartDate" | "localEndDate">): string {
+  if (value.localStartDate === value.localEndDate) {
+    return value.localStartDate;
+  }
+
+  return `${value.localStartDate} 至 ${value.localEndDate}`;
+}
+
+function formatLocalTimeRange(value: Pick<TimeSlotDto, "localStartTime" | "localEndTime">): string {
+  return `${value.localStartTime}-${value.localEndTime}`;
+}
+
+function availabilityBlockIcsExportUrl(
+  publicId: string,
+  ownerKey: string,
+  block: GetScheduleResponse["results"]["everyoneAvailableBlocks"][number]
+): string {
+  return `/api/schedules/${encodeURIComponent(publicId)}/export?${new URLSearchParams({
+    endUtc: block.endUtc,
+    format: "ics",
+    key: ownerKey,
+    startUtc: block.startUtc
+  }).toString()}`;
+}
+
+function finalTimeIcsExportUrl(publicId: string, ownerKey: string): string {
+  return `/api/schedules/${encodeURIComponent(publicId)}/export?${new URLSearchParams({
+    format: "ics",
+    key: ownerKey,
+    target: "final-time"
+  }).toString()}`;
 }

@@ -6,7 +6,7 @@ import type {
 import { hashKey, randomToken } from "../credentials";
 import { HttpError } from "../errors";
 import { buildAbsoluteUrl } from "../urls";
-import { validateAvailabilitySlotsForSchedule } from "./availability-validation";
+import { normalizeAvailabilitySubmissionForSchedule } from "./availability-validation";
 import { assertSchedulePublicId } from "./path-validation";
 import type { CreateParticipantAvailabilityRepository } from "./repository";
 
@@ -33,17 +33,23 @@ export async function createParticipantAvailabilityRecord(
     throw new HttpError(409, "SCHEDULE_LOCKED", "This schedule no longer accepts changes.");
   }
 
-  validateAvailabilitySlotsForSchedule(record.schedule, input.availableSlots);
+  const submission = normalizeAvailabilitySubmissionForSchedule(
+    record.schedule,
+    input.availableSlots,
+    record.candidateTimeOptions,
+    input.candidateVotes
+  );
 
   const editKey = dependencies.editKeyFactory?.() ?? randomToken(24);
   const participant = await dependencies.repository.createParticipantAvailability({
     scheduleId: record.schedule.id,
     displayName: input.displayName,
     editKeyHash: hashKey(editKey),
-    availabilitySlots: input.availableSlots.map((slot) => ({
+    availabilitySlots: submission.availabilitySlots.map((slot) => ({
       slotStartUtc: new Date(slot.startUtc),
       slotEndUtc: new Date(slot.endUtc)
-    }))
+    })),
+    candidateVotes: submission.candidateVotes
   });
 
   return {

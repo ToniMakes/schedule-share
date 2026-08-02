@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, Download, Loader2, Lock } from "lucide-react";
+import { Archive, Calendar, Download, Loader2, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -34,9 +34,17 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
   const isArchiveDisabled = isArchived;
   const isLockSubmitting = lockState.status === "submitting";
   const isArchiveSubmitting = archiveState.status === "submitting";
-  const exportUrl = `/api/schedules/${encodeURIComponent(publicId)}/export?${new URLSearchParams({
-    key: ownerKey
-  }).toString()}`;
+  const exportCsvUrl = `/api/schedules/${encodeURIComponent(publicId)}/export?${new URLSearchParams(
+    {
+      key: ownerKey
+    }
+  ).toString()}`;
+  const exportIcsUrl = `/api/schedules/${encodeURIComponent(publicId)}/export?${new URLSearchParams(
+    {
+      format: "ics",
+      key: ownerKey
+    }
+  ).toString()}`;
 
   async function handleLock() {
     setLockState({ status: "submitting" });
@@ -80,9 +88,13 @@ export function LockScheduleControl({ ownerKey, publicId, status }: LockSchedule
           <p>{actionDescription(status)}</p>
         </div>
         <div className={styles.managementActions}>
-          <a className={styles.secondaryButton} href={exportUrl}>
+          <a className={styles.secondaryButton} href={exportCsvUrl}>
             <Download aria-hidden="true" size={18} />
             导出 CSV
+          </a>
+          <a className={styles.secondaryButton} href={exportIcsUrl}>
+            <Calendar aria-hidden="true" size={18} />
+            导出日历
           </a>
           <button
             className={styles.dangerButton}

@@ -96,6 +96,18 @@
   letter-spacing: 0;
 }
 
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sectionTitleRow .sectionTitle {
+  margin: 0;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -152,24 +164,28 @@
 }
 
 .dayToggle,
-.segment {
+.segment,
+.modeChoice {
   position: relative;
   min-width: 0;
 }
 
 .dayToggle input,
-.segment input {
+.segment input,
+.modeChoice input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
 .dayToggle span,
-.segment span {
+.segment span,
+.modeChoice span {
   min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #ffffff;
@@ -178,22 +194,48 @@
 }
 
 .dayToggle input:checked + span,
-.segment input:checked + span {
+.segment input:checked + span,
+.modeChoice input:checked + span {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-strong);
 }
 
 .dayToggle input:focus-visible + span,
-.segment input:focus-visible + span {
+.segment input:focus-visible + span,
+.modeChoice input:focus-visible + span {
   border-color: var(--focus);
   box-shadow: 0 0 0 3px rgb(37 99 235 / 14%);
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .segmented {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+.candidateList {
+  display: grid;
+  gap: 12px;
+}
+
+.candidateRow {
+  display: grid;
+  grid-template-columns:
+    minmax(148px, 1.2fr) minmax(138px, 1fr) minmax(112px, 0.8fr) minmax(112px, 0.8fr)
+    auto;
+  align-items: end;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
 }
 
 .actions {
@@ -203,7 +245,9 @@
 }
 
 .primaryButton,
-.copyButton {
+.copyButton,
+.inlineButton,
+.iconButton {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -233,6 +277,32 @@
   padding: 0 14px;
   background: #ffffff;
   color: var(--foreground);
+}
+
+.inlineButton,
+.iconButton {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--foreground);
+}
+
+.inlineButton {
+  padding: 0 12px;
+}
+
+.iconButton {
+  width: 44px;
+  padding: 0;
+}
+
+.inlineButton:hover,
+.iconButton:hover {
+  border-color: #94a3b8;
+}
+
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .result {
@@ -273,8 +343,18 @@
   }
 
   .grid,
+  .modeGrid,
   .segmented,
   .linkRow {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionTitleRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .candidateRow {
     grid-template-columns: 1fr;
   }
 
@@ -287,7 +367,9 @@
   }
 
   .primaryButton,
-  .copyButton {
+  .copyButton,
+  .inlineButton,
+  .iconButton {
     width: 100%;
   }
 }

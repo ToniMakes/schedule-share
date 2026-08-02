@@ -75,9 +75,11 @@ function buildOwnerScheduleRecord(): OwnerScheduleWithAvailabilityRecord {
           endTime: "10:00"
         }
       ],
+      scheduleMode: "availability_grid",
       status: "open",
       ownerKeyHash: hashKey("owner-secret")
     },
+    candidateTimeOptions: [],
     participants: [],
     availabilitySlots: []
   };

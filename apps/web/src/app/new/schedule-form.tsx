@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { CalendarPlus, Clipboard, Loader2 } from "lucide-react";
+import { CalendarPlus, Clipboard, Grid3X3, ListChecks, Loader2, Plus, Trash2 } from "lucide-react";
 
 import {
   ApiClientError,
@@ -9,7 +9,17 @@ import {
   getHealthStatus,
   type CreateScheduleResponse
 } from "@schedule-share/api-client";
+import {
+  CoreError,
+  createCandidateTimeWindowFromLocal,
+  type LocalDate,
+  type LocalTime
+} from "@schedule-share/core";
 
+import {
+  readRememberedScheduleFormDefaults,
+  rememberScheduleFormDefaults
+} from "./schedule-form-memory";
 import styles from "./page.module.css";
 
 const dayOptions = [
@@ -32,6 +42,14 @@ const timezoneOptions = [
 ];
 
 type SlotMinutesOption = 15 | 30 | 60;
+type ScheduleModeOption = "availability_grid" | "candidate_poll";
+type CandidateTimeRow = {
+  readonly id: string;
+  readonly date: string;
+  readonly endTime: string;
+  readonly label: string;
+  readonly startTime: string;
+};
 type FormError = {
   readonly detail: string;
   readonly title: string;
@@ -51,11 +69,28 @@ export function NewScheduleForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [timezone, setTimezone] = useState("Australia/Sydney");
+  const [scheduleMode, setScheduleMode] = useState<ScheduleModeOption>("availability_grid");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("18:00");
   const [slotMinutes, setSlotMinutes] = useState<SlotMinutesOption>(30);
+  const [candidateRows, setCandidateRows] = useState<readonly CandidateTimeRow[]>(() => [
+    {
+      id: "candidate-1",
+      date: "",
+      label: "",
+      startTime: "09:00",
+      endTime: "10:00"
+    },
+    {
+      id: "candidate-2",
+      date: "",
+      label: "",
+      startTime: "14:00",
+      endTime: "15:00"
+    }
+  ]);
   const [selectedDays, setSelectedDays] = useState<Set<number>>(
     () => new Set(dayOptions.map((day) => day.value))
   );
@@ -64,6 +99,36 @@ export function NewScheduleForm() {
   const [copiedTarget, setCopiedTarget] = useState<"share" | "owner" | undefined>();
 
   useEffect(() => {
+    const rememberedDefaults = readRememberedScheduleFormDefaults(window.localStorage);
+
+    if (rememberedDefaults !== undefined) {
+      if (rememberedDefaults.timezone !== undefined) {
+        setTimezone(rememberedDefaults.timezone);
+      }
+
+      if (rememberedDefaults.scheduleMode !== undefined) {
+        setScheduleMode(rememberedDefaults.scheduleMode);
+      }
+
+      if (rememberedDefaults.slotMinutes !== undefined) {
+        setSlotMinutes(rememberedDefaults.slotMinutes);
+      }
+
+      if (rememberedDefaults.availabilityGrid?.startTime !== undefined) {
+        setStartTime(rememberedDefaults.availabilityGrid.startTime);
+      }
+
+      if (rememberedDefaults.availabilityGrid?.endTime !== undefined) {
+        setEndTime(rememberedDefaults.availabilityGrid.endTime);
+      }
+
+      if (rememberedDefaults.availabilityGrid?.daysOfWeek !== undefined) {
+        setSelectedDays(new Set(rememberedDefaults.availabilityGrid.daysOfWeek));
+      }
+
+      return;
+    }
+
     const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     if (resolvedTimezone) {
@@ -113,7 +178,7 @@ export function NewScheduleForm() {
       return;
     }
 
-    if (sortedSelectedDays.length === 0) {
+    if (scheduleMode === "availability_grid" && sortedSelectedDays.length === 0) {
       setSubmitState({
         status: "error",
         error: {
@@ -129,28 +194,64 @@ export function NewScheduleForm() {
     setCopiedTarget(undefined);
 
     try {
-      const result = await createSchedule({
+      const commonInput = {
         title: readFormString(formData, "title"),
         description: readOptionalFormString(formData, "description"),
-        timezone: readFormString(formData, "timezone"),
-        dateRange: {
-          start: readFormString(formData, "dateStart"),
-          end: readFormString(formData, "dateEnd")
-        },
-        slotMinutes,
-        dailyWindows: [
-          {
-            daysOfWeek:
-              sortedSelectedDays.length === dayOptions.length ? undefined : sortedSelectedDays,
-            startTime,
-            endTime
-          }
-        ]
-      });
+        timezone: readFormString(formData, "timezone")
+      };
+      const selectedStartTime =
+        scheduleMode === "availability_grid" ? readFormString(formData, "startTime") : startTime;
+      const selectedEndTime =
+        scheduleMode === "availability_grid" ? readFormString(formData, "endTime") : endTime;
+      const result =
+        scheduleMode === "candidate_poll"
+          ? await createSchedule({
+              ...commonInput,
+              scheduleMode: "candidate_poll",
+              slotMinutes,
+              candidateWindows: candidateRows.map((row) =>
+                createCandidateTimeWindowFromLocal({
+                  ...(row.label.trim().length === 0 ? {} : { label: row.label }),
+                  localDate: row.date as LocalDate,
+                  startTime: row.startTime as LocalTime,
+                  endTime: row.endTime as LocalTime,
+                  timezone: commonInput.timezone
+                })
+              )
+            })
+          : await createSchedule({
+              ...commonInput,
+              scheduleMode: "availability_grid",
+              dateRange: {
+                start: readFormString(formData, "dateStart"),
+                end: readFormString(formData, "dateEnd")
+              },
+              slotMinutes,
+              dailyWindows: [
+                {
+                  daysOfWeek:
+                    sortedSelectedDays.length === dayOptions.length
+                      ? undefined
+                      : sortedSelectedDays,
+                  startTime: selectedStartTime,
+                  endTime: selectedEndTime
+                }
+              ]
+            });
 
       setSubmitState({
         status: "success",
         result
+      });
+      rememberScheduleFormDefaults(window.localStorage, {
+        availabilityGrid: {
+          daysOfWeek: sortedSelectedDays,
+          endTime: selectedEndTime,
+          startTime: selectedStartTime
+        },
+        scheduleMode,
+        slotMinutes,
+        timezone: commonInput.timezone
       });
     } catch (error) {
       setSubmitState({
@@ -172,6 +273,31 @@ export function NewScheduleForm() {
 
       return nextDays;
     });
+  }
+
+  function addCandidateRow() {
+    setCandidateRows((currentRows) => [
+      ...currentRows,
+      {
+        id: `candidate-${Date.now()}`,
+        date: "",
+        label: "",
+        startTime: "09:00",
+        endTime: "10:00"
+      }
+    ]);
+  }
+
+  function removeCandidateRow(id: string) {
+    setCandidateRows((currentRows) =>
+      currentRows.length <= 1 ? currentRows : currentRows.filter((row) => row.id !== id)
+    );
+  }
+
+  function updateCandidateRow(id: string, updates: Partial<Omit<CandidateTimeRow, "id">>) {
+    setCandidateRows((currentRows) =>
+      currentRows.map((row) => (row.id === id ? { ...row, ...updates } : row))
+    );
   }
 
   async function copyLink(target: "share" | "owner", value: string) {
@@ -229,87 +355,190 @@ export function NewScheduleForm() {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>时间范围</h2>
-        <div className={styles.grid}>
-          <label className={styles.field}>
-            <span>开始日期</span>
+        <h2 className={styles.sectionTitle}>创建方式</h2>
+        <div className={styles.modeGrid} role="radiogroup" aria-label="创建方式">
+          <label className={styles.modeChoice}>
             <input
-              required
-              name="dateStart"
-              onChange={(event) => setDateStart(event.target.value)}
-              type="date"
-              value={dateStart}
+              checked={scheduleMode === "availability_grid"}
+              name="scheduleMode"
+              onChange={() => setScheduleMode("availability_grid")}
+              type="radio"
+              value="availability_grid"
             />
+            <span>
+              <Grid3X3 aria-hidden="true" size={18} />
+              开放网格
+            </span>
           </label>
-          <label className={styles.field}>
-            <span>结束日期</span>
+          <label className={styles.modeChoice}>
             <input
-              required
-              min={dateStart}
-              name="dateEnd"
-              onChange={(event) => setDateEnd(event.target.value)}
-              type="date"
-              value={dateEnd}
+              checked={scheduleMode === "candidate_poll"}
+              name="scheduleMode"
+              onChange={() => setScheduleMode("candidate_poll")}
+              type="radio"
+              value="candidate_poll"
             />
-          </label>
-          <label className={styles.field}>
-            <span>开始时间</span>
-            <input
-              required
-              name="startTime"
-              onChange={(event) => setStartTime(event.target.value)}
-              step={900}
-              type="time"
-              value={startTime}
-            />
-          </label>
-          <label className={styles.field}>
-            <span>结束时间</span>
-            <input
-              required
-              name="endTime"
-              onChange={(event) => setEndTime(event.target.value)}
-              step={900}
-              type="time"
-              value={endTime}
-            />
+            <span>
+              <ListChecks aria-hidden="true" size={18} />
+              候选投票
+            </span>
           </label>
         </div>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>可选日期</h2>
-        <div className={styles.dayGrid} role="group" aria-label="可选日期">
-          {dayOptions.map((day) => (
-            <label className={styles.dayToggle} key={day.value}>
-              <input
-                checked={selectedDays.has(day.value)}
-                onChange={() => toggleDay(day.value)}
-                type="checkbox"
-              />
-              <span>{day.label}</span>
-            </label>
-          ))}
-        </div>
-      </section>
+      {scheduleMode === "availability_grid" ? (
+        <>
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>时间范围</h2>
+            <div className={styles.grid}>
+              <label className={styles.field}>
+                <span>开始日期</span>
+                <input
+                  required
+                  name="dateStart"
+                  onChange={(event) => setDateStart(event.target.value)}
+                  type="date"
+                  value={dateStart}
+                />
+              </label>
+              <label className={styles.field}>
+                <span>结束日期</span>
+                <input
+                  required
+                  min={dateStart}
+                  name="dateEnd"
+                  onChange={(event) => setDateEnd(event.target.value)}
+                  type="date"
+                  value={dateEnd}
+                />
+              </label>
+              <label className={styles.field}>
+                <span>开始时间</span>
+                <input
+                  required
+                  name="startTime"
+                  onChange={(event) => setStartTime(event.target.value)}
+                  step={900}
+                  type="time"
+                  value={startTime}
+                />
+              </label>
+              <label className={styles.field}>
+                <span>结束时间</span>
+                <input
+                  required
+                  name="endTime"
+                  onChange={(event) => setEndTime(event.target.value)}
+                  step={900}
+                  type="time"
+                  value={endTime}
+                />
+              </label>
+            </div>
+          </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>时间粒度</h2>
-        <div className={styles.segmented} role="radiogroup" aria-label="时间粒度">
-          {([15, 30, 60] as const).map((minutes) => (
-            <label className={styles.segment} key={minutes}>
-              <input
-                checked={slotMinutes === minutes}
-                name="slotMinutes"
-                onChange={() => setSlotMinutes(minutes)}
-                type="radio"
-                value={minutes}
-              />
-              <span>{minutes} 分钟</span>
-            </label>
-          ))}
-        </div>
-      </section>
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>可选日期</h2>
+            <div className={styles.dayGrid} role="group" aria-label="可选日期">
+              {dayOptions.map((day) => (
+                <label className={styles.dayToggle} key={day.value}>
+                  <input
+                    checked={selectedDays.has(day.value)}
+                    onChange={() => toggleDay(day.value)}
+                    type="checkbox"
+                  />
+                  <span>{day.label}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>时间粒度</h2>
+            <div className={styles.segmented} role="radiogroup" aria-label="时间粒度">
+              {([15, 30, 60] as const).map((minutes) => (
+                <label className={styles.segment} key={minutes}>
+                  <input
+                    checked={slotMinutes === minutes}
+                    name="slotMinutes"
+                    onChange={() => setSlotMinutes(minutes)}
+                    type="radio"
+                    value={minutes}
+                  />
+                  <span>{minutes} 分钟</span>
+                </label>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className={styles.section}>
+          <div className={styles.sectionTitleRow}>
+            <h2 className={styles.sectionTitle}>候选时间</h2>
+            <button className={styles.inlineButton} onClick={addCandidateRow} type="button">
+              <Plus aria-hidden="true" size={16} />
+              新增候选
+            </button>
+          </div>
+          <div className={styles.candidateList}>
+            {candidateRows.map((row, index) => (
+              <div className={styles.candidateRow} key={row.id}>
+                <label className={styles.field}>
+                  <span>标签</span>
+                  <input
+                    maxLength={120}
+                    onChange={(event) => updateCandidateRow(row.id, { label: event.target.value })}
+                    placeholder={`候选 ${index + 1}`}
+                    value={row.label}
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span>日期</span>
+                  <input
+                    required
+                    onChange={(event) => updateCandidateRow(row.id, { date: event.target.value })}
+                    type="date"
+                    value={row.date}
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span>开始</span>
+                  <input
+                    required
+                    onChange={(event) =>
+                      updateCandidateRow(row.id, { startTime: event.target.value })
+                    }
+                    step={900}
+                    type="time"
+                    value={row.startTime}
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span>结束</span>
+                  <input
+                    required
+                    onChange={(event) =>
+                      updateCandidateRow(row.id, { endTime: event.target.value })
+                    }
+                    step={900}
+                    type="time"
+                    value={row.endTime}
+                  />
+                </label>
+                <button
+                  aria-label={`删除候选 ${index + 1}`}
+                  className={styles.iconButton}
+                  disabled={candidateRows.length <= 1}
+                  onClick={() => removeCandidateRow(row.id)}
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" size={17} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {submitState.status === "error" ? <ErrorPanel error={submitState.error} /> : null}
 
@@ -402,6 +631,13 @@ function LinkRow({
 }
 
 function toFormError(error: unknown): FormError {
+  if (error instanceof CoreError) {
+    return {
+      title: "请检查候选时间",
+      detail: error.message
+    };
+  }
+
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
       return {

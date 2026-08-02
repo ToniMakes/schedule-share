@@ -1,0 +1,2 @@
+ALTER TABLE "candidate_votes" ADD COLUMN "preference_rank" integer;--> statement-breakpoint
+ALTER TABLE "candidate_votes" ADD CONSTRAINT "candidate_votes_preference_rank_valid" CHECK ("candidate_votes"."preference_rank" IS NULL OR ("candidate_votes"."preference_rank" >= 1 AND "candidate_votes"."preference_rank" <= 50));

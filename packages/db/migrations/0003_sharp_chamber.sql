@@ -1,0 +1,3 @@
+ALTER TABLE "schedules" ADD COLUMN "final_start_utc" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "schedules" ADD COLUMN "final_end_utc" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "schedules" ADD CONSTRAINT "schedules_final_time_valid" CHECK (("schedules"."final_start_utc" IS NULL AND "schedules"."final_end_utc" IS NULL) OR ("schedules"."final_start_utc" IS NOT NULL AND "schedules"."final_end_utc" IS NOT NULL AND "schedules"."final_start_utc" < "schedules"."final_end_utc"));

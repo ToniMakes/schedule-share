@@ -3,8 +3,12 @@ import {
   createParticipantAvailabilityResponseSchema,
   createScheduleRequestSchema,
   createScheduleResponseSchema,
+  confirmFinalTimeRequestSchema,
+  confirmFinalTimeResponseSchema,
   getParticipantAvailabilityResponseSchema,
   getScheduleResponseSchema,
+  availabilityPreviewRequestSchema,
+  availabilityPreviewResponseSchema,
   archiveScheduleRequestSchema,
   archiveScheduleResponseSchema,
   lockScheduleRequestSchema,
@@ -13,6 +17,10 @@ import {
   updateParticipantAvailabilityResponseSchema,
   type ArchiveScheduleRequest,
   type ArchiveScheduleResponse,
+  type AvailabilityPreviewRequest,
+  type AvailabilityPreviewResponse,
+  type ConfirmFinalTimeRequest,
+  type ConfirmFinalTimeResponse,
   type CreateParticipantAvailabilityRequest,
   type CreateParticipantAvailabilityResponse,
   type CreateScheduleRequest,
@@ -27,6 +35,27 @@ import {
 import { requestJson, type ApiClientOptions } from "./request";
 
 export type { ApiClientOptions } from "./request";
+
+export interface PreviewAvailabilityImageRequest {
+  readonly file: Blob;
+  readonly filename?: string;
+  readonly timezone: string;
+  readonly interpretsAs?: "busy";
+}
+
+export interface PreviewAvailabilityIcsRequest {
+  readonly file: Blob;
+  readonly filename?: string;
+  readonly timezone: string;
+  readonly interpretsAs?: "busy";
+}
+
+export interface PreviewAvailabilityCsvRequest {
+  readonly file: Blob;
+  readonly filename?: string;
+  readonly timezone: string;
+  readonly interpretsAs?: "busy";
+}
 
 export async function createSchedule(
   input: CreateScheduleRequest,
@@ -105,6 +134,93 @@ export async function updateParticipantAvailability(
   });
 }
 
+export async function previewAvailability(
+  publicId: string,
+  input: AvailabilityPreviewRequest,
+  options: ApiClientOptions = {}
+): Promise<AvailabilityPreviewResponse> {
+  const request = availabilityPreviewRequestSchema.parse(input);
+
+  return requestJson({
+    init: jsonRequestInit("POST", request),
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/availability-preview`,
+    responseSchema: availabilityPreviewResponseSchema
+  });
+}
+
+export async function previewAvailabilityImage(
+  publicId: string,
+  input: PreviewAvailabilityImageRequest,
+  options: ApiClientOptions = {}
+): Promise<AvailabilityPreviewResponse> {
+  const formData = new FormData();
+  const trimmedTimezone = input.timezone.trim();
+
+  formData.set("method", "image_import");
+  formData.set("timezone", trimmedTimezone);
+  formData.set("interpretsAs", input.interpretsAs ?? "busy");
+  formData.set("file", input.file, input.filename);
+
+  return requestJson({
+    init: {
+      method: "POST",
+      body: formData
+    },
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/availability-preview`,
+    responseSchema: availabilityPreviewResponseSchema
+  });
+}
+
+export async function previewAvailabilityIcs(
+  publicId: string,
+  input: PreviewAvailabilityIcsRequest,
+  options: ApiClientOptions = {}
+): Promise<AvailabilityPreviewResponse> {
+  const formData = new FormData();
+  const trimmedTimezone = input.timezone.trim();
+
+  formData.set("method", "ics_import");
+  formData.set("timezone", trimmedTimezone);
+  formData.set("interpretsAs", input.interpretsAs ?? "busy");
+  formData.set("file", input.file, input.filename);
+
+  return requestJson({
+    init: {
+      method: "POST",
+      body: formData
+    },
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/availability-preview`,
+    responseSchema: availabilityPreviewResponseSchema
+  });
+}
+
+export async function previewAvailabilityCsv(
+  publicId: string,
+  input: PreviewAvailabilityCsvRequest,
+  options: ApiClientOptions = {}
+): Promise<AvailabilityPreviewResponse> {
+  const formData = new FormData();
+  const trimmedTimezone = input.timezone.trim();
+
+  formData.set("method", "csv_import");
+  formData.set("timezone", trimmedTimezone);
+  formData.set("interpretsAs", input.interpretsAs ?? "busy");
+  formData.set("file", input.file, input.filename);
+
+  return requestJson({
+    init: {
+      method: "POST",
+      body: formData
+    },
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/availability-preview`,
+    responseSchema: availabilityPreviewResponseSchema
+  });
+}
+
 export async function lockSchedule(
   publicId: string,
   input: LockScheduleRequest,
@@ -117,6 +233,21 @@ export async function lockSchedule(
     options,
     path: `/api/schedules/${encodeURIComponent(publicId)}/lock`,
     responseSchema: lockScheduleResponseSchema
+  });
+}
+
+export async function confirmFinalTime(
+  publicId: string,
+  input: ConfirmFinalTimeRequest,
+  options: ApiClientOptions = {}
+): Promise<ConfirmFinalTimeResponse> {
+  const request = confirmFinalTimeRequestSchema.parse(input);
+
+  return requestJson({
+    init: jsonRequestInit("POST", request),
+    options,
+    path: `/api/schedules/${encodeURIComponent(publicId)}/final-time`,
+    responseSchema: confirmFinalTimeResponseSchema
   });
 }
 

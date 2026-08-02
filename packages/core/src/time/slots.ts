@@ -2,9 +2,12 @@ import { DateTime } from "luxon";
 
 import { fail } from "../errors";
 import type {
+  CandidateTimeSlot,
+  CandidateTimeWindow,
   DailyWindow,
   DayOfWeek,
   LocalDate,
+  LocalCandidateTimeWindow,
   LocalTime,
   SlotMinutes,
   TimeSlot,
@@ -56,6 +59,74 @@ export function generateTimeSlots(config: TimeSlotConfig): TimeSlot[] {
   }
 
   return Array.from(slotsByKey.values()).sort(compareSlots);
+}
+
+export function createCandidateTimeSlots(input: {
+  readonly candidateWindows: readonly CandidateTimeWindow[];
+  readonly timezone: string;
+}): CandidateTimeSlot[] {
+  validateTimezone(input.timezone);
+
+  if (input.candidateWindows.length === 0) {
+    fail("INVALID_CANDIDATE_TIME", "At least one candidate time is required.");
+  }
+
+  const slotsByKey = new Map<string, CandidateTimeSlot>();
+
+  for (const window of input.candidateWindows) {
+    const key = slotKey(window.startUtc, window.endUtc);
+
+    if (slotsByKey.has(key)) {
+      fail("DUPLICATE_SLOT", "Candidate times cannot contain duplicate ranges.");
+    }
+
+    const start = DateTime.fromISO(normalizeUtcIso(window.startUtc), { setZone: true });
+    const end = DateTime.fromISO(normalizeUtcIso(window.endUtc), { setZone: true });
+    const slot = toTimeSlot(start, end, input.timezone);
+
+    slotsByKey.set(key, {
+      ...slot,
+      ...(window.id === undefined ? {} : { candidateTimeOptionId: window.id }),
+      ...(window.label === undefined || window.label.trim().length === 0
+        ? {}
+        : { label: window.label.trim() })
+    });
+  }
+
+  return Array.from(slotsByKey.values()).sort(compareSlots);
+}
+
+export function createCandidateTimeWindowFromLocal(
+  input: LocalCandidateTimeWindow
+): CandidateTimeWindow {
+  validateTimezone(input.timezone);
+  const start = parseLocalDateTime(input.localDate, input.startTime, input.timezone);
+  let end = parseLocalDateTime(input.localDate, input.endTime, input.timezone);
+
+  if (compareLocalTimes(input.endTime, input.startTime) <= 0) {
+    end = end.plus({ days: 1 });
+  }
+
+  return {
+    ...(input.label === undefined || input.label.trim().length === 0
+      ? {}
+      : { label: input.label.trim() }),
+    startUtc: toUtcIso(start),
+    endUtc: toUtcIso(end)
+  };
+}
+
+export function createTimeSlotFromUtcRange(input: {
+  readonly endUtc: string;
+  readonly startUtc: string;
+  readonly timezone: string;
+}): TimeSlot {
+  validateTimezone(input.timezone);
+
+  const start = DateTime.fromISO(normalizeUtcIso(input.startUtc), { setZone: true });
+  const end = DateTime.fromISO(normalizeUtcIso(input.endUtc), { setZone: true });
+
+  return toTimeSlot(start, end, input.timezone);
 }
 
 export function slotKey(startUtc: string, endUtc: string): string {

@@ -86,10 +86,13 @@ function EditView({
         <EditAvailabilityForm
           editKey={editKey}
           initialAvailableSlots={data.participant.availableSlots}
+          initialCandidateVotes={data.participant.candidateVotes}
           initialDisplayName={data.participant.displayName}
           participantId={data.participant.id}
           publicId={data.schedule.publicId}
+          scheduleMode={data.schedule.scheduleMode}
           scheduleStatus={data.schedule.status}
+          scheduleTimezone={data.schedule.timezone}
           slots={data.slots}
         />
       </div>

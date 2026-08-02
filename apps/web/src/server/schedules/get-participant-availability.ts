@@ -1,8 +1,9 @@
 import type {
   AvailabilitySlotInput,
+  CandidateVoteInput,
   GetParticipantAvailabilityResponse
 } from "@schedule-share/api-client";
-import { CoreError, generateTimeSlots } from "@schedule-share/core";
+import { CoreError } from "@schedule-share/core";
 
 import { HttpError } from "../errors";
 import { assertParticipantEditKeyMatches, assertParticipantEditKeyPresent } from "./access-keys";
@@ -12,7 +13,7 @@ import type {
   ReadParticipantAvailabilityRepository
 } from "./repository";
 import { toScheduleDetail, toTimeSlotDto } from "./schedule-response";
-import { toTimeSlotConfig } from "./schedule-config";
+import { getScheduleSlots } from "./schedule-slots";
 
 export interface GetParticipantAvailabilityDependencies {
   readonly repository: ReadParticipantAvailabilityRepository;
@@ -55,14 +56,46 @@ function toParticipantAvailabilityResponse(
   record: ParticipantAvailabilityWithScheduleRecord
 ): GetParticipantAvailabilityResponse {
   return {
-    schedule: toScheduleDetail(record.schedule),
+    schedule: toScheduleDetail(record.schedule, record.candidateTimeOptions),
     participant: {
       id: record.participant.id,
       displayName: record.participant.displayName,
-      availableSlots: record.participant.availableSlots.map(toAvailabilitySlotInput)
+      availableSlots: record.participant.availableSlots.map(toAvailabilitySlotInput),
+      candidateVotes: toParticipantCandidateVotes(record)
     },
-    slots: generateTimeSlots(toTimeSlotConfig(record.schedule)).map(toTimeSlotDto)
+    slots: getScheduleSlots(record.schedule, record.candidateTimeOptions).map(toTimeSlotDto)
   };
+}
+
+function toParticipantCandidateVotes(
+  record: ParticipantAvailabilityWithScheduleRecord
+): CandidateVoteInput[] {
+  const storedVotes = record.participant.candidateVotes ?? [];
+
+  if (storedVotes.length > 0 || record.schedule.scheduleMode !== "candidate_poll") {
+    return storedVotes.map((vote) => ({
+      candidateTimeOptionId: vote.candidateTimeOptionId,
+      ...(vote.preferenceRank == null ? {} : { preferenceRank: vote.preferenceRank }),
+      response: vote.response
+    }));
+  }
+
+  const availableSlotKeys = new Set(
+    record.participant.availableSlots.map(
+      (slot) => `${slot.slotStartUtc.toISOString()}/${slot.slotEndUtc.toISOString()}`
+    )
+  );
+
+  return record.candidateTimeOptions
+    .filter((option) =>
+      availableSlotKeys.has(
+        `${option.slotStartUtc.toISOString()}/${option.slotEndUtc.toISOString()}`
+      )
+    )
+    .map((option) => ({
+      candidateTimeOptionId: option.id,
+      response: "available"
+    }));
 }
 
 function toAvailabilitySlotInput(slot: {

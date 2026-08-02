@@ -150,6 +150,122 @@ describe("createParticipantAvailabilityRecord", () => {
     } satisfies Partial<HttpError>);
     expect(repository.createdRecords).toHaveLength(0);
   });
+
+  it("persists candidate poll votes and derives available slots from available responses", async () => {
+    const repository = new FakeParticipantRepository(buildCandidatePollScheduleRecord());
+
+    await createParticipantAvailabilityRecord(
+      "candidate123",
+      {
+        displayName: "Ada",
+        availableSlots: [],
+        candidateVotes: [
+          {
+            candidateTimeOptionId: "option-1",
+            preferenceRank: 1,
+            response: "available"
+          },
+          {
+            candidateTimeOptionId: "option-2",
+            preferenceRank: 2,
+            response: "maybe"
+          },
+          {
+            candidateTimeOptionId: "option-3",
+            response: "unavailable"
+          }
+        ]
+      },
+      {
+        baseUrl: "https://example.com",
+        editKeyFactory: () => "edit-secret",
+        repository
+      }
+    );
+
+    expect(repository.createdRecords[0]!.candidateVotes).toEqual([
+      {
+        candidateTimeOptionId: "option-1",
+        preferenceRank: 1,
+        response: "available"
+      },
+      {
+        candidateTimeOptionId: "option-2",
+        preferenceRank: 2,
+        response: "maybe"
+      },
+      {
+        candidateTimeOptionId: "option-3",
+        response: "unavailable"
+      }
+    ]);
+    expect(repository.createdRecords[0]!.availabilitySlots).toHaveLength(1);
+    expect(repository.createdRecords[0]!.availabilitySlots[0]!.slotStartUtc.toISOString()).toBe(
+      "2026-08-03T08:00:00.000Z"
+    );
+  });
+
+  it("rejects duplicate candidate preference ranks", async () => {
+    const repository = new FakeParticipantRepository(buildCandidatePollScheduleRecord());
+
+    await expect(
+      createParticipantAvailabilityRecord(
+        "candidate123",
+        {
+          displayName: "Ada",
+          availableSlots: [],
+          candidateVotes: [
+            {
+              candidateTimeOptionId: "option-1",
+              preferenceRank: 1,
+              response: "available"
+            },
+            {
+              candidateTimeOptionId: "option-2",
+              preferenceRank: 1,
+              response: "maybe"
+            }
+          ]
+        },
+        {
+          baseUrl: "https://example.com",
+          repository
+        }
+      )
+    ).rejects.toMatchObject({
+      code: "VALIDATION_ERROR",
+      status: 400
+    } satisfies Partial<HttpError>);
+    expect(repository.createdRecords).toHaveLength(0);
+  });
+
+  it("rejects candidate votes that reference another schedule option", async () => {
+    const repository = new FakeParticipantRepository(buildCandidatePollScheduleRecord());
+
+    await expect(
+      createParticipantAvailabilityRecord(
+        "candidate123",
+        {
+          displayName: "Ada",
+          availableSlots: [],
+          candidateVotes: [
+            {
+              candidateTimeOptionId: "missing-option",
+              response: "available"
+            }
+          ]
+        },
+        {
+          baseUrl: "https://example.com",
+          repository
+        }
+      )
+    ).rejects.toMatchObject({
+      code: "CANDIDATE_OPTION_NOT_FOUND",
+      status: 400
+    } satisfies Partial<HttpError>);
+    expect(repository.createdRecords).toHaveLength(0);
+  });
 });
 
 function buildScheduleRecord(
@@ -171,12 +287,52 @@ function buildScheduleRecord(
           endTime: "10:00"
         }
       ],
+      scheduleMode: "availability_grid",
       status: "open"
     },
+    candidateTimeOptions: [],
     participants: [],
     availabilitySlots: [],
     ...overrides
   };
+}
+
+function buildCandidatePollScheduleRecord(): ScheduleWithAvailabilityRecord {
+  return buildScheduleRecord({
+    schedule: {
+      id: "schedule-1",
+      publicId: "candidate123",
+      title: "Project sync",
+      description: null,
+      timezone: "Australia/Sydney",
+      dateRangeStart: "2026-08-03",
+      dateRangeEnd: "2026-08-05",
+      slotMinutes: 60,
+      dailyWindows: [],
+      scheduleMode: "candidate_poll",
+      status: "open"
+    },
+    candidateTimeOptions: [
+      {
+        id: "option-1",
+        label: "Option A",
+        slotStartUtc: new Date("2026-08-03T08:00:00.000Z"),
+        slotEndUtc: new Date("2026-08-03T09:00:00.000Z")
+      },
+      {
+        id: "option-2",
+        label: "Option B",
+        slotStartUtc: new Date("2026-08-04T09:00:00.000Z"),
+        slotEndUtc: new Date("2026-08-04T10:00:00.000Z")
+      },
+      {
+        id: "option-3",
+        label: "Option C",
+        slotStartUtc: new Date("2026-08-05T09:00:00.000Z"),
+        slotEndUtc: new Date("2026-08-05T10:00:00.000Z")
+      }
+    ]
+  });
 }
 
 function hashKey(key: string): string {

@@ -7,8 +7,18 @@ import { loadRootEnv } from "../../../scripts/load-env.mjs";
 loadRootEnv();
 
 const requiredExtensions = ["pgcrypto"];
-const requiredTables = ["availability_slots", "participants", "schedules"];
-const requiredTypes = ["schedule_status"];
+const requiredTables = [
+  "availability_slots",
+  "candidate_time_options",
+  "candidate_votes",
+  "participants",
+  "schedules"
+];
+const requiredTypes = ["candidate_vote_response", "schedule_mode", "schedule_status"];
+const requiredColumnsByTable = {
+  candidate_votes: ["preference_rank"],
+  schedules: ["final_start_utc", "final_end_utc"]
+};
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -60,6 +70,18 @@ try {
       where table_schema = 'public'
     `)
   );
+  for (const [tableName, requiredColumns] of Object.entries(requiredColumnsByTable)) {
+    await assertColumnsPresent(
+      tableName,
+      requiredColumns,
+      await readNames(sql`
+        select column_name as name
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = ${tableName}
+      `)
+    );
+  }
 
   log("Database check passed.");
 } catch (error) {
@@ -88,6 +110,22 @@ async function assertPresent(kind, requiredNames, actualNames) {
   }
 
   log(`Found ${kind}${requiredNames.length === 1 ? "" : "s"}: ${requiredNames.join(", ")}.`);
+}
+
+async function assertColumnsPresent(tableName, requiredColumns, actualColumns) {
+  const missing = requiredColumns.filter((columnName) => !actualColumns.has(columnName));
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing column${missing.length === 1 ? "" : "s"} on ${tableName}: ${missing.join(
+        ", "
+      )}. Run migrations before starting the app.`
+    );
+  }
+
+  log(
+    `Found column${requiredColumns.length === 1 ? "" : "s"} on ${tableName}: ${requiredColumns.join(", ")}.`
+  );
 }
 
 function log(message) {

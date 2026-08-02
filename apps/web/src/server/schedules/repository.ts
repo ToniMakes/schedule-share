@@ -1,8 +1,12 @@
 import {
   availabilitySlots,
+  candidateTimeOptions as candidateTimeOptionsTable,
+  candidateVotes as candidateVotesTable,
   participants,
   schedules,
+  type CandidateVoteResponse,
   type Database,
+  type ScheduleMode,
   type ScheduleStatus,
   type StoredDailyWindow
 } from "@schedule-share/db";
@@ -17,6 +21,8 @@ export interface CreateScheduleRecord {
   readonly dateRangeEnd: string;
   readonly slotMinutes: 15 | 30 | 60;
   readonly dailyWindows: readonly StoredDailyWindow[];
+  readonly scheduleMode: ScheduleMode;
+  readonly candidateTimeOptions: readonly CreateCandidateTimeOptionRecord[];
   readonly ownerKeyHash: string;
   readonly status: "open";
   readonly expiresAt: Date;
@@ -26,6 +32,7 @@ export interface CreatedScheduleRecord {
   readonly publicId: string;
   readonly title: string;
   readonly timezone: string;
+  readonly scheduleMode: ScheduleMode;
   readonly status: ScheduleStatus;
 }
 
@@ -39,6 +46,9 @@ export interface ScheduleDetailRecord {
   readonly dateRangeEnd: string;
   readonly slotMinutes: number;
   readonly dailyWindows: readonly StoredDailyWindow[];
+  readonly scheduleMode: ScheduleMode;
+  readonly finalEndUtc?: Date | null;
+  readonly finalStartUtc?: Date | null;
   readonly status: ScheduleStatus;
 }
 
@@ -54,10 +64,24 @@ export interface ParticipantRecord {
 export interface ParticipantAvailabilityRecord extends ParticipantRecord {
   readonly editKeyHash: string;
   readonly availableSlots: readonly CreateParticipantAvailabilitySlotRecord[];
+  readonly candidateVotes?: readonly CreateParticipantCandidateVoteRecord[];
 }
 
 export interface AvailabilitySlotRecord {
   readonly participantId: string;
+  readonly slotStartUtc: Date;
+  readonly slotEndUtc: Date;
+}
+
+export interface CandidateTimeOptionRecord {
+  readonly id: string;
+  readonly label: string | null;
+  readonly slotStartUtc: Date;
+  readonly slotEndUtc: Date;
+}
+
+export interface CreateCandidateTimeOptionRecord {
+  readonly label: string | null;
   readonly slotStartUtc: Date;
   readonly slotEndUtc: Date;
 }
@@ -67,11 +91,25 @@ export interface CreateParticipantAvailabilitySlotRecord {
   readonly slotEndUtc: Date;
 }
 
+export interface CandidateVoteRecord {
+  readonly participantId: string;
+  readonly candidateTimeOptionId: string;
+  readonly preferenceRank?: number | null;
+  readonly response: CandidateVoteResponse;
+}
+
+export interface CreateParticipantCandidateVoteRecord {
+  readonly candidateTimeOptionId: string;
+  readonly preferenceRank?: number | null;
+  readonly response: CandidateVoteResponse;
+}
+
 export interface CreateParticipantAvailabilityRecord {
   readonly scheduleId: string;
   readonly displayName: string;
   readonly editKeyHash: string;
   readonly availabilitySlots: readonly CreateParticipantAvailabilitySlotRecord[];
+  readonly candidateVotes: readonly CreateParticipantCandidateVoteRecord[];
 }
 
 export interface CreatedParticipantAvailabilityRecord {
@@ -84,26 +122,39 @@ export interface UpdateParticipantAvailabilityRecord {
   readonly participantId: string;
   readonly displayName: string;
   readonly availabilitySlots: readonly CreateParticipantAvailabilitySlotRecord[];
+  readonly candidateVotes: readonly CreateParticipantCandidateVoteRecord[];
 }
 
 export interface ScheduleWithAvailabilityRecord {
   readonly schedule: ScheduleDetailRecord;
+  readonly candidateTimeOptions: readonly CandidateTimeOptionRecord[];
   readonly participants: readonly ParticipantRecord[];
   readonly availabilitySlots: readonly AvailabilitySlotRecord[];
+  readonly candidateVotes?: readonly CandidateVoteRecord[];
 }
 
 export interface OwnerScheduleWithAvailabilityRecord {
   readonly schedule: OwnerScheduleDetailRecord;
+  readonly candidateTimeOptions: readonly CandidateTimeOptionRecord[];
   readonly participants: readonly ParticipantRecord[];
   readonly availabilitySlots: readonly AvailabilitySlotRecord[];
+  readonly candidateVotes?: readonly CandidateVoteRecord[];
 }
 
 export interface ParticipantAvailabilityWithScheduleRecord {
   readonly schedule: ScheduleDetailRecord;
+  readonly candidateTimeOptions: readonly CandidateTimeOptionRecord[];
   readonly participant: ParticipantAvailabilityRecord;
 }
 
 export interface LockedScheduleRecord {
+  readonly publicId: string;
+  readonly status: "locked";
+}
+
+export interface ConfirmedFinalTimeScheduleRecord {
+  readonly finalEndUtc: Date;
+  readonly finalStartUtc: Date;
   readonly publicId: string;
   readonly status: "locked";
 }
@@ -150,6 +201,13 @@ export interface LockScheduleRepository extends ReadOwnerScheduleRepository {
   lockSchedule(scheduleId: string): Promise<LockedScheduleRecord | undefined>;
 }
 
+export interface ConfirmFinalTimeRepository extends ReadOwnerScheduleRepository {
+  confirmFinalTime(
+    scheduleId: string,
+    finalTime: { readonly endUtc: Date; readonly startUtc: Date }
+  ): Promise<ConfirmedFinalTimeScheduleRecord | undefined>;
+}
+
 export interface ArchiveScheduleRepository extends ReadOwnerScheduleRepository {
   archiveSchedule(scheduleId: string): Promise<ArchivedScheduleRecord | undefined>;
 }
@@ -163,24 +221,45 @@ export interface ScheduleRepository
     UpdateParticipantAvailabilityRepository,
     ReadOwnerScheduleRepository,
     LockScheduleRepository,
+    ConfirmFinalTimeRepository,
     ArchiveScheduleRepository {}
 
 export class DrizzleScheduleRepository implements ScheduleRepository {
   constructor(private readonly database: Database) {}
 
   async createSchedule(record: CreateScheduleRecord): Promise<CreatedScheduleRecord> {
-    const [created] = await this.database.insert(schedules).values(record).returning({
-      publicId: schedules.publicId,
-      title: schedules.title,
-      timezone: schedules.timezone,
-      status: schedules.status
+    return await this.database.transaction(async (transaction) => {
+      const { candidateTimeOptions, ...scheduleRecord } = record;
+      const [created] = await transaction.insert(schedules).values(scheduleRecord).returning({
+        id: schedules.id,
+        publicId: schedules.publicId,
+        title: schedules.title,
+        timezone: schedules.timezone,
+        scheduleMode: schedules.scheduleMode,
+        status: schedules.status
+      });
+
+      if (created === undefined) {
+        throw new Error("Failed to create schedule.");
+      }
+
+      if (candidateTimeOptions.length > 0) {
+        await transaction.insert(candidateTimeOptionsTable).values(
+          candidateTimeOptions.map((option) => ({
+            scheduleId: created.id,
+            ...option
+          }))
+        );
+      }
+
+      return {
+        publicId: created.publicId,
+        title: created.title,
+        timezone: created.timezone,
+        scheduleMode: created.scheduleMode,
+        status: created.status
+      };
     });
-
-    if (created === undefined) {
-      throw new Error("Failed to create schedule.");
-    }
-
-    return created;
   }
 
   async getScheduleByPublicId(
@@ -197,6 +276,9 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
         dateRangeEnd: schedules.dateRangeEnd,
         slotMinutes: schedules.slotMinutes,
         dailyWindows: schedules.dailyWindows,
+        scheduleMode: schedules.scheduleMode,
+        finalStartUtc: schedules.finalStartUtc,
+        finalEndUtc: schedules.finalEndUtc,
         status: schedules.status
       })
       .from(schedules)
@@ -207,7 +289,25 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       return undefined;
     }
 
-    const [scheduleParticipants, scheduleAvailabilitySlots] = await Promise.all([
+    const [
+      scheduleCandidateOptions,
+      scheduleParticipants,
+      scheduleAvailabilitySlots,
+      scheduleCandidateVotes
+    ] = await Promise.all([
+      this.database
+        .select({
+          id: candidateTimeOptionsTable.id,
+          label: candidateTimeOptionsTable.label,
+          slotStartUtc: candidateTimeOptionsTable.slotStartUtc,
+          slotEndUtc: candidateTimeOptionsTable.slotEndUtc
+        })
+        .from(candidateTimeOptionsTable)
+        .where(eq(candidateTimeOptionsTable.scheduleId, schedule.id))
+        .orderBy(
+          asc(candidateTimeOptionsTable.slotStartUtc),
+          asc(candidateTimeOptionsTable.slotEndUtc)
+        ),
       this.database
         .select({
           id: participants.id,
@@ -224,13 +324,28 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
         })
         .from(availabilitySlots)
         .where(eq(availabilitySlots.scheduleId, schedule.id))
-        .orderBy(asc(availabilitySlots.slotStartUtc), asc(availabilitySlots.slotEndUtc))
+        .orderBy(asc(availabilitySlots.slotStartUtc), asc(availabilitySlots.slotEndUtc)),
+      this.database
+        .select({
+          participantId: candidateVotesTable.participantId,
+          candidateTimeOptionId: candidateVotesTable.candidateTimeOptionId,
+          preferenceRank: candidateVotesTable.preferenceRank,
+          response: candidateVotesTable.response
+        })
+        .from(candidateVotesTable)
+        .where(eq(candidateVotesTable.scheduleId, schedule.id))
+        .orderBy(
+          asc(candidateVotesTable.participantId),
+          asc(candidateVotesTable.candidateTimeOptionId)
+        )
     ]);
 
     return {
       schedule,
+      candidateTimeOptions: scheduleCandidateOptions,
       participants: scheduleParticipants,
-      availabilitySlots: scheduleAvailabilitySlots
+      availabilitySlots: scheduleAvailabilitySlots,
+      candidateVotes: scheduleCandidateVotes
     };
   }
 
@@ -248,6 +363,9 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
         dateRangeEnd: schedules.dateRangeEnd,
         slotMinutes: schedules.slotMinutes,
         dailyWindows: schedules.dailyWindows,
+        scheduleMode: schedules.scheduleMode,
+        finalStartUtc: schedules.finalStartUtc,
+        finalEndUtc: schedules.finalEndUtc,
         status: schedules.status,
         ownerKeyHash: schedules.ownerKeyHash
       })
@@ -259,7 +377,25 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       return undefined;
     }
 
-    const [scheduleParticipants, scheduleAvailabilitySlots] = await Promise.all([
+    const [
+      scheduleCandidateOptions,
+      scheduleParticipants,
+      scheduleAvailabilitySlots,
+      scheduleCandidateVotes
+    ] = await Promise.all([
+      this.database
+        .select({
+          id: candidateTimeOptionsTable.id,
+          label: candidateTimeOptionsTable.label,
+          slotStartUtc: candidateTimeOptionsTable.slotStartUtc,
+          slotEndUtc: candidateTimeOptionsTable.slotEndUtc
+        })
+        .from(candidateTimeOptionsTable)
+        .where(eq(candidateTimeOptionsTable.scheduleId, schedule.id))
+        .orderBy(
+          asc(candidateTimeOptionsTable.slotStartUtc),
+          asc(candidateTimeOptionsTable.slotEndUtc)
+        ),
       this.database
         .select({
           id: participants.id,
@@ -276,13 +412,28 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
         })
         .from(availabilitySlots)
         .where(eq(availabilitySlots.scheduleId, schedule.id))
-        .orderBy(asc(availabilitySlots.slotStartUtc), asc(availabilitySlots.slotEndUtc))
+        .orderBy(asc(availabilitySlots.slotStartUtc), asc(availabilitySlots.slotEndUtc)),
+      this.database
+        .select({
+          participantId: candidateVotesTable.participantId,
+          candidateTimeOptionId: candidateVotesTable.candidateTimeOptionId,
+          preferenceRank: candidateVotesTable.preferenceRank,
+          response: candidateVotesTable.response
+        })
+        .from(candidateVotesTable)
+        .where(eq(candidateVotesTable.scheduleId, schedule.id))
+        .orderBy(
+          asc(candidateVotesTable.participantId),
+          asc(candidateVotesTable.candidateTimeOptionId)
+        )
     ]);
 
     return {
       schedule,
+      candidateTimeOptions: scheduleCandidateOptions,
       participants: scheduleParticipants,
-      availabilitySlots: scheduleAvailabilitySlots
+      availabilitySlots: scheduleAvailabilitySlots,
+      candidateVotes: scheduleCandidateVotes
     };
   }
 
@@ -317,6 +468,18 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
         );
       }
 
+      if (record.candidateVotes.length > 0) {
+        await transaction.insert(candidateVotesTable).values(
+          record.candidateVotes.map((vote) => ({
+            scheduleId: record.scheduleId,
+            participantId: created.id,
+            candidateTimeOptionId: vote.candidateTimeOptionId,
+            preferenceRank: vote.preferenceRank ?? null,
+            response: vote.response
+          }))
+        );
+      }
+
       return created;
     });
   }
@@ -336,6 +499,9 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
         dateRangeEnd: schedules.dateRangeEnd,
         slotMinutes: schedules.slotMinutes,
         dailyWindows: schedules.dailyWindows,
+        scheduleMode: schedules.scheduleMode,
+        finalStartUtc: schedules.finalStartUtc,
+        finalEndUtc: schedules.finalEndUtc,
         status: schedules.status
       })
       .from(schedules)
@@ -360,25 +526,57 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       return undefined;
     }
 
-    const participantSlots = await this.database
-      .select({
-        slotStartUtc: availabilitySlots.slotStartUtc,
-        slotEndUtc: availabilitySlots.slotEndUtc
-      })
-      .from(availabilitySlots)
-      .where(
-        and(
-          eq(availabilitySlots.scheduleId, schedule.id),
-          eq(availabilitySlots.participantId, participantId)
-        )
-      )
-      .orderBy(asc(availabilitySlots.slotStartUtc), asc(availabilitySlots.slotEndUtc));
+    const [scheduleCandidateOptions, participantSlots, participantCandidateVotes] =
+      await Promise.all([
+        this.database
+          .select({
+            id: candidateTimeOptionsTable.id,
+            label: candidateTimeOptionsTable.label,
+            slotStartUtc: candidateTimeOptionsTable.slotStartUtc,
+            slotEndUtc: candidateTimeOptionsTable.slotEndUtc
+          })
+          .from(candidateTimeOptionsTable)
+          .where(eq(candidateTimeOptionsTable.scheduleId, schedule.id))
+          .orderBy(
+            asc(candidateTimeOptionsTable.slotStartUtc),
+            asc(candidateTimeOptionsTable.slotEndUtc)
+          ),
+        this.database
+          .select({
+            slotStartUtc: availabilitySlots.slotStartUtc,
+            slotEndUtc: availabilitySlots.slotEndUtc
+          })
+          .from(availabilitySlots)
+          .where(
+            and(
+              eq(availabilitySlots.scheduleId, schedule.id),
+              eq(availabilitySlots.participantId, participantId)
+            )
+          )
+          .orderBy(asc(availabilitySlots.slotStartUtc), asc(availabilitySlots.slotEndUtc)),
+        this.database
+          .select({
+            candidateTimeOptionId: candidateVotesTable.candidateTimeOptionId,
+            preferenceRank: candidateVotesTable.preferenceRank,
+            response: candidateVotesTable.response
+          })
+          .from(candidateVotesTable)
+          .where(
+            and(
+              eq(candidateVotesTable.scheduleId, schedule.id),
+              eq(candidateVotesTable.participantId, participantId)
+            )
+          )
+          .orderBy(asc(candidateVotesTable.candidateTimeOptionId))
+      ]);
 
     return {
       schedule,
+      candidateTimeOptions: scheduleCandidateOptions,
       participant: {
         ...participant,
-        availableSlots: participantSlots
+        availableSlots: participantSlots,
+        candidateVotes: participantCandidateVotes
       }
     };
   }
@@ -417,6 +615,15 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
           )
         );
 
+      await transaction
+        .delete(candidateVotesTable)
+        .where(
+          and(
+            eq(candidateVotesTable.scheduleId, record.scheduleId),
+            eq(candidateVotesTable.participantId, record.participantId)
+          )
+        );
+
       if (record.availabilitySlots.length > 0) {
         await transaction.insert(availabilitySlots).values(
           record.availabilitySlots.map((slot) => ({
@@ -424,6 +631,18 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
             participantId: record.participantId,
             slotStartUtc: slot.slotStartUtc,
             slotEndUtc: slot.slotEndUtc
+          }))
+        );
+      }
+
+      if (record.candidateVotes.length > 0) {
+        await transaction.insert(candidateVotesTable).values(
+          record.candidateVotes.map((vote) => ({
+            scheduleId: record.scheduleId,
+            participantId: record.participantId,
+            candidateTimeOptionId: vote.candidateTimeOptionId,
+            preferenceRank: vote.preferenceRank ?? null,
+            response: vote.response
           }))
         );
       }
@@ -451,6 +670,38 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
 
     return {
       publicId: updated.publicId,
+      status: "locked"
+    };
+  }
+
+  async confirmFinalTime(
+    scheduleId: string,
+    finalTime: { readonly endUtc: Date; readonly startUtc: Date }
+  ): Promise<ConfirmedFinalTimeScheduleRecord | undefined> {
+    const [updated] = await this.database
+      .update(schedules)
+      .set({
+        finalStartUtc: finalTime.startUtc,
+        finalEndUtc: finalTime.endUtc,
+        status: "locked",
+        updatedAt: new Date()
+      })
+      .where(eq(schedules.id, scheduleId))
+      .returning({
+        publicId: schedules.publicId,
+        finalStartUtc: schedules.finalStartUtc,
+        finalEndUtc: schedules.finalEndUtc,
+        status: schedules.status
+      });
+
+    if (updated === undefined || updated.finalStartUtc === null || updated.finalEndUtc === null) {
+      return undefined;
+    }
+
+    return {
+      publicId: updated.publicId,
+      finalStartUtc: updated.finalStartUtc,
+      finalEndUtc: updated.finalEndUtc,
       status: "locked"
     };
   }

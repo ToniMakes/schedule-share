@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, CalendarDays, Clock, ListChecks, Users } from "lucide-react";
+import { ArrowLeft, CalendarCheck, CalendarDays, Clock, ListChecks, Users } from "lucide-react";
 
 import type {
   AvailabilityBlockDto,
   GetScheduleResponse,
+  TimeSlotDto,
   TimeSlotAvailabilityDto
 } from "@schedule-share/api-client";
 
@@ -14,7 +15,14 @@ import { getScheduleView } from "@/server/schedules/get-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 import { AvailabilityForm } from "./availability-form";
+import { AvailabilityHeatmapPanel } from "./availability-heatmap-panel";
+import {
+  formatAvailableParticipantNames,
+  formatUnavailableParticipantNames
+} from "./availability-slot-names";
+import { CandidatePollResultsPanel } from "./candidate-results-panel";
 import styles from "./page.module.css";
+import { RememberedEditLinkPanel } from "./remembered-edit-link-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +56,7 @@ export default async function SchedulePage({ params }: SchedulePageProps) {
 }
 
 function ScheduleView({ data }: { readonly data: GetScheduleResponse }) {
+  const isCandidatePoll = data.schedule.scheduleMode === "candidate_poll";
   const everyoneBlocks = data.results.everyoneAvailableBlocks.slice(0, 8);
   const rankedSlots = data.results.rankedSlots.slice(0, 8);
 
@@ -81,8 +90,8 @@ function ScheduleView({ data }: { readonly data: GetScheduleResponse }) {
           />
           <SummaryItem
             icon={<ListChecks aria-hidden="true" size={18} />}
-            label="粒度"
-            value={`${data.schedule.slotMinutes} 分钟`}
+            label={isCandidatePoll ? "模式" : "粒度"}
+            value={isCandidatePoll ? "候选投票" : `${data.schedule.slotMinutes} 分钟`}
           />
           <SummaryItem
             icon={<Users aria-hidden="true" size={18} />}
@@ -91,76 +100,120 @@ function ScheduleView({ data }: { readonly data: GetScheduleResponse }) {
           />
         </section>
 
-        <AvailabilityForm
+        {data.schedule.finalTime ? <FinalTimeNotice finalTime={data.schedule.finalTime} /> : null}
+
+        <RememberedEditLinkPanel
           publicId={data.schedule.publicId}
           scheduleStatus={data.schedule.status}
-          slots={data.results.slotResults}
         />
 
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>全员可用时间</h2>
-            <span>{everyoneBlocks.length} 段</span>
-          </div>
-          {everyoneBlocks.length > 0 ? (
-            <div className={styles.blockList}>
-              {everyoneBlocks.map((block) => (
-                <AvailabilityBlockItem block={block} key={`${block.startUtc}-${block.endUtc}`} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="暂时没有全员都可用的时间"
-              body={
-                data.participants.length === 0
-                  ? "等待参与者提交可用时间后，这里会自动汇总。"
-                  : "可以扩大日期范围、调整时间段，或等待更多参与者更新。"
-              }
+        <AvailabilityForm
+          publicId={data.schedule.publicId}
+          scheduleMode={data.schedule.scheduleMode}
+          scheduleStatus={data.schedule.status}
+          scheduleTimezone={data.schedule.timezone}
+          slots={data.results.slotResults}
+          totalParticipantCount={data.results.totalParticipantCount}
+        />
+
+        {isCandidatePoll ? (
+          <CandidatePollResultsPanel
+            participants={data.participants}
+            slots={data.results.slotResults}
+          />
+        ) : (
+          <>
+            <AvailabilityHeatmapPanel
+              slots={data.results.slotResults}
+              totalParticipantCount={data.results.totalParticipantCount}
             />
-          )}
-        </section>
 
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>当前最优时间槽</h2>
-            <span>{data.results.totalParticipantCount} 人参与</span>
-          </div>
-          {rankedSlots.length > 0 ? (
-            <div className={styles.slotList}>
-              {rankedSlots.map((slot) => (
-                <RankedSlotItem
-                  key={`${slot.startUtc}-${slot.endUtc}`}
-                  slot={slot}
-                  totalParticipantCount={data.results.totalParticipantCount}
-                />
-              ))}
-            </div>
-          ) : (
-            <EmptyState title="还没有可排序的时间槽" body="目前没有参与者提交可用时间。" />
-          )}
-        </section>
-
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>可选时间范围</h2>
-            <span>{data.schedule.dailyWindows.length} 组</span>
-          </div>
-          <div className={styles.windowList}>
-            {data.schedule.dailyWindows.map((window, index) => (
-              <div
-                className={styles.windowItem}
-                key={`${index}-${window.startTime}-${window.endTime}`}
-              >
-                <span>{index + 1}</span>
-                <strong>
-                  {formatDays(window.daysOfWeek)} {window.startTime}-{window.endTime}
-                </strong>
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>全员可用时间</h2>
+                <span>{everyoneBlocks.length} 段</span>
               </div>
-            ))}
-          </div>
-        </section>
+              {everyoneBlocks.length > 0 ? (
+                <div className={styles.blockList}>
+                  {everyoneBlocks.map((block) => (
+                    <AvailabilityBlockItem
+                      block={block}
+                      key={`${block.startUtc}-${block.endUtc}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="暂时没有全员都可用的时间"
+                  body={
+                    data.participants.length === 0
+                      ? "等待参与者提交可用时间后，这里会自动汇总。"
+                      : "可以扩大日期范围、调整时间段，或等待更多参与者更新。"
+                  }
+                />
+              )}
+            </section>
+
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>当前最优时间槽</h2>
+                <span>{data.results.totalParticipantCount} 人参与</span>
+              </div>
+              {rankedSlots.length > 0 ? (
+                <div className={styles.slotList}>
+                  {rankedSlots.map((slot) => (
+                    <RankedSlotItem
+                      key={`${slot.startUtc}-${slot.endUtc}`}
+                      participants={data.participants}
+                      slot={slot}
+                      totalParticipantCount={data.results.totalParticipantCount}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState title="还没有可排序的时间槽" body="目前没有参与者提交可用时间。" />
+              )}
+            </section>
+
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>可选时间范围</h2>
+                <span>{data.schedule.dailyWindows.length} 组</span>
+              </div>
+              <div className={styles.windowList}>
+                {data.schedule.dailyWindows.map((window, index) => (
+                  <div
+                    className={styles.windowItem}
+                    key={`${index}-${window.startTime}-${window.endTime}`}
+                  >
+                    <span>{index + 1}</span>
+                    <strong>
+                      {formatDays(window.daysOfWeek)} {window.startTime}-{window.endTime}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </main>
+  );
+}
+
+function FinalTimeNotice({ finalTime }: { readonly finalTime: TimeSlotDto }) {
+  return (
+    <section className={styles.finalTimeNotice} aria-label="已确认最终时间">
+      <div className={styles.finalTimeIcon}>
+        <CalendarCheck aria-hidden="true" size={20} />
+      </div>
+      <div>
+        <span>已确认最终时间</span>
+        <strong>
+          {formatLocalDateRange(finalTime)} {formatLocalTimeRange(finalTime)}
+        </strong>
+      </div>
+    </section>
   );
 }
 
@@ -197,21 +250,38 @@ function AvailabilityBlockItem({ block }: { readonly block: AvailabilityBlockDto
 }
 
 function RankedSlotItem({
+  participants,
   slot,
   totalParticipantCount
 }: {
+  readonly participants: GetScheduleResponse["participants"];
   readonly slot: TimeSlotAvailabilityDto;
   readonly totalParticipantCount: number;
 }) {
+  const availableNames = formatAvailableParticipantNames(
+    slot.availableParticipantIds,
+    participants
+  );
+  const unavailableNames = formatUnavailableParticipantNames(
+    slot.availableParticipantIds,
+    participants
+  );
+
   return (
     <div className={styles.slotItem}>
       <div>
         <span>{formatLocalDateRange(slot)}</span>
         <strong>{formatLocalTimeRange(slot)}</strong>
       </div>
-      <p>
-        {slot.availableParticipantCount}/{totalParticipantCount} 可用
-      </p>
+      <div className={styles.slotItemDetails}>
+        <p>
+          {slot.availableParticipantCount}/{totalParticipantCount} 可用
+        </p>
+        {availableNames.length > 0 ? <span>方便：{availableNames}</span> : null}
+        {unavailableNames.length > 0 ? (
+          <span className={styles.slotItemMuted}>未选此时间：{unavailableNames}</span>
+        ) : null}
+      </div>
     </div>
   );
 }

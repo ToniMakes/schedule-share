@@ -5,7 +5,7 @@ import type {
 
 import { HttpError } from "../errors";
 import { assertParticipantEditKeyMatches } from "./access-keys";
-import { validateAvailabilitySlotsForSchedule } from "./availability-validation";
+import { normalizeAvailabilitySubmissionForSchedule } from "./availability-validation";
 import { assertScheduleParticipantPath } from "./path-validation";
 import type { UpdateParticipantAvailabilityRepository } from "./repository";
 
@@ -36,16 +36,22 @@ export async function updateParticipantAvailabilityRecord(
     throw new HttpError(409, "SCHEDULE_LOCKED", "This schedule no longer accepts changes.");
   }
 
-  validateAvailabilitySlotsForSchedule(record.schedule, input.availableSlots);
+  const submission = normalizeAvailabilitySubmissionForSchedule(
+    record.schedule,
+    input.availableSlots,
+    record.candidateTimeOptions,
+    input.candidateVotes
+  );
 
   const participant = await dependencies.repository.updateParticipantAvailability({
     scheduleId: record.schedule.id,
     participantId,
     displayName: input.displayName,
-    availabilitySlots: input.availableSlots.map((slot) => ({
+    availabilitySlots: submission.availabilitySlots.map((slot) => ({
       slotStartUtc: new Date(slot.startUtc),
       slotEndUtc: new Date(slot.endUtc)
-    }))
+    })),
+    candidateVotes: submission.candidateVotes
   });
 
   if (participant === undefined) {

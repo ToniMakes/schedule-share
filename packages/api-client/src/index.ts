@@ -3,23 +3,40 @@ export { getHealthStatus } from "./client/health";
 export type { HealthClientOptions } from "./client/health";
 export {
   archiveSchedule,
+  confirmFinalTime,
   createParticipantAvailability,
   createSchedule,
   getParticipantAvailability,
   getSchedule,
   lockSchedule,
+  previewAvailability,
+  previewAvailabilityCsv,
+  previewAvailabilityIcs,
+  previewAvailabilityImage,
   updateParticipantAvailability
 } from "./client/schedules";
-export type { ApiClientOptions } from "./client/schedules";
+export type {
+  ApiClientOptions,
+  PreviewAvailabilityCsvRequest,
+  PreviewAvailabilityIcsRequest,
+  PreviewAvailabilityImageRequest
+} from "./client/schedules";
 export {
   availabilityBlockSchema,
   availabilityResultsSchema,
   availabilitySlotInputSchema,
   archiveScheduleRequestSchema,
   archiveScheduleResponseSchema,
+  availabilityPreviewRequestSchema,
+  availabilityPreviewResponseSchema,
+  availabilityTemplateSchema,
   apiErrorCodeSchema,
   apiErrorCodes,
   apiErrorResponseSchema,
+  candidateTimeWindowSchema,
+  candidateVoteInputSchema,
+  confirmFinalTimeRequestSchema,
+  confirmFinalTimeResponseSchema,
   createParticipantAvailabilityRequestSchema,
   createParticipantAvailabilityResponseSchema,
   createScheduleRequestSchema,
@@ -29,6 +46,7 @@ export {
   getParticipantAvailabilityResponseSchema,
   getScheduleResponseSchema,
   healthStatusResponseSchema,
+  importedBusyBlockSchema,
   lockScheduleRequestSchema,
   lockScheduleResponseSchema,
   participantAvailabilitySchema,
@@ -39,16 +57,26 @@ export {
   timeSlotAvailabilitySchema,
   timeSlotSchema,
   updateParticipantAvailabilityRequestSchema,
-  updateParticipantAvailabilityResponseSchema
+  updateParticipantAvailabilityResponseSchema,
+  weeklyAvailabilityWindowSchema
 } from "./contracts";
 export type {
   ArchiveScheduleRequest,
   ArchiveScheduleResponse,
+  AvailabilityEntryMethodDto,
+  AvailabilityPreviewRequest,
+  AvailabilityPreviewResponse,
   AvailabilityBlockDto,
   AvailabilityResults,
   AvailabilitySlotInput,
+  AvailabilityTemplateDto,
   ApiErrorCode,
   ApiErrorResponse,
+  CandidateTimeWindowInput,
+  CandidateVoteInput,
+  CandidateVoteResponse,
+  ConfirmFinalTimeRequest,
+  ConfirmFinalTimeResponse,
   CreateParticipantAvailabilityRequest,
   CreateParticipantAvailabilityResponse,
   CreateScheduleRequest,
@@ -58,15 +86,18 @@ export type {
   GetParticipantAvailabilityResponse,
   GetScheduleResponse,
   HealthStatusResponse,
+  ImportedBusyBlockDto,
   LockScheduleRequest,
   LockScheduleResponse,
   ParticipantAvailability,
   ParticipantSummary,
   ScheduleDetail,
+  ScheduleMode,
   ScheduleStatusSummary,
   ScheduleSummary,
   TimeSlotAvailabilityDto,
   TimeSlotDto,
   UpdateParticipantAvailabilityRequest,
-  UpdateParticipantAvailabilityResponse
+  UpdateParticipantAvailabilityResponse,
+  WeeklyAvailabilityWindowDto
 } from "./contracts";
