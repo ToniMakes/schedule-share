@@ -8,6 +8,7 @@
 - 时区规则。
 - 可用时间交集。
 - 多数人空闲排序。
+- 候选投票综合排序。
 - 领域输入校验。
 - 不依赖外部状态的纯函数。
 
@@ -31,4 +32,9 @@
 
 - `generateTimeSlots`：从日程配置生成标准 UTC 时间格。
 - `calculateAvailabilitySummary`：计算每个时间格的可用人数、所有人可用时间和排序候选时间。
+- `buildCandidatePollResults`：按 `available = 1`、`maybe = 0.5` 计算候选投票综合支持度，并用首选人数和平均偏好顺位辅助排名。
 - `mergeAvailabilityBlocks`：合并相邻且可用参与者集合相同的时间格。
+- `createCandidateTimeSlots`：把明确 UTC 候选时间规范化为日程时区下的可展示时间槽。
+- `createCandidateTimeWindowFromLocal`：把本地日期和时间窗口转换为明确 UTC 候选时间。
+- `createAvailabilityDraftFromBusyBlocks`：把导入识别出的忙碌时间块转换为当前日程中的可用时间草稿。
+- `createAvailabilityDraftFromAvailableSlots`：把已有可用时间槽归一化为可确认的可用时间草稿。

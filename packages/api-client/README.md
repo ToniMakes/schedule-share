@@ -14,13 +14,19 @@
 
 - `createScheduleRequestSchema`
 - `createScheduleResponseSchema`
+- `candidateTimeWindowSchema`
+- `candidateVoteInputSchema`
 - `createParticipantAvailabilityRequestSchema`
 - `createParticipantAvailabilityResponseSchema`
 - `getParticipantAvailabilityResponseSchema`
 - `updateParticipantAvailabilityRequestSchema`
 - `updateParticipantAvailabilityResponseSchema`
+- `availabilityPreviewRequestSchema`
+- `availabilityPreviewResponseSchema`
 - `lockScheduleRequestSchema`
 - `lockScheduleResponseSchema`
+- `confirmFinalTimeRequestSchema`
+- `confirmFinalTimeResponseSchema`
 - `getScheduleResponseSchema`
 - `apiErrorResponseSchema`
 - `createSchedule`
@@ -28,7 +34,12 @@
 - `createParticipantAvailability`
 - `getParticipantAvailability`
 - `updateParticipantAvailability`
+- `previewAvailability`
+- `previewAvailabilityImage`
+- `previewAvailabilityIcs`
+- `previewAvailabilityCsv`
 - `lockSchedule`
+- `confirmFinalTime`
 - `ApiClientError`
 
 ## 首批客户端函数
@@ -38,4 +49,9 @@
 - `createParticipantAvailability`：已实现。
 - `getParticipantAvailability`：已实现。
 - `updateParticipantAvailability`：已实现。
+- `previewAvailability`：已实现 `text_import` JSON 预览，以及结构化 `image_import` / `ics_import` / `csv_import` busyBlocks 预览。
+- `previewAvailabilityImage`：已实现 `image_import` multipart 图片预览。
+- `previewAvailabilityIcs`：已实现 `ics_import` multipart 日历文件预览。
+- `previewAvailabilityCsv`：已实现 `csv_import` multipart CSV 文件预览。
 - `lockSchedule`：已实现。
+- `confirmFinalTime`：已实现。

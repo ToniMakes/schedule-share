@@ -9,12 +9,14 @@
 
 ## 变量清单
 
-| 变量                     | 必填 | 使用位置                                              | 示例                                        | 说明                                                                                                                             |
-| ------------------------ | ---- | ----------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`           | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                              |
-| `DATABASE_MIGRATION_URL` | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。 |
-| `APP_BASE_URL`           | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                        |
-| `SMOKE_BASE_URL`         | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                        |
+| 变量                        | 必填 | 使用位置                                              | 示例                                        | 说明                                                                                                                             |
+| --------------------------- | ---- | ----------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`              | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                              |
+| `DATABASE_MIGRATION_URL`    | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。 |
+| `APP_BASE_URL`              | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                        |
+| `OPENAI_API_KEY`            | 否   | Web API                                               | `sk-...`                                    | 启用图片课表/排班导入识别。未设置时图片导入返回 `IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴和手动填写不受影响。                      |
+| `OPENAI_IMAGE_IMPORT_MODEL` | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                  |
+| `SMOKE_BASE_URL`            | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                        |
 
 ## 检查配置状态
 
@@ -82,6 +84,8 @@ corepack pnpm dev
 DATABASE_URL=postgres://...
 DATABASE_MIGRATION_URL=postgres://...
 APP_BASE_URL=https://schedule.tonimakes.com
+OPENAI_API_KEY=sk-...
+OPENAI_IMAGE_IMPORT_MODEL=gpt-5.6-luna
 ```
 
 部署后验证生产站点：
@@ -100,5 +104,6 @@ corepack pnpm verify:deployment
 ## 安全注意
 
 - `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 包含数据库用户名和密码，不能截图、公开贴出或写进 issue。
+- `OPENAI_API_KEY` 是第三方 API 密钥，也只能放在本地 `.env.local` 或部署平台环境变量里。
 - `ownerUrl` 和 `editUrl` 带有管理或编辑密钥，也不能公开记录。
 - 如果怀疑连接串泄露，先在数据库平台轮换密码，再更新部署平台环境变量并重新部署。

@@ -28,14 +28,15 @@
 - 组织者管理页面。
 - 参与者可用时间提交表单。
 - 参与者可用时间编辑页面。
-- 共享 API contract、`createSchedule`、`getSchedule`、`createParticipantAvailability`、`getParticipantAvailability`、`updateParticipantAvailability` 和 `lockSchedule` API client。
+- 共享 API contract、`createSchedule`、`getSchedule`、`createParticipantAvailability`、`getParticipantAvailability`、`updateParticipantAvailability`、`lockSchedule` 和 `confirmFinalTime` API client。
 - `POST /api/schedules` 创建日程 API。
 - `GET /api/schedules/:publicId` 获取日程 API。
 - `POST /api/schedules/:publicId/participants` 提交可用时间 API。
 - `GET/PUT /api/schedules/:publicId/participants/:participantId` 查看和更新参与者可用时间 API。
 - `POST /api/schedules/:publicId/lock` 锁定日程 API。
+- `POST /api/schedules/:publicId/final-time` 组织者确认最终时间 API。
 - `POST /api/schedules/:publicId/archive` 归档日程 API。
-- `GET /api/schedules/:publicId/export` 组织者 CSV 导出 API。
+- `GET /api/schedules/:publicId/export` 组织者 CSV 和 `.ics` 日历导出 API。
 - `GET /api/health` 健康检查 API。
 - Drizzle + Postgres 数据库 schema 和初始 migration。
 - Neon Postgres Singapore 托管数据库接入。
@@ -45,6 +46,24 @@
 - 核心逻辑测试。
 - GitHub Actions CI 门禁。
 - 多种可用时间添加方式的产品和架构文档基线。
+- `AvailabilityDraft` 归一化和忙碌时间块求差集核心逻辑。
+- 参与者填写页和编辑页的手动时间格支持点按选择、拖拽涂选、每天全选/清空、总进度、每日已选计数、日期快速跳转、移动端两列布局和基础热力强度。
+- 参与者填写页会在本机浏览器记住上次成功提交或编辑的显示名，用于下次预填姓名。
+- 公开日程页会在本机浏览器记住当前日程下上次成功提交或编辑的编辑链接，方便同一浏览器再次修改。
+- 参与者填写页和开放网格编辑页会在本机浏览器记住上次成功使用的每周模板星期和时间段，也可保存多个本机每周模板用于下次预填。
+- 创建页会在本机浏览器记住上次成功创建时使用的模式、时区、时间粒度和开放网格时间范围，用于下次预填。
+- 文本粘贴导入预览 API 和参与者填写页、开放网格编辑页预填入口，支持常见中英文日期、英文月份日期、日期/星期逗号上下文（如 `Mon, 9-11 COMP101`、`Monday, Aug 3, 6pm-7pm Dinner`）、时间段、`from 9 to 11 on Monday`、`between 9 and 11 on Monday`、`noon-1pm`、`midnight to 1am`、`6 to 7pm`、`9am until 11am`、`2pm till 4pm`、`9am for 2 hours`、`14:30 for 90 min` 这类英文自然句、列表/编号和 `Busy:`/`忙碌:` 状态前缀、tab/逗号分隔课表/排班表格、Markdown 表格、复制自合并日期表头的多行表头、日期/星期 + 时间的双层表头、`Start/End` 拆分表头行、左右并排区域各自独立 `Time/时间` 列的课表、导出标题行后的 `Date/Start/End/Title` 和 `Date/Time/Title` 这类行式排班表格、合并单元格复制后空白日期/时间的上下文继承、独立 `Notes/备注` 列的纯备注续行、常见导出标题/汇总/页脚/说明行跳过、带明确钟点的课程节次写法，以及无明确钟点课程节次按用户粘贴的自定义节次表、裸数字自定义节次定义、`Period/节次` 列裸 `1-2` 范围或默认作息表换算并提示复核。
+- 图片课表/排班导入预览 API、上传限制、OpenAI provider 适配器和参与者填写页、开放网格编辑页图片预填入口。
+- 每周可用模板投影核心逻辑、内联模板预览 API，以及参与者填写页、开放网格编辑页的模板预填、本机模板保存、选择和删除入口。
+- `.ics` 日历文件预览 API、基础 ICS 事件解析、`VFREEBUSY` 忙闲区间、UTC / `TZID` / 常见 Windows 时区别名、`DTSTART` + `DURATION`、全天事件（含缺少 `DTEND` 的 date-only `DTSTART`）、每日、每周、常见月度重复（同日、指定月份、月内日期、月末、每月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）和常见年度重复（同月同日、`BYMONTH`、`BYMONTHDAY`、每年某月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、`COUNT` / `UNTIL` / `RDATE`（含 `VALUE=PERIOD`）/ `EXDATE` / `RECURRENCE-ID` 处理和参与者填写页、开放网格编辑页日历预填入口。
+- CSV 排班/课表文件预览 API、基础 CSV 解析和参与者填写页、开放网格编辑页 CSV 预填入口，支持时间 x 星期课表、复制自合并日期表头的多行表头、日期/星期 + 时间的双层表头、`Start/End` 拆分表头行、左右并排区域各自独立 `Time/时间` 列的课表、导出标题行后的 `Date/Start/End/Title` 和 `Date/Time/Title` 这类行式排班导出、`Period/节次` 课程节次列裸 `1-2` 范围、自定义节次表、裸数字自定义节次定义、空白日期/时间单元格的上一行继承、独立 `Notes/备注` 列纯备注续行，以及常见导出标题/汇总/页脚/说明行跳过。
+- 参与者填写页和开放网格编辑页统一预填反馈会展示来源、忙碌段数、可用时间数、置信度、需复核状态、常见 warnings 中文提示，以及逐条识别出的忙碌时间明细，方便提交前手动修正。
+- 候选时间投票三态 v1：创建页候选模式、候选时间表、参与者选择方便/也许/不方便、方便/也许候选偏好顺位、拖拽调整偏好顺位、结果汇总复用、首选/平均顺位辅助排序、排序依据解释、候选项洞察、缺口标签、对比最佳分析、专门结果视图和管理页逐条复制候选。
+- 开放网格结果热力图：公开页和管理页按日期展示每格可用人数、峰值和重合比例，并支持全部/有人可用/只看峰值筛选和长日期折叠。
+- 管理页 `.ics` 导出入口，可把所有全员可用连续时间段、某一个共同时间段或已确认最终时间下载为日历文件。
+- 管理页最终时间确认入口，可从开放网格的全员可用连续时间段或候选投票的候选项中选择最终时间并锁定日程。
+- 公开页和管理页的开放网格结果会同时展示全员可用时间和按可用人数排序的当前较优时间槽，并列出方便和未选此时间的参与者，方便没有全员共同时间时继续沟通。
+- 管理页结果摘要复制入口和开放网格单个较优时间槽复制入口，可把关键结果或某个备选时间复制到群聊或邮件，且不会包含管理密钥。
 
 ## 文档
 
@@ -142,11 +161,15 @@ docs/
   adr/
 ```
 
+图片导入需要配置 `OPENAI_API_KEY`；可选 `OPENAI_IMAGE_IMPORT_MODEL` 覆盖默认识别模型。未配置时，图片预填会返回
+`IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴和手动填写仍可使用。
+
 ## 下一步
 
-- 为多种添加方式实现 `packages/core` 中的 `AvailabilityDraft` 归一化逻辑，并补时间边界测试。
-- 为课表/排班导入实现忙碌时间块到可用时间槽转换。
-- 为个人长期模板实现每周可用窗口投影逻辑，并在登录方案确定后实现数据表。
-- 改进参与者填写页的手动拖拽网格和群体热力图体验。
+- 收集真实文本/表格粘贴和 CSV 样本，继续扩展更复杂自然语言、更复杂嵌套表头、更多学校特殊节次格式和真实样本 warnings。
+- 根据真实 `.ics` 样本继续补更复杂 Recurrence、更多时区边界和低置信度 warnings。
+- 在登录方案确定后实现用户、模板数据表，并把当前本机模板升级为账号保存型个人长期模板。
+- 根据真实候选投票使用情况评估参与者自定义偏好权重。
+- 继续改进移动端手动拖拽手感和更长日期范围下的结果密度体验。
 - 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
 - 找 3 到 5 个朋友按 `docs/internal-test-checklist.md` 做真实内测。
