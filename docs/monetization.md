@@ -4,7 +4,7 @@
 
 ## 定位
 
-本文件记录网站常驻展示广告、AI 图片识别成本控制、激励广告换额度和后续增值能力的商业化方案。当前代码已经接入默认关闭的常驻展示广告框架和 `/ads.txt` 路由；真实广告、AI 额度账本、激励广告验证和付费能力仍未开放。
+本文件记录网站常驻展示广告、AI 图片识别成本控制、激励广告换额度和后续增值能力的商业化方案。当前代码已经接入默认关闭的常驻展示广告框架、`/ads.txt` 路由、AI 额度账本数据库和服务层；真实广告、图片识别 API 强制额度校验、激励广告验证和付费能力仍未开放。
 
 当前已经实现的是核心排期主链路、图片导入预览入口、OpenAI provider 适配器，以及默认不加载第三方脚本的展示广告位框架；要让产品长期开放给真实用户，需要同时解决两类问题：
 
@@ -183,7 +183,7 @@ AI 图片识别仍应通过激励广告额度或未来付费额度单独控制�
 4. 服务端通过广告平台回调或服务端验证确认事件有效后，发放 1 次 AI 图片识别额度。
 5. 用户上传图片，服务端原子消耗 1 次额度，再调用 OpenAI 图片识别。
 6. 识别结果只生成 `AvailabilityDraft`，用户仍需确认或手动修正后才会提交。
-7. 如果 provider 不可用、超时或内部错误，额度可以退款；如果成功返回但置信度低，一般不自动退款，只提示用户复核。
+7. 如果 provider 不可用、超时或内部错误，额度可以退款；如果成功返回但置信度低，一般不自动退款，只提示用户复核。当前服务层已经提供原子消耗、成功标记和退款方法，但图片识别 API 尚未调用这些方法。
 
 推荐默认策略：
 
@@ -330,7 +330,7 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 计划变更：
 
-- 当 `method=image_import` 且激励广告模式开启时，服务端必须先原子消耗 1 次 AI 图片识别额度。
+- 当 `method=image_import` 且激励广告模式开启时，服务端必须先原子消耗 1 次 AI 图片识别额度；底层服务方法已实现，仍需接入现有图片识别 API。
 - 无额度时返回计划错误码 `AI_CREDIT_REQUIRED`，并告诉前端可以展示 rewarded ad 入口。
 - provider 不可用、网络超时或内部错误时可以自动退款。
 - 文件类型、大小、低置信度和用户取消不应绕过既有校验。
@@ -366,22 +366,22 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 AI 图片识别基础闸门：
 
-| 变量                                     | 说明                                                                       |
-| ---------------------------------------- | -------------------------------------------------------------------------- |
-| `AI_IMAGE_IMPORT_ENABLED`                | 图片识别总开关。默认 false；即使配置 `OPENAI_API_KEY` 也不会自动开放。     |
-| `AI_IMAGE_IMPORT_RELEASE_MODE`           | `off`、`local_only`、`internal_test` 或 `public`；当前 public 被代码阻断。 |
-| `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`    | 内测请求头 `x-ai-image-import-test-token` 需要匹配该值。                   |
-| `AI_IMAGE_IMPORT_MAX_BYTES`              | 图片上传大小上限，只能低于或等于代码硬上限 4MB。                           |
-| `AI_IMAGE_IMPORT_ESTIMATED_COST_USD`     | 单次图片识别保守估算成本；用于静态成本闸门。                               |
-| `AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD` | 单次估算成本上限；估算值高于它时 provider 不会创建。                       |
-| `AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT`    | 当前环境每日请求上限配置；额度账本落地后需要由服务端计数强制执行。         |
-| `AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD`   | 当前环境每日预算配置；请求上限乘以单次估算成本不能超过它。                 |
-| `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`         | OpenAI 图片识别请求超时，代码硬上限 30 秒。                                |
-| `OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS`  | 图片识别最大输出 token，代码硬上限 3000。                                  |
-| `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE`     | 低于该整体置信度时返回低置信度错误，不生成可提交结果。                     |
-| `AI_IMAGE_AD_GATE_READY`                 | 广告门槛是否已准备好；公开开放前必须由真实实现和运营检查支撑。             |
-| `AI_IMAGE_CREDITS_ENFORCED`              | 额度账本和原子消耗是否已强制执行。                                         |
-| `AI_IMAGE_COST_GUARDRAIL_ENABLED`        | 全站成本护栏和紧急关闭是否已启用。                                         |
+| 变量                                     | 说明                                                                         |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| `AI_IMAGE_IMPORT_ENABLED`                | 图片识别总开关。默认 false；即使配置 `OPENAI_API_KEY` 也不会自动开放。       |
+| `AI_IMAGE_IMPORT_RELEASE_MODE`           | `off`、`local_only`、`internal_test` 或 `public`；当前 public 被代码阻断。   |
+| `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`    | 内测请求头 `x-ai-image-import-test-token` 需要匹配该值。                     |
+| `AI_IMAGE_IMPORT_MAX_BYTES`              | 图片上传大小上限，只能低于或等于代码硬上限 4MB。                             |
+| `AI_IMAGE_IMPORT_ESTIMATED_COST_USD`     | 单次图片识别保守估算成本；用于静态成本闸门。                                 |
+| `AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD` | 单次估算成本上限；估算值高于它时 provider 不会创建。                         |
+| `AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT`    | 当前环境每日请求上限配置；额度账本落地后需要由服务端计数强制执行。           |
+| `AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD`   | 当前环境每日预算配置；请求上限乘以单次估算成本不能超过它。                   |
+| `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`         | OpenAI 图片识别请求超时，代码硬上限 30 秒。                                  |
+| `OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS`  | 图片识别最大输出 token，代码硬上限 3000。                                    |
+| `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE`     | 低于该整体置信度时返回低置信度错误，不生成可提交结果。                       |
+| `AI_IMAGE_AD_GATE_READY`                 | 广告门槛是否已准备好；公开开放前必须由真实实现和运营检查支撑。               |
+| `AI_IMAGE_CREDITS_ENFORCED`              | 图片识别 API 是否已经强制使用额度账本和原子消耗。服务层存在不等于可设 true。 |
+| `AI_IMAGE_COST_GUARDRAIL_ENABLED`        | 全站成本护栏和紧急关闭是否已启用。                                           |
 
 以下变量仍属于后续激励广告和额度系统计划，当前代码尚未读取，不需要在 Vercel 里立即配置：
 
@@ -471,8 +471,8 @@ AI 额度和激励广告：
 公开开放广告换图片识别前，至少需要满足：
 
 - `OPENAI_API_KEY` 已在生产环境配置并通过真实样本调优。
-- `AI_IMAGE_IMPORT_ENABLED=true` 和 `AI_IMAGE_IMPORT_RELEASE_MODE=public` 只在最后开放时设置；当前代码仍会阻断 public，必须在额度账本、广告验证和成本护栏实现后再专门提交解除阻断。
-- 有 `AiRecognitionCreditGrant` 和 `AiRecognitionAttempt` 账本，额度消耗是原子的。
+- `AI_IMAGE_IMPORT_ENABLED=true` 和 `AI_IMAGE_IMPORT_RELEASE_MODE=public` 只在最后开放时设置；当前代码仍会阻断 public，必须在图片识别 API 强制接入账本、广告验证和成本护栏后再专门提交解除阻断。
+- 有 `AiRecognitionCreditGrant` 和 `AiRecognitionAttempt` 账本，额度消耗是原子的，并且图片识别 API 已经强制调用账本服务。
 - 广告完成事件通过服务端验证，不能只信任前端回调。
 - 隐私说明已经补充广告和 AI provider 数据处理边界。
 - 有全站开关、每日成本上限、单日程上限和紧急关闭流程。

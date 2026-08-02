@@ -135,7 +135,7 @@
 
 ### AiRecognitionCreditGrant
 
-AI 图片识别额度发放记录。用于限制 `image_import` 的成本暴露，并支持免费额度、激励广告奖励、人工发放和失败退款。当前数据库表和 migration 已实现；额度发放、原子消耗、退款和前端兑换流程仍未接入，详细方案见 `docs/monetization.md`。
+AI 图片识别额度发放记录。用于限制 `image_import` 的成本暴露，并支持免费额度、激励广告奖励、人工发放和失败退款。当前数据库表、migration 和服务端账本方法已实现；图片识别 API 强制接入账本、免费额度自动发放、广告验证和前端兑换流程仍未接入，详细方案见 `docs/monetization.md`。
 
 当前字段：
 

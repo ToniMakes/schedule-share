@@ -621,11 +621,11 @@ ICS 内容包含：
 - 服务端再调用 `packages/core` 把输入来源转换为当前日程内的建议可用时间槽。
 - 图片识别需要配置 `OPENAI_API_KEY`，可选 `OPENAI_IMAGE_IMPORT_MODEL`；但 key 只是凭证，不能单独开放功能。
 - 图片识别默认关闭。必须同时设置 `AI_IMAGE_IMPORT_ENABLED=true` 和允许的 `AI_IMAGE_IMPORT_RELEASE_MODE` 才会尝试调用 provider。
-- `AI_IMAGE_IMPORT_RELEASE_MODE=local_only` 只用于本地非生产运行；`internal_test` 需要请求头 `x-ai-image-import-test-token` 匹配 `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`；`public` 当前被代码层阻断，直到额度账本、广告验证和成本护栏实现后再开放。
-- 后续如果开启激励广告换 AI 图片识别额度，`image_import` 还需要先通过计划中的额度校验；无额度时返回计划错误码 `AI_CREDIT_REQUIRED`。当前代码尚未实现该校验。
+- `AI_IMAGE_IMPORT_RELEASE_MODE=local_only` 只用于本地非生产运行；`internal_test` 需要请求头 `x-ai-image-import-test-token` 匹配 `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`；`public` 当前被代码层阻断，直到图片识别 API 强制接入额度账本、广告验证和成本护栏后再开放。
+- 后续如果开启激励广告换 AI 图片识别额度，`image_import` 还需要先通过额度校验；无额度时返回计划错误码 `AI_CREDIT_REQUIRED`。当前代码已有账本服务层，但尚未把该校验接入图片识别 API。
 - 图片上传限制为 PNG、JPEG 或 WebP，默认最大 4MB，可用 `AI_IMAGE_IMPORT_MAX_BYTES` 设置更低上限；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 - OpenAI 请求有 `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`、`OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS` 和 `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE` 运行时护栏；超时返回 `IMPORT_PROVIDER_UNAVAILABLE`，低置信度返回 `IMPORT_LOW_CONFIDENCE`。
-- 当前代码还读取 `AI_IMAGE_IMPORT_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT` 和 `AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD`。如果单次估算成本超过上限，或每日请求上限乘以单次估算成本可能超过每日预算，图片识别 provider 不会创建；这仍是静态成本闸门，不替代后续额度账本。
+- 当前代码还读取 `AI_IMAGE_IMPORT_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT` 和 `AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD`。如果单次估算成本超过上限，或每日请求上限乘以单次估算成本可能超过每日预算，图片识别 provider 不会创建；这仍是静态成本闸门，不替代图片识别 API 的额度消耗和全站动态计数。
 - `.ics` 上传限制为单个 `.ics` 文件最大 1MB；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 - CSV 上传限制为单个 `.csv` 文件最大 1MB；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 
@@ -870,7 +870,7 @@ Web 端本机多模板保存、选择和删除只使用浏览器 localStorage，
 
 ## AI 图片识别额度与激励广告
 
-以下接口状态均为计划中。它们用于把 `image_import` 的 AI 成本限制在免费额度、激励广告奖励或未来付费额度内；当前代码尚未实现。
+以下接口状态均为计划中。它们用于把 `image_import` 的 AI 成本限制在免费额度、激励广告奖励或未来付费额度内；当前底层账本服务已实现，公开 API 和广告验证流程尚未接入。
 
 详细产品、成本和风控方案见 `docs/monetization.md`。
 
