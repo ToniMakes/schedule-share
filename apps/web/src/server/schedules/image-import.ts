@@ -19,6 +19,13 @@ const DEFAULT_OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE = 0.6;
 const DEFAULT_OPENAI_IMAGE_IMPORT_TIMEOUT_MS = 15_000;
 const MAX_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS = 3000;
 const MAX_OPENAI_IMAGE_IMPORT_TIMEOUT_MS = 30_000;
+const DEFAULT_AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD = 0.25;
+const DEFAULT_AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT = 20;
+const DEFAULT_AI_IMAGE_IMPORT_ESTIMATED_COST_USD = 0.01;
+const DEFAULT_AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD = 0.02;
+const MAX_AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD = 10;
+const MAX_AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT = 500;
+const MAX_AI_IMAGE_IMPORT_ESTIMATED_COST_USD = 0.1;
 const PUBLIC_IMAGE_IMPORT_RELEASE_SUPPORTED = false;
 
 const imageImportReleaseModes = ["off", "local_only", "internal_test", "public"] as const;
@@ -85,9 +92,13 @@ interface ImageImportEnvironment {
   readonly AI_IMAGE_AD_GATE_READY?: string;
   readonly AI_IMAGE_COST_GUARDRAIL_ENABLED?: string;
   readonly AI_IMAGE_CREDITS_ENFORCED?: string;
+  readonly AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD?: string;
+  readonly AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT?: string;
   readonly AI_IMAGE_IMPORT_ENABLED?: string;
+  readonly AI_IMAGE_IMPORT_ESTIMATED_COST_USD?: string;
   readonly AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN?: string;
   readonly AI_IMAGE_IMPORT_MAX_BYTES?: string;
+  readonly AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD?: string;
   readonly AI_IMAGE_IMPORT_RELEASE_MODE?: string;
   readonly NODE_ENV?: string;
   readonly OPENAI_API_KEY?: string;
@@ -102,9 +113,13 @@ export interface ImageImportRuntimeConfig {
   readonly adGateReady: boolean;
   readonly costGuardrailEnabled: boolean;
   readonly creditsEnforced: boolean;
+  readonly dailyCostLimitUsd: number;
+  readonly dailyRequestLimit: number;
   readonly enabled: boolean;
+  readonly estimatedCostPerRequestUsd: number;
   readonly internalTestToken?: string;
   readonly maxBytes: number;
+  readonly maxEstimatedCostPerRequestUsd: number;
   readonly maxOutputTokens: number;
   readonly minConfidence: number;
   readonly nodeEnv?: string;
@@ -241,13 +256,36 @@ export function readImageImportRuntimeConfig(
     adGateReady: parseBooleanFlag(environment.AI_IMAGE_AD_GATE_READY),
     costGuardrailEnabled: parseBooleanFlag(environment.AI_IMAGE_COST_GUARDRAIL_ENABLED),
     creditsEnforced: parseBooleanFlag(environment.AI_IMAGE_CREDITS_ENFORCED),
+    dailyCostLimitUsd: parseBoundedNumber(environment.AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD, {
+      defaultValue: DEFAULT_AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD,
+      maxValue: MAX_AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD,
+      minValue: 0.01
+    }),
+    dailyRequestLimit: parseBoundedInteger(environment.AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT, {
+      defaultValue: DEFAULT_AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT,
+      maxValue: MAX_AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT,
+      minValue: 1
+    }),
     enabled: parseBooleanFlag(environment.AI_IMAGE_IMPORT_ENABLED),
+    estimatedCostPerRequestUsd: parseBoundedNumber(environment.AI_IMAGE_IMPORT_ESTIMATED_COST_USD, {
+      defaultValue: DEFAULT_AI_IMAGE_IMPORT_ESTIMATED_COST_USD,
+      maxValue: MAX_AI_IMAGE_IMPORT_ESTIMATED_COST_USD,
+      minValue: 0.0001
+    }),
     internalTestToken: trimToUndefined(environment.AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN),
     maxBytes: parseBoundedInteger(environment.AI_IMAGE_IMPORT_MAX_BYTES, {
       defaultValue: IMAGE_IMPORT_MAX_BYTES,
       maxValue: IMAGE_IMPORT_MAX_BYTES,
       minValue: 1
     }),
+    maxEstimatedCostPerRequestUsd: parseBoundedNumber(
+      environment.AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD,
+      {
+        defaultValue: DEFAULT_AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD,
+        maxValue: MAX_AI_IMAGE_IMPORT_ESTIMATED_COST_USD,
+        minValue: 0.0001
+      }
+    ),
     maxOutputTokens: parseBoundedInteger(environment.OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS, {
       defaultValue: DEFAULT_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS,
       maxValue: MAX_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS,
@@ -281,6 +319,12 @@ export function checkImageImportAccess(
     return { allowed: false, reason: "Image import release mode is off." };
   }
 
+  const costPolicy = checkImageImportCostPolicy(config);
+
+  if (!costPolicy.allowed) {
+    return costPolicy;
+  }
+
   if (config.releaseMode === "local_only") {
     const isLocalRuntime =
       config.nodeEnv !== "production" &&
@@ -312,6 +356,39 @@ export function checkImageImportAccess(
     return {
       allowed: false,
       reason: "Public image import requires ad gating, credit enforcement, and cost guardrails."
+    };
+  }
+
+  return { allowed: true };
+}
+
+export function checkImageImportCostPolicy(
+  config: Pick<
+    ImageImportRuntimeConfig,
+    | "dailyCostLimitUsd"
+    | "dailyRequestLimit"
+    | "estimatedCostPerRequestUsd"
+    | "maxEstimatedCostPerRequestUsd"
+  >
+): ImageImportAccessResult {
+  if (config.estimatedCostPerRequestUsd > config.maxEstimatedCostPerRequestUsd) {
+    return {
+      allowed: false,
+      reason: "Image import estimated cost exceeds the per-request cost ceiling."
+    };
+  }
+
+  if (config.estimatedCostPerRequestUsd > config.dailyCostLimitUsd) {
+    return {
+      allowed: false,
+      reason: "Image import estimated cost exceeds the daily cost ceiling."
+    };
+  }
+
+  if (config.estimatedCostPerRequestUsd * config.dailyRequestLimit > config.dailyCostLimitUsd) {
+    return {
+      allowed: false,
+      reason: "Image import daily request limit can exceed the daily cost ceiling."
     };
   }
 

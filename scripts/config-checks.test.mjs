@@ -191,6 +191,20 @@ describe("checkAppBaseUrl", () => {
 });
 
 describe("checkImageImportConfig", () => {
+  function openAiImageImportEnvironment(overrides = {}) {
+    return {
+      AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD: "0.25",
+      AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT: "20",
+      AI_IMAGE_IMPORT_ENABLED: "true",
+      AI_IMAGE_IMPORT_ESTIMATED_COST_USD: "0.01",
+      AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN: "secret",
+      AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD: "0.02",
+      AI_IMAGE_IMPORT_RELEASE_MODE: "internal_test",
+      OPENAI_API_KEY: "sk-test",
+      ...overrides
+    };
+  }
+
   it("keeps image import safely disabled even when OPENAI_API_KEY is set", () => {
     const check = checkImageImportConfig({
       OPENAI_API_KEY: "sk-test"
@@ -226,6 +240,54 @@ describe("checkImageImportConfig", () => {
 
     assert.equal(check.level, "error");
     assert.equal(check.status, "missing-internal-test-token");
+  });
+
+  it("requires valid image import cost policy values when OpenAI calls can run", () => {
+    const check = checkImageImportConfig(
+      openAiImageImportEnvironment({
+        AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT: "1.5"
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "invalid-daily-request-limit");
+  });
+
+  it("rejects image import when estimated cost exceeds the per-request ceiling", () => {
+    const check = checkImageImportConfig(
+      openAiImageImportEnvironment({
+        AI_IMAGE_IMPORT_ESTIMATED_COST_USD: "0.03",
+        AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD: "0.02"
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "estimated-cost-too-high");
+  });
+
+  it("rejects image import when daily request limit can exceed the daily budget", () => {
+    const check = checkImageImportConfig(
+      openAiImageImportEnvironment({
+        AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD: "0.05",
+        AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT: "20",
+        AI_IMAGE_IMPORT_ESTIMATED_COST_USD: "0.01"
+      }),
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "daily-budget-too-low");
+  });
+
+  it("accepts internal image import testing when cost policy is conservative", () => {
+    const check = checkImageImportConfig(openAiImageImportEnvironment(), {
+      requireProductionSafe: true
+    });
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "internal-test");
   });
 
   it("blocks public image import until the guarded implementation exists", () => {

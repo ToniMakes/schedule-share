@@ -625,6 +625,7 @@ ICS 内容包含：
 - 后续如果开启激励广告换 AI 图片识别额度，`image_import` 还需要先通过计划中的额度校验；无额度时返回计划错误码 `AI_CREDIT_REQUIRED`。当前代码尚未实现该校验。
 - 图片上传限制为 PNG、JPEG 或 WebP，默认最大 4MB，可用 `AI_IMAGE_IMPORT_MAX_BYTES` 设置更低上限；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 - OpenAI 请求有 `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`、`OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS` 和 `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE` 运行时护栏；超时返回 `IMPORT_PROVIDER_UNAVAILABLE`，低置信度返回 `IMPORT_LOW_CONFIDENCE`。
+- 当前代码还读取 `AI_IMAGE_IMPORT_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT` 和 `AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD`。如果单次估算成本超过上限，或每日请求上限乘以单次估算成本可能超过每日预算，图片识别 provider 不会创建；这仍是静态成本闸门，不替代后续额度账本。
 - `.ics` 上传限制为单个 `.ics` 文件最大 1MB；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 - CSV 上传限制为单个 `.csv` 文件最大 1MB；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 

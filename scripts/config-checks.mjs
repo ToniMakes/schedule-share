@@ -4,6 +4,18 @@ const defaultSmokeBaseUrl = "http://127.0.0.1:3000";
 const displayAdKeyedUrlModes = new Set(["off", "internal", "full"]);
 const displayAdProviders = new Set(["placeholder", "adsense"]);
 const imageImportReleaseModes = new Set(["off", "local_only", "internal_test", "public"]);
+const imageImportCostPolicyDefaults = {
+  dailyCostLimitUsd: 0.25,
+  dailyRequestLimit: 20,
+  estimatedCostPerRequestUsd: 0.01,
+  maxEstimatedCostPerRequestUsd: 0.02
+};
+const imageImportCostPolicyLimits = {
+  dailyCostLimitUsd: { maxValue: 10, minValue: 0.01 },
+  dailyRequestLimit: { maxValue: 500, minValue: 1 },
+  estimatedCostPerRequestUsd: { maxValue: 0.1, minValue: 0.0001 },
+  maxEstimatedCostPerRequestUsd: { maxValue: 0.1, minValue: 0.0001 }
+};
 const publicImageImportReleaseSupported = false;
 
 export function checkDatabaseUrl(rawValue, options = {}) {
@@ -249,6 +261,12 @@ export function checkImageImportConfig(environment = {}, options = {}) {
       name: "AI_IMAGE_IMPORT",
       status: "enabled-but-off"
     };
+  }
+
+  const costPolicyCheck = checkImageImportCostPolicy(environment, { requireProductionSafe });
+
+  if (costPolicyCheck !== undefined) {
+    return costPolicyCheck;
   }
 
   if (releaseMode === "local_only") {
@@ -507,6 +525,117 @@ export function redactUrl(value) {
   }
 
   return parsed.toString();
+}
+
+function checkImageImportCostPolicy(environment, options = {}) {
+  const requireProductionSafe = options.requireProductionSafe ?? false;
+  const level = requireProductionSafe ? "error" : "warn";
+  const dailyCostLimitUsd = parseNumericConfig(environment.AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD, {
+    defaultValue: imageImportCostPolicyDefaults.dailyCostLimitUsd,
+    integer: false,
+    name: "AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD",
+    status: "invalid-daily-cost-limit",
+    ...imageImportCostPolicyLimits.dailyCostLimitUsd
+  });
+  const dailyRequestLimit = parseNumericConfig(environment.AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT, {
+    defaultValue: imageImportCostPolicyDefaults.dailyRequestLimit,
+    integer: true,
+    name: "AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT",
+    status: "invalid-daily-request-limit",
+    ...imageImportCostPolicyLimits.dailyRequestLimit
+  });
+  const estimatedCostPerRequestUsd = parseNumericConfig(
+    environment.AI_IMAGE_IMPORT_ESTIMATED_COST_USD,
+    {
+      defaultValue: imageImportCostPolicyDefaults.estimatedCostPerRequestUsd,
+      integer: false,
+      name: "AI_IMAGE_IMPORT_ESTIMATED_COST_USD",
+      status: "invalid-estimated-cost",
+      ...imageImportCostPolicyLimits.estimatedCostPerRequestUsd
+    }
+  );
+  const maxEstimatedCostPerRequestUsd = parseNumericConfig(
+    environment.AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD,
+    {
+      defaultValue: imageImportCostPolicyDefaults.maxEstimatedCostPerRequestUsd,
+      integer: false,
+      name: "AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD",
+      status: "invalid-max-estimated-cost",
+      ...imageImportCostPolicyLimits.maxEstimatedCostPerRequestUsd
+    }
+  );
+
+  for (const parsed of [
+    dailyCostLimitUsd,
+    dailyRequestLimit,
+    estimatedCostPerRequestUsd,
+    maxEstimatedCostPerRequestUsd
+  ]) {
+    if (parsed.error !== undefined) {
+      return {
+        detail: parsed.error,
+        level,
+        name: "AI_IMAGE_IMPORT",
+        status: parsed.status
+      };
+    }
+  }
+
+  if (estimatedCostPerRequestUsd.value > maxEstimatedCostPerRequestUsd.value) {
+    return {
+      detail: "AI_IMAGE_IMPORT_ESTIMATED_COST_USD exceeds AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD.",
+      level,
+      name: "AI_IMAGE_IMPORT",
+      status: "estimated-cost-too-high"
+    };
+  }
+
+  if (estimatedCostPerRequestUsd.value > dailyCostLimitUsd.value) {
+    return {
+      detail: "A single image import estimate exceeds AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD.",
+      level,
+      name: "AI_IMAGE_IMPORT",
+      status: "request-cost-exceeds-daily-budget"
+    };
+  }
+
+  if (estimatedCostPerRequestUsd.value * dailyRequestLimit.value > dailyCostLimitUsd.value) {
+    return {
+      detail:
+        "AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT multiplied by AI_IMAGE_IMPORT_ESTIMATED_COST_USD can exceed AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD.",
+      level,
+      name: "AI_IMAGE_IMPORT",
+      status: "daily-budget-too-low"
+    };
+  }
+
+  return undefined;
+}
+
+function parseNumericConfig(value, options) {
+  const rawValue = value?.trim() ?? "";
+
+  if (rawValue.length === 0) {
+    return { value: options.defaultValue };
+  }
+
+  const parsed = Number(rawValue);
+
+  if (!Number.isFinite(parsed) || (options.integer && !Number.isInteger(parsed))) {
+    return {
+      error: `${options.name} must be ${options.integer ? "an integer" : "a number"}.`,
+      status: options.status
+    };
+  }
+
+  if (parsed < options.minValue || parsed > options.maxValue) {
+    return {
+      error: `${options.name} must be between ${options.minValue} and ${options.maxValue}.`,
+      status: options.status
+    };
+  }
+
+  return { value: parsed };
 }
 
 function parseUrl(value) {

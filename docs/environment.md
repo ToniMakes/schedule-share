@@ -9,25 +9,29 @@
 
 ## 变量清单
 
-| 变量                                    | 必填 | 使用位置                                              | 示例                                        | 说明                                                                                                                                               |
-| --------------------------------------- | ---- | ----------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                          | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                                                |
-| `DATABASE_MIGRATION_URL`                | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。                   |
-| `APP_BASE_URL`                          | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                                          |
-| `NEXT_PUBLIC_SUPPORT_EMAIL`             | 否   | Web 页面                                              | `support@example.com`                       | 公开反馈和删除请求邮箱。会进入前端 bundle；只填写准备公开展示的支持邮箱，不要填写私人邮箱或内部密钥。                                              |
-| `OPENAI_API_KEY`                        | 否   | Web API                                               | `sk-...`                                    | 图片课表/排班导入识别的 OpenAI 凭证。这个 key 本身不会开放功能；还必须通过 `AI_IMAGE_IMPORT_ENABLED` 和 release mode。未配置时图片导入返回不可用。 |
-| `OPENAI_IMAGE_IMPORT_MODEL`             | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                                    |
-| `AI_IMAGE_IMPORT_ENABLED`               | 否   | Web API                                               | `false`                                     | 图片识别总开关。默认 false；即使配置了 `OPENAI_API_KEY`，这里不是 true 也不会调用 OpenAI。                                                         |
-| `AI_IMAGE_IMPORT_RELEASE_MODE`          | 否   | Web API                                               | `off`                                       | 图片识别开放模式：`off`、`local_only`、`internal_test`、`public`。当前 `public` 被代码挡住，直到额度账本和广告验证实现。                           |
-| `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`   | 否   | Web API                                               | `change-me`                                 | `internal_test` 模式需要请求头 `x-ai-image-import-test-token` 匹配该值；不要用于公开前端。                                                         |
-| `AI_IMAGE_IMPORT_MAX_BYTES`             | 否   | Web API                                               | `4194304`                                   | 图片上传大小上限，不能超过代码硬上限 4MB。                                                                                                         |
-| `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`        | 否   | Web API                                               | `15000`                                     | OpenAI 图片识别请求超时；代码硬上限 30 秒。                                                                                                        |
-| `OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS` | 否   | Web API                                               | `2000`                                      | OpenAI 图片识别最大输出 token；代码硬上限 3000。                                                                                                   |
-| `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE`    | 否   | Web API                                               | `0.6`                                       | 低于该整体置信度时返回 `IMPORT_LOW_CONFIDENCE`，用户改用手动、文本、CSV 或 ICS。                                                                   |
-| `AI_IMAGE_AD_GATE_READY`                | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的广告门槛确认。当前仅作为硬闸门条件之一，实际广告验证实现前保持 false。                                                         |
-| `AI_IMAGE_CREDITS_ENFORCED`             | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的额度账本确认。当前仅作为硬闸门条件之一，实际额度原子消耗/退款实现前保持 false。                                                |
-| `AI_IMAGE_COST_GUARDRAIL_ENABLED`       | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的成本护栏确认。当前仅作为硬闸门条件之一，实际全站成本上限和紧急关闭实现前保持 false。                                           |
-| `SMOKE_BASE_URL`                        | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                                          |
+| 变量                                     | 必填 | 使用位置                                              | 示例                                        | 说明                                                                                                                                               |
+| ---------------------------------------- | ---- | ----------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                           | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                                                |
+| `DATABASE_MIGRATION_URL`                 | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。                   |
+| `APP_BASE_URL`                           | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                                          |
+| `NEXT_PUBLIC_SUPPORT_EMAIL`              | 否   | Web 页面                                              | `support@example.com`                       | 公开反馈和删除请求邮箱。会进入前端 bundle；只填写准备公开展示的支持邮箱，不要填写私人邮箱或内部密钥。                                              |
+| `OPENAI_API_KEY`                         | 否   | Web API                                               | `sk-...`                                    | 图片课表/排班导入识别的 OpenAI 凭证。这个 key 本身不会开放功能；还必须通过 `AI_IMAGE_IMPORT_ENABLED` 和 release mode。未配置时图片导入返回不可用。 |
+| `OPENAI_IMAGE_IMPORT_MODEL`              | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                                    |
+| `AI_IMAGE_IMPORT_ENABLED`                | 否   | Web API                                               | `false`                                     | 图片识别总开关。默认 false；即使配置了 `OPENAI_API_KEY`，这里不是 true 也不会调用 OpenAI。                                                         |
+| `AI_IMAGE_IMPORT_RELEASE_MODE`           | 否   | Web API                                               | `off`                                       | 图片识别开放模式：`off`、`local_only`、`internal_test`、`public`。当前 `public` 被代码挡住，直到额度账本和广告验证实现。                           |
+| `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`    | 否   | Web API                                               | `change-me`                                 | `internal_test` 模式需要请求头 `x-ai-image-import-test-token` 匹配该值；不要用于公开前端。                                                         |
+| `AI_IMAGE_IMPORT_MAX_BYTES`              | 否   | Web API                                               | `4194304`                                   | 图片上传大小上限，不能超过代码硬上限 4MB。                                                                                                         |
+| `AI_IMAGE_IMPORT_ESTIMATED_COST_USD`     | 否   | Web API、`deployment:config`                          | `0.01`                                      | 单次图片识别的保守估算成本。用于静态成本闸门；实际成本后续仍要用 usage log 校准。                                                                  |
+| `AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD` | 否   | Web API、`deployment:config`                          | `0.02`                                      | 允许的单次估算成本上限。`AI_IMAGE_IMPORT_ESTIMATED_COST_USD` 高于它时，图片识别 provider 不会创建。                                                |
+| `AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT`    | 否   | Web API、`deployment:config`                          | `20`                                        | 当前环境每日允许的图片识别请求上限配置。现阶段是静态闸门；额度账本落地后需要由服务端计数强制执行。                                                 |
+| `AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD`   | 否   | Web API、`deployment:config`                          | `0.25`                                      | 当前环境每日图片识别预算上限配置。如果每日请求上限乘以单次估算成本可能超过它，图片识别 provider 不会创建。                                         |
+| `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`         | 否   | Web API                                               | `15000`                                     | OpenAI 图片识别请求超时；代码硬上限 30 秒。                                                                                                        |
+| `OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS`  | 否   | Web API                                               | `2000`                                      | OpenAI 图片识别最大输出 token；代码硬上限 3000。                                                                                                   |
+| `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE`     | 否   | Web API                                               | `0.6`                                       | 低于该整体置信度时返回 `IMPORT_LOW_CONFIDENCE`，用户改用手动、文本、CSV 或 ICS。                                                                   |
+| `AI_IMAGE_AD_GATE_READY`                 | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的广告门槛确认。当前仅作为硬闸门条件之一，实际广告验证实现前保持 false。                                                         |
+| `AI_IMAGE_CREDITS_ENFORCED`              | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的额度账本确认。当前仅作为硬闸门条件之一，实际额度原子消耗/退款实现前保持 false。                                                |
+| `AI_IMAGE_COST_GUARDRAIL_ENABLED`        | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的成本护栏确认。当前仅作为硬闸门条件之一，实际全站成本上限和紧急关闭实现前保持 false。                                           |
+| `SMOKE_BASE_URL`                         | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                                          |
 
 ## 常驻展示广告变量
 
@@ -63,9 +67,9 @@
 - 管理页和编辑页这类带 `?key=` 的页面传入 `thirdPartyAllowed=false`；即使将 provider 改成 `adsense`，也不会在这些页面加载第三方广告脚本。
 - `deployment:config` 会在真实 AdSense 开启时要求公开支持邮箱、`/ads.txt` publisher ID、隐私披露确认、广告政策审阅确认和 consent 策略确认；缺任一项都会阻断生产部署验证。
 
-## 计划中的 AI 图片识别额度和激励广告变量
+## 后续 AI 图片识别额度和激励广告变量
 
-以下变量属于 `docs/monetization.md` 里的后续方案，当前代码尚未读取，不需要在 Vercel 里立即配置：
+以下变量属于 `docs/monetization.md` 里的后续方案，当前代码尚未读取，不需要在 Vercel 里立即配置。上方变量清单里的 `AI_IMAGE_IMPORT_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD`、`AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT` 和 `AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD` 已被当前代码读取，用于静态成本闸门；它们还不是完整额度账本。
 
 AI 图片识别和激励广告：
 
@@ -75,7 +79,6 @@ AI 图片识别和激励广告：
 | `AI_IMAGE_FREE_CREDITS_PER_SCHEDULE`     | 每个日程默认发放的免费图片识别额度。                    |
 | `AI_IMAGE_CREDIT_DAILY_LIMIT`            | 同一匿名 session、设备或用户每日可获得/使用的额度上限。 |
 | `AI_IMAGE_MAX_RECOGNITIONS_PER_SCHEDULE` | 单个日程最多允许的图片识别次数。                        |
-| `AI_IMAGE_COST_GUARDRAIL_USD`            | 单日或单周期 AI 图片识别成本上限。                      |
 | `REWARDED_AD_PROVIDER`                   | 激励广告提供商标识。                                    |
 | `REWARDED_AD_UNIT_ID`                    | 广告单元 ID。                                           |
 | `REWARDED_AD_VERIFICATION_SECRET`        | 服务端验证广告完成事件所需的密钥或签名 secret。         |

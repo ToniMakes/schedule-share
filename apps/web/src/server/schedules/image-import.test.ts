@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { HttpError } from "../errors";
 import {
   IMAGE_IMPORT_MAX_BYTES,
+  checkImageImportCostPolicy,
   checkImageImportAccess,
   createConfiguredImageImportProvider,
   ImageImportProviderUnavailableError,
@@ -269,8 +270,12 @@ describe("image import runtime gates", () => {
 
   it("allows local-only image import outside production when explicitly enabled", () => {
     const environment = {
+      AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD: "0.25",
+      AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT: "20",
       AI_IMAGE_IMPORT_ENABLED: "true",
+      AI_IMAGE_IMPORT_ESTIMATED_COST_USD: "0.01",
       AI_IMAGE_IMPORT_RELEASE_MODE: "local_only",
+      AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD: "0.02",
       NODE_ENV: "development",
       OPENAI_API_KEY: "test-key"
     };
@@ -291,6 +296,35 @@ describe("image import runtime gates", () => {
 
     expect(checkImageImportAccess(config, "wrong")).toMatchObject({ allowed: false });
     expect(checkImageImportAccess(config, "secret")).toMatchObject({ allowed: true });
+  });
+
+  it("rejects a cost policy where each image import can exceed the per-request ceiling", () => {
+    expect(
+      checkImageImportCostPolicy({
+        dailyCostLimitUsd: 1,
+        dailyRequestLimit: 10,
+        estimatedCostPerRequestUsd: 0.03,
+        maxEstimatedCostPerRequestUsd: 0.02
+      })
+    ).toMatchObject({
+      allowed: false
+    });
+  });
+
+  it("rejects a cost policy where the daily request limit can overspend the daily budget", () => {
+    const environment = {
+      AI_IMAGE_IMPORT_DAILY_COST_LIMIT_USD: "0.05",
+      AI_IMAGE_IMPORT_DAILY_REQUEST_LIMIT: "20",
+      AI_IMAGE_IMPORT_ENABLED: "true",
+      AI_IMAGE_IMPORT_ESTIMATED_COST_USD: "0.01",
+      AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN: "secret",
+      AI_IMAGE_IMPORT_MAX_ESTIMATED_COST_USD: "0.02",
+      AI_IMAGE_IMPORT_RELEASE_MODE: "internal_test",
+      NODE_ENV: "production",
+      OPENAI_API_KEY: "test-key"
+    };
+
+    expect(createConfiguredImageImportProvider(environment, fetch, "secret")).toBeUndefined();
   });
 
   it("does not allow public image import before credit and ad gate code exists", () => {
