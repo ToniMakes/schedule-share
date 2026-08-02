@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   checkAppBaseUrl,
   checkDatabaseUrl,
+  checkImageImportConfig,
   checkMigrationDatabaseUrl,
   checkSmokeBaseUrl,
   hasCheckLevel,
@@ -185,6 +186,62 @@ describe("checkAppBaseUrl", () => {
     assert.equal(check.level, "ok");
     assert.equal(check.status, "remote");
     assert.equal(check.value, "https://schedule-share.example");
+  });
+});
+
+describe("checkImageImportConfig", () => {
+  it("keeps image import safely disabled even when OPENAI_API_KEY is set", () => {
+    const check = checkImageImportConfig({
+      OPENAI_API_KEY: "sk-test"
+    });
+
+    assert.equal(check.level, "ok");
+    assert.equal(check.status, "disabled");
+  });
+
+  it("warns when local-only mode is set for deployment preflight", () => {
+    const check = checkImageImportConfig(
+      {
+        AI_IMAGE_IMPORT_ENABLED: "true",
+        AI_IMAGE_IMPORT_RELEASE_MODE: "local_only",
+        OPENAI_API_KEY: "sk-test"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "warn");
+    assert.equal(check.status, "local-only");
+  });
+
+  it("requires an internal test token in internal test mode", () => {
+    const check = checkImageImportConfig(
+      {
+        AI_IMAGE_IMPORT_ENABLED: "true",
+        AI_IMAGE_IMPORT_RELEASE_MODE: "internal_test",
+        OPENAI_API_KEY: "sk-test"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "missing-internal-test-token");
+  });
+
+  it("blocks public image import until the guarded implementation exists", () => {
+    const check = checkImageImportConfig(
+      {
+        AI_IMAGE_AD_GATE_READY: "true",
+        AI_IMAGE_COST_GUARDRAIL_ENABLED: "true",
+        AI_IMAGE_CREDITS_ENFORCED: "true",
+        AI_IMAGE_IMPORT_ENABLED: "true",
+        AI_IMAGE_IMPORT_RELEASE_MODE: "public",
+        OPENAI_API_KEY: "sk-test"
+      },
+      { requireProductionSafe: true }
+    );
+
+    assert.equal(check.level, "error");
+    assert.equal(check.status, "public-not-supported");
   });
 });
 

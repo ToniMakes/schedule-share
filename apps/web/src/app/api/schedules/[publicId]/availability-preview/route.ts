@@ -6,7 +6,8 @@ import { readScheduleRouteParams, type ScheduleRouteContext } from "@/server/rou
 import { parseCsvImportFormDataFields } from "@/server/schedules/csv-import";
 import {
   createConfiguredImageImportProvider,
-  parseImageImportFormDataFields
+  parseImageImportFormDataFields,
+  readImageImportRuntimeConfig
 } from "@/server/schedules/image-import";
 import { parseIcsImportFormDataFields } from "@/server/schedules/ics-import";
 import { readImportFormData, readRequiredFormString } from "@/server/schedules/import-form-data";
@@ -29,9 +30,16 @@ export async function POST(request: Request, context: ScheduleRouteContext): Pro
       const repository = createScheduleRepository();
 
       if (method === "image_import") {
-        const input = await parseImageImportFormDataFields(formData);
+        const imageImportConfig = readImageImportRuntimeConfig();
+        const input = await parseImageImportFormDataFields(formData, {
+          maxBytes: imageImportConfig.maxBytes
+        });
         const response = await previewAvailabilityDraftFromImage(publicId, input, {
-          imageImportProvider: createConfiguredImageImportProvider(),
+          imageImportProvider: createConfiguredImageImportProvider(
+            process.env,
+            fetch,
+            request.headers.get("x-ai-image-import-test-token") ?? undefined
+          ),
           repository
         });
 

@@ -9,14 +9,24 @@
 
 ## 变量清单
 
-| 变量                        | 必填 | 使用位置                                              | 示例                                        | 说明                                                                                                                             |
-| --------------------------- | ---- | ----------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`              | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                              |
-| `DATABASE_MIGRATION_URL`    | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。 |
-| `APP_BASE_URL`              | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                        |
-| `OPENAI_API_KEY`            | 否   | Web API                                               | `sk-...`                                    | 启用图片课表/排班导入识别。未设置时图片导入返回 `IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴和手动填写不受影响。                      |
-| `OPENAI_IMAGE_IMPORT_MODEL` | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                  |
-| `SMOKE_BASE_URL`            | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                        |
+| 变量                                    | 必填 | 使用位置                                              | 示例                                        | 说明                                                                                                                                               |
+| --------------------------------------- | ---- | ----------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                          | 是   | Web API、`db:check`、`smoke:api`、`verify:deployment` | `postgres://user:password@host:5432/dbname` | Postgres 连接串。本地 Docker 默认值见 `.env.example` 和 `compose.yaml`。Neon 可使用 pooled 连接串。                                                |
+| `DATABASE_MIGRATION_URL`                | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。                   |
+| `APP_BASE_URL`                          | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                                          |
+| `OPENAI_API_KEY`                        | 否   | Web API                                               | `sk-...`                                    | 图片课表/排班导入识别的 OpenAI 凭证。这个 key 本身不会开放功能；还必须通过 `AI_IMAGE_IMPORT_ENABLED` 和 release mode。未配置时图片导入返回不可用。 |
+| `OPENAI_IMAGE_IMPORT_MODEL`             | 否   | Web API                                               | `gpt-5.6-luna`                              | 图片导入识别使用的 OpenAI Responses API 模型。不设置时默认使用 `gpt-5.6-luna`。                                                                    |
+| `AI_IMAGE_IMPORT_ENABLED`               | 否   | Web API                                               | `false`                                     | 图片识别总开关。默认 false；即使配置了 `OPENAI_API_KEY`，这里不是 true 也不会调用 OpenAI。                                                         |
+| `AI_IMAGE_IMPORT_RELEASE_MODE`          | 否   | Web API                                               | `off`                                       | 图片识别开放模式：`off`、`local_only`、`internal_test`、`public`。当前 `public` 被代码挡住，直到额度账本和广告验证实现。                           |
+| `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`   | 否   | Web API                                               | `change-me`                                 | `internal_test` 模式需要请求头 `x-ai-image-import-test-token` 匹配该值；不要用于公开前端。                                                         |
+| `AI_IMAGE_IMPORT_MAX_BYTES`             | 否   | Web API                                               | `4194304`                                   | 图片上传大小上限，不能超过代码硬上限 4MB。                                                                                                         |
+| `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`        | 否   | Web API                                               | `15000`                                     | OpenAI 图片识别请求超时；代码硬上限 30 秒。                                                                                                        |
+| `OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS` | 否   | Web API                                               | `2000`                                      | OpenAI 图片识别最大输出 token；代码硬上限 3000。                                                                                                   |
+| `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE`    | 否   | Web API                                               | `0.6`                                       | 低于该整体置信度时返回 `IMPORT_LOW_CONFIDENCE`，用户改用手动、文本、CSV 或 ICS。                                                                   |
+| `AI_IMAGE_AD_GATE_READY`                | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的广告门槛确认。当前仅作为硬闸门条件之一，实际广告验证实现前保持 false。                                                         |
+| `AI_IMAGE_CREDITS_ENFORCED`             | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的额度账本确认。当前仅作为硬闸门条件之一，实际额度原子消耗/退款实现前保持 false。                                                |
+| `AI_IMAGE_COST_GUARDRAIL_ENABLED`       | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的成本护栏确认。当前仅作为硬闸门条件之一，实际全站成本上限和紧急关闭实现前保持 false。                                           |
+| `SMOKE_BASE_URL`                        | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                                          |
 
 ## 计划中的广告、AI 图片识别额度和激励广告变量
 
@@ -128,9 +138,13 @@ corepack pnpm dev
 DATABASE_URL=postgres://...
 DATABASE_MIGRATION_URL=postgres://...
 APP_BASE_URL=https://schedule.tonimakes.com
-OPENAI_API_KEY=sk-...
-OPENAI_IMAGE_IMPORT_MODEL=gpt-5.6-luna
+AI_IMAGE_IMPORT_ENABLED=false
+AI_IMAGE_IMPORT_RELEASE_MODE=off
 ```
+
+`OPENAI_API_KEY` 不是当前公开生产必填项。可以先只配置到本地或 Preview 调优；如果已经配置到
+Production，也必须保持 `AI_IMAGE_IMPORT_ENABLED=false` 或 `AI_IMAGE_IMPORT_RELEASE_MODE=off`，避免图片识别公开调用
+OpenAI。
 
 部署后验证生产站点：
 
@@ -149,5 +163,6 @@ corepack pnpm verify:deployment
 
 - `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 包含数据库用户名和密码，不能截图、公开贴出或写进 issue。
 - `OPENAI_API_KEY` 是第三方 API 密钥，也只能放在本地 `.env.local` 或部署平台环境变量里。
+- `OPENAI_API_KEY` 不等于功能开放；公开开放前必须经过图片识别 release mode、额度账本、广告验证和成本护栏。
 - `ownerUrl` 和 `editUrl` 带有管理或编辑密钥，也不能公开记录。
 - 如果怀疑连接串泄露，先在数据库平台轮换密码，再更新部署平台环境变量并重新部署。

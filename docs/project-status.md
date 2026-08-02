@@ -69,7 +69,7 @@
 - 文本粘贴导入支持中文上午/下午写法、英文 `from 9 to 11 on Monday`、`between 9 and 11 on Monday`、`noon-1pm`、`midnight to 1am`、`6 to 7pm`、`9am until 11am`、`2pm till 4pm`、`9am for 2 hours`、`14:30 for 90 min` 自然句、英文月份日期、`Mon, 9-11` 日期/星期逗号上下文、列表/编号和 `Busy:`/`忙碌:` 状态前缀归一化、tab 或逗号分隔课表/排班表格、Markdown 表格、复制自合并日期表头的多行表头、日期/星期 + 时间的双层表头、`Start/End` 拆分表头行、左右并排区域各自独立 `Time/时间` 列的课表、导出标题行后的 `Date/Start/End/Title`、`Date/Time/Title`、`Day/Time/Activity`、`Day of Week/Period/Activity` 这类行式排班表格、空白日期/时间单元格上一行继承、独立 `Notes/备注` 列纯备注续行、常见导出标题/汇总/页脚/说明行跳过、带明确钟点的课程节次行，以及无明确钟点课程节次按用户粘贴的自定义节次表、裸数字自定义节次定义、`Period/节次` 列裸 `1-2` 范围或默认作息表换算并提示复核。
 - `POST /api/schedules/:publicId/availability-preview` 的 `image_import` multipart 图片预览 API。
 - 图片课表/排班导入的 PNG、JPEG、WebP 文件类型限制、4MB 大小限制和 OpenAI provider 适配器。
-- 参与者填写页和开放网格编辑页的图片上传预填入口；未配置 `OPENAI_API_KEY` 时会明确降级到 `IMPORT_PROVIDER_UNAVAILABLE`。
+- 参与者填写页和开放网格编辑页的图片上传预填代码路径；`OPENAI_API_KEY` 只是 provider 凭证，当前还有 `AI_IMAGE_IMPORT_ENABLED`、`AI_IMAGE_IMPORT_RELEASE_MODE`、内测 token、超时、输出 token、置信度和上传大小等运行时闸门；公开模式在代码层阻断，公开前端入口默认隐藏，直到额度账本、广告验证和成本护栏实现。
 - `POST /api/schedules/:publicId/availability-preview` 的 `ics_import` multipart 日历文件预览 API，支持单个 `.ics` 文件、1MB 限制、基础 `VEVENT`、`VFREEBUSY` 忙闲区间、UTC/`TZID` 时间、常见 Windows 时区别名、`DTSTART` + `DURATION`（含周、日、时、分、秒，秒级时长向上折算到分钟）、`FREEBUSY` 的 `start/end` 与 `start/duration` 区间、全天事件（含缺少 `DTEND` 的 date-only `DTSTART`）、常见每日 `RRULE`、常见每周 `RRULE`、常见月度 `RRULE`（含 `BYMONTH` 指定月份和 `BYSETPOS` 位置过滤）、常见年度 `RRULE`（含 `BYSETPOS` 位置过滤）、`COUNT` / `UNTIL` 有限重复、`RDATE` 额外日期或 `VALUE=PERIOD` 额外时段、`EXDATE` 例外日期和同 `UID` 的 `RECURRENCE-ID` 单次取消/改期。
 - 参与者填写页和开放网格编辑页的 `.ics` 日历文件预填入口；日历文件只生成可编辑草稿，不保存原文件。
 - `POST /api/schedules/:publicId/availability-preview` 的 `csv_import` multipart CSV 文件预览 API，支持单个 `.csv` 文件、1MB 限制、“时间 x 星期/日期列”课表/排班 CSV、复制自合并日期表头的多行表头、日期/星期 + 时间的双层表头、`Start/End` 拆分表头行、左右并排区域各自独立 `Time/时间` 列的 CSV、多种常见行式排班 CSV 表头、导出标题行跳过、常见导出标题/汇总/页脚/说明行跳过、单列时间范围表头、`Period/节次` 课程节次表头裸 `1-2` 范围、自定义节次表、空白日期/时间单元格上一行继承和独立 `Notes/备注` 列纯备注续行。
@@ -216,7 +216,7 @@ corepack pnpm db:setup
 - 隐私与数据保留说明仍需正式法律审阅，正式反馈联系渠道和删除请求处理时限尚未确定。
 - 尚未做微信小程序版。
 - 尚未实现广告、商业化或支付能力；默认全站外围常驻展示广告、AI 图片识别激励广告换额度和组织者侧增值方案已形成文档，仍缺 AdSense 审核准备、公开说明页/条款、`robots.txt`、`sitemap.xml`、`/ads.txt`、广告平台接入、位置禁用清单、密钥 URL 迁移和第三方脚本防护、测试流量真实广告禁用、额度账本、广告服务端验证、成本护栏和前端兑换流程。
-- 图片课表/排班导入已接入基础 provider，但本地/生产需要配置 `OPENAI_API_KEY` 后才能真实识别截图，仍缺少真实课表/排班样本调优。
+- 图片课表/排班导入已接入基础 provider，但公开模式被代码层阻断；本地或内测需要配置 `OPENAI_API_KEY`、功能开关、release mode 和必要 token 后才能真实识别截图，仍缺少真实课表/排班样本调优。
 - 文本粘贴导入目前支持常见结构化时间文本、英文月份日期、日期/星期逗号上下文保留、英文 `from/to/until/till/between ... and ...` 自然句、英文 `noon/midnight` 时间词、结束时间 am/pm 反推开始时间、开始时间加数字时长、列表/编号和忙碌状态前缀、基础课表/排班表格粘贴、复制自合并日期表头的多行表头、日期/星期 + 时间双层表头、`Start/End` 拆分表头行、左右并排区域独立时间列、`Date/Start/End/Title`、`Date/Time/Title`、`Day/Time/Activity`、`Day of Week/Period/Activity` 这类行式排班表格、空白日期/时间继承、独立备注续行、常见导出标题/汇总/说明/页脚跳过、带明确钟点的课程节次、用户粘贴的自定义节次表、裸数字自定义节次定义、`Period/节次` 列裸数字范围和无明确钟点课程节次默认作息表预填；更复杂自然语言、更多学校特殊节次格式、更多深层分组表头和非结构化多行说明待真实样本评估。
 - `.ics` 日历导入已支持基础事件、`VFREEBUSY` 忙闲区间、常见 Windows 时区别名、`DTSTART` + `DURATION`（含周、日、时、分、秒，秒级时长向上折算到分钟）、全天事件（含缺少 `DTEND` 的 date-only `DTSTART`）、常见每日重复事件、常见每周重复事件、常见月度重复事件（含指定月份、月内日期、月末、每月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、常见年度重复事件（含同月同日、指定月份、指定月内日期、每年某月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、有限重复、`RDATE` 额外日期或 `VALUE=PERIOD` 额外时段、例外日期和同 `UID` 的 `RECURRENCE-ID` 单次取消/改期；更复杂 recurrence、更多非 IANA 时区和真实日历样本仍待补充验证。
 - CSV 文件导入已支持基础课表/排班 CSV、复制自合并日期表头的多行表头、日期/星期 + 时间双层表头、`Start/End` 拆分表头行、左右并排区域独立时间列、多种常见行式排班表头、导出标题行跳过、常见导出标题/汇总/说明/页脚跳过、单列时间范围表头、`Period/节次` 课程节次表头裸数字范围、自定义节次表、裸数字自定义节次定义、空白日期/时间继承和独立备注续行；更多学校特殊节次格式、更多深层分组表头和真实排班样本仍待补充验证。
@@ -226,7 +226,7 @@ corepack pnpm db:setup
 
 ## 下一步建议
 
-1. 配置生产 `OPENAI_API_KEY` 后，用真实课表/排班截图调优图片识别 prompt、低置信度判定和 warnings 内容。
+1. 先不要公开启用图片识别；如需调优，用 `local_only` 或 `internal_test` 模式配合 `OPENAI_API_KEY` 和测试 token 处理真实课表/排班截图，继续调优 prompt、低置信度判定和 warnings 内容。
 2. 收集真实文本/表格粘贴和 CSV 样本，继续扩展更复杂自然语言、更复杂嵌套表头、更多学校特殊节次格式和真实样本 warnings。
 3. 根据真实 `.ics` 样本继续补复杂 recurrence、更多非 IANA 时区和低置信度 warnings。
 4. 根据真实候选投票使用情况评估是否需要参与者自定义偏好权重。

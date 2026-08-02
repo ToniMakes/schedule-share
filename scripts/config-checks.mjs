@@ -1,6 +1,8 @@
 const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]);
 const defaultDatabaseUrl = "postgres://schedule_share:schedule_share@localhost:5432/schedule_share";
 const defaultSmokeBaseUrl = "http://127.0.0.1:3000";
+const imageImportReleaseModes = new Set(["off", "local_only", "internal_test", "public"]);
+const publicImageImportReleaseSupported = false;
 
 export function checkDatabaseUrl(rawValue, options = {}) {
   const requireHosted = options.requireHosted ?? false;
@@ -196,6 +198,114 @@ export function checkAppBaseUrl(rawValue, options = {}) {
   };
 }
 
+export function checkImageImportConfig(environment = {}, options = {}) {
+  const requireProductionSafe = options.requireProductionSafe ?? false;
+  const apiKey = environment.OPENAI_API_KEY?.trim() ?? "";
+  const enabled = parseBooleanFlag(environment.AI_IMAGE_IMPORT_ENABLED);
+  const releaseMode = environment.AI_IMAGE_IMPORT_RELEASE_MODE?.trim() || "off";
+  const internalTestToken = environment.AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN?.trim() ?? "";
+  const adGateReady = parseBooleanFlag(environment.AI_IMAGE_AD_GATE_READY);
+  const creditsEnforced = parseBooleanFlag(environment.AI_IMAGE_CREDITS_ENFORCED);
+  const costGuardrailEnabled = parseBooleanFlag(environment.AI_IMAGE_COST_GUARDRAIL_ENABLED);
+
+  if (!imageImportReleaseModes.has(releaseMode)) {
+    return {
+      detail:
+        "AI_IMAGE_IMPORT_RELEASE_MODE must be one of off, local_only, internal_test, or public.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "AI_IMAGE_IMPORT",
+      status: "invalid-release-mode"
+    };
+  }
+
+  if (!enabled) {
+    return {
+      detail:
+        apiKey.length === 0
+          ? "Image import is closed. OPENAI_API_KEY is not set."
+          : "Image import is closed even though OPENAI_API_KEY is set. This is safe for production.",
+      level: "ok",
+      name: "AI_IMAGE_IMPORT",
+      status: "disabled"
+    };
+  }
+
+  if (apiKey.length === 0) {
+    return {
+      detail: "AI_IMAGE_IMPORT_ENABLED is true, but OPENAI_API_KEY is missing.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "AI_IMAGE_IMPORT",
+      status: "missing-openai-key"
+    };
+  }
+
+  if (releaseMode === "off") {
+    return {
+      detail:
+        "AI_IMAGE_IMPORT_ENABLED is true, but AI_IMAGE_IMPORT_RELEASE_MODE is off. No public calls will be made.",
+      level: "ok",
+      name: "AI_IMAGE_IMPORT",
+      status: "enabled-but-off"
+    };
+  }
+
+  if (releaseMode === "local_only") {
+    return {
+      detail:
+        "Image import is enabled for local development only. Production and Vercel Preview requests remain blocked.",
+      level: requireProductionSafe ? "warn" : "ok",
+      name: "AI_IMAGE_IMPORT",
+      status: "local-only"
+    };
+  }
+
+  if (releaseMode === "internal_test" && internalTestToken.length === 0) {
+    return {
+      detail: "Internal image import testing requires AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN.",
+      level: requireProductionSafe ? "error" : "warn",
+      name: "AI_IMAGE_IMPORT",
+      status: "missing-internal-test-token"
+    };
+  }
+
+  if (releaseMode === "internal_test") {
+    return {
+      detail:
+        "Image import is enabled only for requests with the matching x-ai-image-import-test-token header.",
+      level: "ok",
+      name: "AI_IMAGE_IMPORT",
+      status: "internal-test"
+    };
+  }
+
+  if (!publicImageImportReleaseSupported) {
+    return {
+      detail:
+        "Public image import is blocked in this codebase until the credit ledger, rewarded ad verification, and hard cost guardrails are implemented.",
+      level: "error",
+      name: "AI_IMAGE_IMPORT",
+      status: "public-not-supported"
+    };
+  }
+
+  if (!adGateReady || !creditsEnforced || !costGuardrailEnabled) {
+    return {
+      detail:
+        "Public image import requires AI_IMAGE_AD_GATE_READY, AI_IMAGE_CREDITS_ENFORCED, and AI_IMAGE_COST_GUARDRAIL_ENABLED.",
+      level: "error",
+      name: "AI_IMAGE_IMPORT",
+      status: "public-guardrails-missing"
+    };
+  }
+
+  return {
+    detail: "Public image import guardrails are marked ready.",
+    level: "ok",
+    name: "AI_IMAGE_IMPORT",
+    status: "public-ready"
+  };
+}
+
 export function hasCheckLevel(checks, level) {
   return checks.some((check) => check.level === level);
 }
@@ -244,4 +354,8 @@ function isLocalHostname(hostname) {
 
 function isPooledPostgresHostname(hostname) {
   return hostname.toLowerCase().includes("-pooler.");
+}
+
+function parseBooleanFlag(value) {
+  return value?.trim().toLowerCase() === "true";
 }

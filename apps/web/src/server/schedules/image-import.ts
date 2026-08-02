@@ -14,6 +14,16 @@ export const IMAGE_IMPORT_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/web
 
 const DEFAULT_OPENAI_IMAGE_IMPORT_MODEL = "gpt-5.6-luna";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const DEFAULT_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS = 2000;
+const DEFAULT_OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE = 0.6;
+const DEFAULT_OPENAI_IMAGE_IMPORT_TIMEOUT_MS = 15_000;
+const MAX_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS = 3000;
+const MAX_OPENAI_IMAGE_IMPORT_TIMEOUT_MS = 30_000;
+const PUBLIC_IMAGE_IMPORT_RELEASE_SUPPORTED = false;
+
+const imageImportReleaseModes = ["off", "local_only", "internal_test", "public"] as const;
+
+export type ImageImportReleaseMode = (typeof imageImportReleaseModes)[number];
 
 export interface ImageImportFile {
   readonly bytes: Uint8Array;
@@ -64,13 +74,48 @@ export class ImageImportLowConfidenceError extends Error {
 interface OpenAiImageImportProviderOptions {
   readonly apiKey?: string;
   readonly fetch?: typeof fetch;
+  readonly maxOutputTokens?: number;
+  readonly minConfidence?: number;
   readonly model?: string;
+  readonly timeoutMs?: number;
 }
 
 interface ImageImportEnvironment {
   readonly [key: string]: string | undefined;
+  readonly AI_IMAGE_AD_GATE_READY?: string;
+  readonly AI_IMAGE_COST_GUARDRAIL_ENABLED?: string;
+  readonly AI_IMAGE_CREDITS_ENFORCED?: string;
+  readonly AI_IMAGE_IMPORT_ENABLED?: string;
+  readonly AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN?: string;
+  readonly AI_IMAGE_IMPORT_MAX_BYTES?: string;
+  readonly AI_IMAGE_IMPORT_RELEASE_MODE?: string;
+  readonly NODE_ENV?: string;
   readonly OPENAI_API_KEY?: string;
+  readonly OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS?: string;
   readonly OPENAI_IMAGE_IMPORT_MODEL?: string;
+  readonly OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE?: string;
+  readonly OPENAI_IMAGE_IMPORT_TIMEOUT_MS?: string;
+  readonly VERCEL_ENV?: string;
+}
+
+export interface ImageImportRuntimeConfig {
+  readonly adGateReady: boolean;
+  readonly costGuardrailEnabled: boolean;
+  readonly creditsEnforced: boolean;
+  readonly enabled: boolean;
+  readonly internalTestToken?: string;
+  readonly maxBytes: number;
+  readonly maxOutputTokens: number;
+  readonly minConfidence: number;
+  readonly nodeEnv?: string;
+  readonly releaseMode: ImageImportReleaseMode;
+  readonly timeoutMs: number;
+  readonly vercelEnv?: string;
+}
+
+interface ImageImportAccessResult {
+  readonly allowed: boolean;
+  readonly reason?: string;
 }
 
 const rawImageImportResponseSchema = z
@@ -103,7 +148,8 @@ export async function parseImageImportFormData(request: Request): Promise<ImageI
 }
 
 export async function parseImageImportFormDataFields(
-  formData: FormData
+  formData: FormData,
+  options: { readonly maxBytes?: number } = {}
 ): Promise<ImageImportPreviewInput> {
   const method = readRequiredFormString(formData, "method");
 
@@ -148,7 +194,7 @@ export async function parseImageImportFormDataFields(
     throw new HttpError(400, "VALIDATION_ERROR", "Image file is empty.");
   }
 
-  if (file.size > IMAGE_IMPORT_MAX_BYTES) {
+  if (file.size > (options.maxBytes ?? IMAGE_IMPORT_MAX_BYTES)) {
     throw new HttpError(413, "IMPORT_FILE_TOO_LARGE", "Image file is too large.");
   }
 
@@ -168,24 +214,131 @@ export async function parseImageImportFormDataFields(
 
 export function createConfiguredImageImportProvider(
   environment: ImageImportEnvironment = process.env,
-  fetchImpl: typeof fetch = fetch
-): ImageImportProvider {
+  fetchImpl: typeof fetch = fetch,
+  accessToken?: string
+): ImageImportProvider | undefined {
+  const config = readImageImportRuntimeConfig(environment);
+  const access = checkImageImportAccess(config, accessToken);
+
+  if (!access.allowed) {
+    return undefined;
+  }
+
   return new OpenAiImageImportProvider({
     apiKey: environment.OPENAI_API_KEY,
     fetch: fetchImpl,
-    model: environment.OPENAI_IMAGE_IMPORT_MODEL
+    maxOutputTokens: config.maxOutputTokens,
+    minConfidence: config.minConfidence,
+    model: environment.OPENAI_IMAGE_IMPORT_MODEL,
+    timeoutMs: config.timeoutMs
   });
+}
+
+export function readImageImportRuntimeConfig(
+  environment: ImageImportEnvironment = process.env
+): ImageImportRuntimeConfig {
+  return {
+    adGateReady: parseBooleanFlag(environment.AI_IMAGE_AD_GATE_READY),
+    costGuardrailEnabled: parseBooleanFlag(environment.AI_IMAGE_COST_GUARDRAIL_ENABLED),
+    creditsEnforced: parseBooleanFlag(environment.AI_IMAGE_CREDITS_ENFORCED),
+    enabled: parseBooleanFlag(environment.AI_IMAGE_IMPORT_ENABLED),
+    internalTestToken: trimToUndefined(environment.AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN),
+    maxBytes: parseBoundedInteger(environment.AI_IMAGE_IMPORT_MAX_BYTES, {
+      defaultValue: IMAGE_IMPORT_MAX_BYTES,
+      maxValue: IMAGE_IMPORT_MAX_BYTES,
+      minValue: 1
+    }),
+    maxOutputTokens: parseBoundedInteger(environment.OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS, {
+      defaultValue: DEFAULT_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS,
+      maxValue: MAX_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS,
+      minValue: 200
+    }),
+    minConfidence: parseBoundedNumber(environment.OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE, {
+      defaultValue: DEFAULT_OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE,
+      maxValue: 1,
+      minValue: 0
+    }),
+    nodeEnv: trimToUndefined(environment.NODE_ENV),
+    releaseMode: parseReleaseMode(environment.AI_IMAGE_IMPORT_RELEASE_MODE),
+    timeoutMs: parseBoundedInteger(environment.OPENAI_IMAGE_IMPORT_TIMEOUT_MS, {
+      defaultValue: DEFAULT_OPENAI_IMAGE_IMPORT_TIMEOUT_MS,
+      maxValue: MAX_OPENAI_IMAGE_IMPORT_TIMEOUT_MS,
+      minValue: 1000
+    }),
+    vercelEnv: trimToUndefined(environment.VERCEL_ENV)
+  };
+}
+
+export function checkImageImportAccess(
+  config: ImageImportRuntimeConfig,
+  accessToken?: string
+): ImageImportAccessResult {
+  if (!config.enabled) {
+    return { allowed: false, reason: "Image import is disabled by feature flag." };
+  }
+
+  if (config.releaseMode === "off") {
+    return { allowed: false, reason: "Image import release mode is off." };
+  }
+
+  if (config.releaseMode === "local_only") {
+    const isLocalRuntime =
+      config.nodeEnv !== "production" &&
+      (config.vercelEnv === undefined || config.vercelEnv === "");
+
+    return isLocalRuntime
+      ? { allowed: true }
+      : { allowed: false, reason: "Image import local-only mode is not available here." };
+  }
+
+  if (config.releaseMode === "internal_test") {
+    if (config.internalTestToken === undefined) {
+      return { allowed: false, reason: "Image import internal test token is not configured." };
+    }
+
+    return accessToken === config.internalTestToken
+      ? { allowed: true }
+      : { allowed: false, reason: "Image import internal test token did not match." };
+  }
+
+  if (!PUBLIC_IMAGE_IMPORT_RELEASE_SUPPORTED) {
+    return {
+      allowed: false,
+      reason: "Public image import requires the credit ledger and rewarded ad verification first."
+    };
+  }
+
+  if (!config.adGateReady || !config.creditsEnforced || !config.costGuardrailEnabled) {
+    return {
+      allowed: false,
+      reason: "Public image import requires ad gating, credit enforcement, and cost guardrails."
+    };
+  }
+
+  return { allowed: true };
+}
+
+export function isPublicImageImportVisible(
+  config: ImageImportRuntimeConfig = readImageImportRuntimeConfig()
+): boolean {
+  return checkImageImportAccess(config).allowed && config.releaseMode === "public";
 }
 
 export class OpenAiImageImportProvider implements ImageImportProvider {
   private readonly apiKey?: string;
   private readonly fetchImpl: typeof fetch;
+  private readonly maxOutputTokens: number;
+  private readonly minConfidence: number;
   private readonly model: string;
+  private readonly timeoutMs: number;
 
   constructor(options: OpenAiImageImportProviderOptions = {}) {
     this.apiKey = options.apiKey;
     this.fetchImpl = options.fetch ?? fetch;
+    this.maxOutputTokens = options.maxOutputTokens ?? DEFAULT_OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS;
+    this.minConfidence = options.minConfidence ?? DEFAULT_OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE;
     this.model = options.model?.trim() || DEFAULT_OPENAI_IMAGE_IMPORT_MODEL;
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_OPENAI_IMAGE_IMPORT_TIMEOUT_MS;
   }
 
   async recognizeBusyBlocks(
@@ -195,14 +348,30 @@ export class OpenAiImageImportProvider implements ImageImportProvider {
       throw new ImageImportProviderUnavailableError();
     }
 
-    const response = await this.fetchImpl(OPENAI_RESPONSES_URL, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${this.apiKey}`,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(buildOpenAiRequest(this.model, input))
-    });
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), this.timeoutMs);
+
+    let response: Response;
+
+    try {
+      response = await this.fetchImpl(OPENAI_RESPONSES_URL, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${this.apiKey}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(buildOpenAiRequest(this.model, input, this.maxOutputTokens)),
+        signal: abortController.signal
+      });
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw new ImageImportProviderUnavailableError("Image import provider timed out.");
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       throw new ImageImportProviderUnavailableError("Image import provider request failed.");
@@ -229,11 +398,21 @@ export class OpenAiImageImportProvider implements ImageImportProvider {
       throw new ImageImportLowConfidenceError();
     }
 
-    return normalizeRawImageImportResponse(parsed.data, input.timezone);
+    const normalized = normalizeRawImageImportResponse(parsed.data, input.timezone);
+
+    if (normalized.confidence !== undefined && normalized.confidence < this.minConfidence) {
+      throw new ImageImportLowConfidenceError();
+    }
+
+    return normalized;
   }
 }
 
-function buildOpenAiRequest(model: string, input: ImageImportRecognitionInput): unknown {
+function buildOpenAiRequest(
+  model: string,
+  input: ImageImportRecognitionInput,
+  maxOutputTokens: number
+): unknown {
   return {
     model,
     input: [
@@ -259,7 +438,7 @@ function buildOpenAiRequest(model: string, input: ImageImportRecognitionInput): 
         ]
       }
     ],
-    max_output_tokens: 2000,
+    max_output_tokens: maxOutputTokens,
     text: {
       format: {
         type: "json_schema",
@@ -395,4 +574,60 @@ function normalizeRawImageImportResponse(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function parseBooleanFlag(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() === "true";
+}
+
+function parseReleaseMode(value: string | undefined): ImageImportReleaseMode {
+  const normalized = value?.trim();
+
+  return imageImportReleaseModes.includes(normalized as ImageImportReleaseMode)
+    ? (normalized as ImageImportReleaseMode)
+    : "off";
+}
+
+function parseBoundedInteger(
+  value: string | undefined,
+  {
+    defaultValue,
+    maxValue,
+    minValue
+  }: { readonly defaultValue: number; readonly maxValue: number; readonly minValue: number }
+): number {
+  const parsed = Number.parseInt(value ?? "", 10);
+
+  if (!Number.isFinite(parsed)) {
+    return defaultValue;
+  }
+
+  return Math.min(Math.max(parsed, minValue), maxValue);
+}
+
+function parseBoundedNumber(
+  value: string | undefined,
+  {
+    defaultValue,
+    maxValue,
+    minValue
+  }: { readonly defaultValue: number; readonly maxValue: number; readonly minValue: number }
+): number {
+  const parsed = Number.parseFloat(value ?? "");
+
+  if (!Number.isFinite(parsed)) {
+    return defaultValue;
+  }
+
+  return Math.min(Math.max(parsed, minValue), maxValue);
+}
+
+function trimToUndefined(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+
+  return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
 }

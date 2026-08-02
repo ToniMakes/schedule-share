@@ -162,8 +162,10 @@ docs/
   adr/
 ```
 
-图片导入需要配置 `OPENAI_API_KEY`；可选 `OPENAI_IMAGE_IMPORT_MODEL` 覆盖默认识别模型。未配置时，图片预填会返回
-`IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴和手动填写仍可使用。
+图片导入需要配置 `OPENAI_API_KEY`；可选 `OPENAI_IMAGE_IMPORT_MODEL` 覆盖默认识别模型。不过 key
+只是凭证，不能单独开放功能；`AI_IMAGE_IMPORT_ENABLED` 和 `AI_IMAGE_IMPORT_RELEASE_MODE`
+默认会让图片识别保持关闭，公开模式当前也被代码层阻断，前端图片入口默认隐藏。不可用时图片预填会返回
+`IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴、CSV、ICS 和手动填写仍可使用。
 如果后续接入常驻展示广告，默认方向是每个页面尽量保留外围广告位；但上线前需要先补齐广告审核公开内容、隐私披露、`/ads.txt` 和测试流量禁用。带管理/编辑密钥的页面在完成 URL 密钥迁移前不加载第三方广告脚本；通过激励广告换取图片识别额度时，广告位、成本、额度、隐私和风控方案见 `docs/monetization.md`。
 
 ## 下一步

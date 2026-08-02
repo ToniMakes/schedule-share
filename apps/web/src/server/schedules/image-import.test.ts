@@ -3,9 +3,13 @@ import { describe, expect, it } from "vitest";
 import { HttpError } from "../errors";
 import {
   IMAGE_IMPORT_MAX_BYTES,
+  checkImageImportAccess,
+  createConfiguredImageImportProvider,
   ImageImportProviderUnavailableError,
   OpenAiImageImportProvider,
-  parseImageImportFormData
+  parseImageImportFormData,
+  parseImageImportFormDataFields,
+  readImageImportRuntimeConfig
 } from "./image-import";
 
 describe("parseImageImportFormData", () => {
@@ -82,6 +86,23 @@ describe("parseImageImportFormData", () => {
         })
       )
     ).rejects.toMatchObject({
+      code: "IMPORT_FILE_TOO_LARGE",
+      status: 413
+    } satisfies Partial<HttpError>);
+  });
+
+  it("applies a stricter runtime upload limit", async () => {
+    const formData = new FormData();
+    formData.set("method", "image_import");
+    formData.set("timezone", "Australia/Sydney");
+    formData.set(
+      "file",
+      new File([new Uint8Array(11)], "timetable.png", {
+        type: "image/png"
+      })
+    );
+
+    await expect(parseImageImportFormDataFields(formData, { maxBytes: 10 })).rejects.toMatchObject({
       code: "IMPORT_FILE_TOO_LARGE",
       status: 413
     } satisfies Partial<HttpError>);
@@ -165,6 +186,7 @@ describe("OpenAiImageImportProvider", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]!.input).toBe("https://api.openai.com/v1/responses");
     expect(calls[0]!.body).toMatchObject({
+      max_output_tokens: 2000,
       model: "gpt-5.6-luna",
       text: {
         format: {
@@ -189,5 +211,99 @@ describe("OpenAiImageImportProvider", () => {
       warnings: ["Review OCR output before submitting."],
       confidence: 0.82
     });
+  });
+
+  it("rejects recognized output below the configured confidence threshold", async () => {
+    const provider = new OpenAiImageImportProvider({
+      apiKey: "test-key",
+      fetch: async () =>
+        new Response(
+          JSON.stringify({
+            output_text: JSON.stringify({
+              busyBlocks: [],
+              warnings: ["Image is unclear."],
+              confidence: 0.4
+            })
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json"
+            }
+          }
+        ),
+      minConfidence: 0.7
+    });
+
+    await expect(
+      provider.recognizeBusyBlocks({
+        file: {
+          bytes: new Uint8Array([1]),
+          filename: "timetable.png",
+          mimeType: "image/png",
+          size: 1
+        },
+        scheduleDateRangeEnd: "2026-08-01",
+        scheduleDateRangeStart: "2026-08-01",
+        scheduleTimezone: "Australia/Sydney",
+        timezone: "Australia/Sydney"
+      })
+    ).rejects.toMatchObject({
+      name: "ImageImportLowConfidenceError"
+    });
+  });
+});
+
+describe("image import runtime gates", () => {
+  it("keeps image import disabled by default even when an API key exists", () => {
+    const environment = {
+      OPENAI_API_KEY: "test-key"
+    };
+
+    expect(readImageImportRuntimeConfig(environment)).toMatchObject({
+      enabled: false,
+      releaseMode: "off"
+    });
+    expect(createConfiguredImageImportProvider(environment)).toBeUndefined();
+  });
+
+  it("allows local-only image import outside production when explicitly enabled", () => {
+    const environment = {
+      AI_IMAGE_IMPORT_ENABLED: "true",
+      AI_IMAGE_IMPORT_RELEASE_MODE: "local_only",
+      NODE_ENV: "development",
+      OPENAI_API_KEY: "test-key"
+    };
+
+    expect(createConfiguredImageImportProvider(environment)).toBeInstanceOf(
+      OpenAiImageImportProvider
+    );
+  });
+
+  it("requires the internal test token in internal test mode", () => {
+    const config = readImageImportRuntimeConfig({
+      AI_IMAGE_IMPORT_ENABLED: "true",
+      AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN: "secret",
+      AI_IMAGE_IMPORT_RELEASE_MODE: "internal_test",
+      NODE_ENV: "production",
+      OPENAI_API_KEY: "test-key"
+    });
+
+    expect(checkImageImportAccess(config, "wrong")).toMatchObject({ allowed: false });
+    expect(checkImageImportAccess(config, "secret")).toMatchObject({ allowed: true });
+  });
+
+  it("does not allow public image import before credit and ad gate code exists", () => {
+    const environment = {
+      AI_IMAGE_AD_GATE_READY: "true",
+      AI_IMAGE_COST_GUARDRAIL_ENABLED: "true",
+      AI_IMAGE_CREDITS_ENFORCED: "true",
+      AI_IMAGE_IMPORT_ENABLED: "true",
+      AI_IMAGE_IMPORT_RELEASE_MODE: "public",
+      NODE_ENV: "production",
+      OPENAI_API_KEY: "test-key"
+    };
+
+    expect(createConfiguredImageImportProvider(environment)).toBeUndefined();
   });
 });

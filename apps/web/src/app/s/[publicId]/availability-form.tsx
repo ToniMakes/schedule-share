@@ -35,6 +35,7 @@ import { rememberParticipantEditLink } from "./participant-edit-link-memory";
 import styles from "./page.module.css";
 
 interface AvailabilityFormProps {
+  readonly imageImportVisible: boolean;
   readonly publicId: string;
   readonly scheduleMode: ScheduleDetail["scheduleMode"];
   readonly scheduleStatus: ScheduleDetail["status"];
@@ -52,6 +53,7 @@ type SubmitState =
 type CopyState = "idle" | "copied" | "failed";
 
 export function AvailabilityForm({
+  imageImportVisible,
   publicId,
   scheduleMode,
   scheduleStatus,
@@ -229,6 +231,7 @@ export function AvailabilityForm({
 
         {!isCandidatePoll ? (
           <AvailabilityImportPanel
+            imageImportVisible={imageImportVisible}
             onPreviewApplied={setSelectedSlotKeys}
             publicId={publicId}
             scheduleTimezone={scheduleTimezone}

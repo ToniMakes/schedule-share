@@ -12,6 +12,7 @@ import type {
 import { getDatabase } from "@/server/db";
 import { HttpError } from "@/server/errors";
 import { getScheduleView } from "@/server/schedules/get-schedule";
+import { isPublicImageImportVisible } from "@/server/schedules/image-import";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 import { AvailabilityForm } from "./availability-form";
@@ -109,6 +110,7 @@ function ScheduleView({ data }: { readonly data: GetScheduleResponse }) {
 
         <AvailabilityForm
           publicId={data.schedule.publicId}
+          imageImportVisible={isPublicImageImportVisible()}
           scheduleMode={data.schedule.scheduleMode}
           scheduleStatus={data.schedule.status}
           scheduleTimezone={data.schedule.timezone}

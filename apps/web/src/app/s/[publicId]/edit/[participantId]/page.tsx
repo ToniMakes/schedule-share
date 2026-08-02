@@ -7,6 +7,7 @@ import type { GetParticipantAvailabilityResponse } from "@schedule-share/api-cli
 import { getDatabase } from "@/server/db";
 import { HttpError } from "@/server/errors";
 import { getParticipantAvailabilityView } from "@/server/schedules/get-participant-availability";
+import { isPublicImageImportVisible } from "@/server/schedules/image-import";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 import { EditAvailabilityForm } from "./edit-availability-form";
@@ -85,6 +86,7 @@ function EditView({
 
         <EditAvailabilityForm
           editKey={editKey}
+          imageImportVisible={isPublicImageImportVisible()}
           initialAvailableSlots={data.participant.availableSlots}
           initialCandidateVotes={data.participant.candidateVotes}
           initialDisplayName={data.participant.displayName}

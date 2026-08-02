@@ -111,13 +111,13 @@
 
 当前已实现基础预览：
 
-- 参与者填写页和开放网格编辑页可以选择 PNG、JPEG 或 WebP 课表/排班截图并生成预填。
+- 参与者填写页和开放网格编辑页的代码支持 PNG、JPEG 或 WebP 课表/排班截图预填，但公开入口默认隐藏，只有公开闸门真正允许时才展示。
 - 服务端支持 `POST /api/schedules/:publicId/availability-preview` 的 `image_import` multipart 请求。
-- 图片上传限制为单张最大 4MB，默认不保存原图。
+- 图片上传限制为单张默认最大 4MB，可通过运行时配置继续收紧，默认不保存原图。
 - OpenAI provider 会把图片识别成结构化 busyBlocks，再复用 `packages/core` 的忙碌时间求差集逻辑。
-- 未配置 `OPENAI_API_KEY` 时返回 `IMPORT_PROVIDER_UNAVAILABLE`，用户仍可使用文本粘贴或手动填写。
+- 未配置 `OPENAI_API_KEY`，或图片识别功能闸门没有打开时，返回 `IMPORT_PROVIDER_UNAVAILABLE`，用户仍可使用文本粘贴、CSV、ICS 或手动填写。
 - 预填只更新页面上的可用时间选择，并展示识别出的忙碌时间明细、置信度和 warnings；用户仍需确认或手动修正后提交。
-- 后续公开放量前，应接入 `docs/monetization.md` 里的 AI 图片识别额度、激励广告验证、成本护栏和失败退款规则。
+- 当前公开模式被代码层阻断；后续公开放量前，应接入 `docs/monetization.md` 里的 AI 图片识别额度、激励广告验证、成本护栏和失败退款规则。
 
 v1 范围：
 

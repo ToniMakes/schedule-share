@@ -358,18 +358,28 @@ requiredEcpm = apiCostPerRecognition * 1000 / (fillRate * validTrafficRate)
 
 AI 图片识别和激励广告：
 
-| 变量                                     | 说明                                                    |
-| ---------------------------------------- | ------------------------------------------------------- |
-| `AI_IMAGE_REWARDED_ADS_ENABLED`          | 是否启用激励广告换图片识别额度。                        |
-| `AI_IMAGE_FREE_CREDITS_PER_SCHEDULE`     | 每个日程默认发放的免费图片识别额度。                    |
-| `AI_IMAGE_CREDIT_DAILY_LIMIT`            | 同一匿名 session、设备或用户每日可获得/使用的额度上限。 |
-| `AI_IMAGE_MAX_RECOGNITIONS_PER_SCHEDULE` | 单个日程最多允许的图片识别次数。                        |
-| `AI_IMAGE_COST_GUARDRAIL_USD`            | 单日或单周期 AI 图片识别成本上限。                      |
-| `REWARDED_AD_PROVIDER`                   | 激励广告提供商标识。                                    |
-| `REWARDED_AD_UNIT_ID`                    | 广告单元 ID。                                           |
-| `REWARDED_AD_VERIFICATION_SECRET`        | 服务端验证广告完成事件所需的密钥或签名 secret。         |
-| `REWARDED_AD_MIN_EFFECTIVE_ECPM_USD`     | 低于该有效 eCPM 时暂停广告换额度。                      |
-| `REWARDED_AD_CREDIT_EXCHANGE_RATE_DENOM` | 兑换比例分母，例如设置为 `2` 表示 2 次广告换 1 次识别。 |
+| 变量                                     | 说明                                                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| `AI_IMAGE_IMPORT_ENABLED`                | 图片识别总开关。默认 false；即使配置 `OPENAI_API_KEY` 也不会自动开放。     |
+| `AI_IMAGE_IMPORT_RELEASE_MODE`           | `off`、`local_only`、`internal_test` 或 `public`；当前 public 被代码阻断。 |
+| `AI_IMAGE_IMPORT_INTERNAL_TEST_TOKEN`    | 内测请求头 `x-ai-image-import-test-token` 需要匹配该值。                   |
+| `AI_IMAGE_IMPORT_MAX_BYTES`              | 图片上传大小上限，只能低于或等于代码硬上限 4MB。                           |
+| `OPENAI_IMAGE_IMPORT_TIMEOUT_MS`         | OpenAI 图片识别请求超时，代码硬上限 30 秒。                                |
+| `OPENAI_IMAGE_IMPORT_MAX_OUTPUT_TOKENS`  | 图片识别最大输出 token，代码硬上限 3000。                                  |
+| `OPENAI_IMAGE_IMPORT_MIN_CONFIDENCE`     | 低于该整体置信度时返回低置信度错误，不生成可提交结果。                     |
+| `AI_IMAGE_AD_GATE_READY`                 | 广告门槛是否已准备好；公开开放前必须由真实实现和运营检查支撑。             |
+| `AI_IMAGE_CREDITS_ENFORCED`              | 额度账本和原子消耗是否已强制执行。                                         |
+| `AI_IMAGE_COST_GUARDRAIL_ENABLED`        | 全站成本护栏和紧急关闭是否已启用。                                         |
+| `AI_IMAGE_REWARDED_ADS_ENABLED`          | 是否启用激励广告换图片识别额度。                                           |
+| `AI_IMAGE_FREE_CREDITS_PER_SCHEDULE`     | 每个日程默认发放的免费图片识别额度。                                       |
+| `AI_IMAGE_CREDIT_DAILY_LIMIT`            | 同一匿名 session、设备或用户每日可获得/使用的额度上限。                    |
+| `AI_IMAGE_MAX_RECOGNITIONS_PER_SCHEDULE` | 单个日程最多允许的图片识别次数。                                           |
+| `AI_IMAGE_COST_GUARDRAIL_USD`            | 单日或单周期 AI 图片识别成本上限。                                         |
+| `REWARDED_AD_PROVIDER`                   | 激励广告提供商标识。                                                       |
+| `REWARDED_AD_UNIT_ID`                    | 广告单元 ID。                                                              |
+| `REWARDED_AD_VERIFICATION_SECRET`        | 服务端验证广告完成事件所需的密钥或签名 secret。                            |
+| `REWARDED_AD_MIN_EFFECTIVE_ECPM_USD`     | 低于该有效 eCPM 时暂停广告换额度。                                         |
+| `REWARDED_AD_CREDIT_EXCHANGE_RATE_DENOM` | 兑换比例分母，例如设置为 `2` 表示 2 次广告换 1 次识别。                    |
 
 ## 隐私和合规原则
 
@@ -443,6 +453,7 @@ AI 图片识别和激励广告：
 公开开放广告换图片识别前，至少需要满足：
 
 - `OPENAI_API_KEY` 已在生产环境配置并通过真实样本调优。
+- `AI_IMAGE_IMPORT_ENABLED=true` 和 `AI_IMAGE_IMPORT_RELEASE_MODE=public` 只在最后开放时设置；当前代码仍会阻断 public，必须在额度账本、广告验证和成本护栏实现后再专门提交解除阻断。
 - 有 `AiRecognitionCreditGrant` 和 `AiRecognitionAttempt` 账本，额度消耗是原子的。
 - 广告完成事件通过服务端验证，不能只信任前端回调。
 - 隐私说明已经补充广告和 AI provider 数据处理边界。

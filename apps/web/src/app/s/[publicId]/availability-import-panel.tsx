@@ -41,6 +41,7 @@ import {
 import styles from "./page.module.css";
 
 interface AvailabilityImportPanelProps {
+  readonly imageImportVisible: boolean;
   readonly onPreviewApplied: (selectedSlotKeys: Set<string>) => void;
   readonly publicId: string;
   readonly scheduleTimezone: string;
@@ -89,6 +90,7 @@ const previewMethodLabels = {
 } as const satisfies Record<PreviewMethod, string>;
 
 export function AvailabilityImportPanel({
+  imageImportVisible,
   onPreviewApplied,
   publicId,
   scheduleTimezone
@@ -425,14 +427,16 @@ export function AvailabilityImportPanel({
           value={importText}
         />
       </label>
-      <label className={styles.importField}>
-        <span>上传课表截图</span>
-        <input
-          accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => setImportFile(event.target.files?.[0])}
-          type="file"
-        />
-      </label>
+      {imageImportVisible ? (
+        <label className={styles.importField}>
+          <span>上传课表截图</span>
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event) => setImportFile(event.target.files?.[0])}
+            type="file"
+          />
+        </label>
+      ) : null}
       <label className={styles.importField}>
         <span>上传 .ics 日历</span>
         <input
@@ -558,19 +562,21 @@ export function AvailabilityImportPanel({
             )}
             文本预填
           </button>
-          <button
-            className={styles.secondaryButton}
-            disabled={isPreviewing || importFile === undefined}
-            onClick={handlePreviewImageAvailability}
-            type="button"
-          >
-            {isPreviewingImage ? (
-              <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
-            ) : (
-              <ImagePlus aria-hidden="true" size={18} />
-            )}
-            图片预填
-          </button>
+          {imageImportVisible ? (
+            <button
+              className={styles.secondaryButton}
+              disabled={isPreviewing || importFile === undefined}
+              onClick={handlePreviewImageAvailability}
+              type="button"
+            >
+              {isPreviewingImage ? (
+                <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
+              ) : (
+                <ImagePlus aria-hidden="true" size={18} />
+              )}
+              图片预填
+            </button>
+          ) : null}
           <button
             className={styles.secondaryButton}
             disabled={isPreviewing || icsFile === undefined}

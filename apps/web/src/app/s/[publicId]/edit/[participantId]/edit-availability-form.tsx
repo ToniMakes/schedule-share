@@ -37,6 +37,7 @@ import { rememberParticipantDisplayName } from "../../participant-name-memory";
 
 interface EditAvailabilityFormProps {
   readonly editKey: string;
+  readonly imageImportVisible: boolean;
   readonly initialAvailableSlots: readonly AvailabilitySlotInput[];
   readonly initialCandidateVotes?: readonly CandidateVoteInput[];
   readonly initialDisplayName: string;
@@ -56,6 +57,7 @@ type SubmitState =
 
 export function EditAvailabilityForm({
   editKey,
+  imageImportVisible,
   initialAvailableSlots,
   initialCandidateVotes = [],
   initialDisplayName,
@@ -211,6 +213,7 @@ export function EditAvailabilityForm({
 
         {!isCandidatePoll ? (
           <AvailabilityImportPanel
+            imageImportVisible={imageImportVisible}
             onPreviewApplied={setSelectedSlotKeys}
             publicId={publicId}
             scheduleTimezone={scheduleTimezone}
