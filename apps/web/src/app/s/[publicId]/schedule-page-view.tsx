@@ -59,16 +59,16 @@ function ScheduleView({
 
   return (
     <main className={styles.page}>
-      {locale === "en" ? <PageLanguage lang="en" /> : null}
+      <PageLanguage lang={locale === "en" ? "en" : "zh-CN"} />
       <AdPageChrome mobileAnchor={false} pageContext="public-schedule">
         <div className={styles.shell}>
           <LanguageSwitcher
-            chineseHref={`/s/${data.schedule.publicId}`}
+            chineseHref={`/zh/s/${data.schedule.publicId}`}
             current={locale}
-            englishHref={`/en/s/${data.schedule.publicId}`}
+            englishHref={`/s/${data.schedule.publicId}`}
           />
           <header className={styles.header}>
-            <Link className={styles.backLink} href={locale === "en" ? "/en" : "/"}>
+            <Link className={styles.backLink} href={locale === "en" ? "/" : "/zh"}>
               <ArrowLeft aria-hidden="true" size={17} />
               {copy.backHome}
             </Link>
@@ -347,10 +347,10 @@ function ErrorView({
 
   return (
     <main className={styles.page}>
-      {locale === "en" ? <PageLanguage lang="en" /> : null}
+      <PageLanguage lang={locale === "en" ? "en" : "zh-CN"} />
       <div className={styles.shell}>
         <header className={styles.header}>
-          <Link className={styles.backLink} href={locale === "en" ? "/en" : "/"}>
+          <Link className={styles.backLink} href={locale === "en" ? "/" : "/zh"}>
             <ArrowLeft aria-hidden="true" size={17} />
             {copy.backHome}
           </Link>

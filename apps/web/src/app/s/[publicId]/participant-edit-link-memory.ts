@@ -198,9 +198,12 @@ function normalizeEditUrl(
     return undefined;
   }
 
-  const expectedPath = `/s/${encodeURIComponent(publicId)}/edit/${encodeURIComponent(participantId)}`;
+  const expectedPaths = new Set([
+    `/s/${encodeURIComponent(publicId)}/edit/${encodeURIComponent(participantId)}`,
+    `/zh/s/${encodeURIComponent(publicId)}/edit/${encodeURIComponent(participantId)}`
+  ]);
 
-  if (url.pathname !== expectedPath) {
+  if (!expectedPaths.has(url.pathname)) {
     return undefined;
   }
 

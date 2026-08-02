@@ -3,70 +3,74 @@ import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
+import { PageLanguage } from "../i18n/page-language";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "隐私与数据保留说明 | 日程表共享",
-  description: "了解日程表共享 MVP 会保存哪些数据、用途、链接权限和默认保留时间。"
+  title: "Privacy and Data Retention | Schedule Share",
+  description:
+    "Learn what Schedule Share stores, how scheduling links work, how ads and AI image recognition are gated, and how schedule data is retained."
 };
 
 const dataItems = [
-  "组织者填写的日程标题、说明、时区、日期范围和可选时间窗口。",
-  "参与者填写的显示名称和选择的可用时间。",
-  "浏览器本机会保存上次成功提交或编辑的显示名称，用于下次预填。",
-  "浏览器本机会按日程保存自己的编辑链接，用于同一浏览器再次修改提交。",
-  "浏览器本机会保存上次成功使用的每周模板星期和时间段，也会保存用户主动保存的多个本机每周模板，用于下次模板预填。",
-  "浏览器本机会保存上次成功创建日程时使用的模式、时区、时间粒度和开放网格时间范围，用于下次预填。",
-  "系统生成的分享链接、管理链接和编辑链接所需的随机标识或密钥哈希。",
-  "创建时间、更新时间、过期时间和日程状态。"
+  "Schedule title, description, time zone, date range, available daily time windows, and slot length entered by the organizer.",
+  "Participant display names and selected availability or candidate-time vote responses.",
+  "Local browser memory for a recently used display name, edit link, weekly template, and create-schedule defaults.",
+  "Random identifiers or hashed access keys needed for share links, management links, and edit links.",
+  "Schedule creation time, update time, expiration time, and status."
 ];
 
 const usageItems = [
-  "创建和展示日程房间。",
-  "让参与者提交或修改自己的可用时间。",
-  "计算所有人都有空或多数人有空的候选时间。",
-  "让组织者查看结果、导出 CSV、锁定或归档日程。"
+  "Create and display shared scheduling pages.",
+  "Let participants submit or edit their own availability.",
+  "Calculate full-group overlap, partial overlap, and candidate-time voting results.",
+  "Let organizers review, lock, archive, export, or confirm a final time."
 ];
 
-const plannedAdItems = [
-  "真实展示广告当前默认关闭；开启前会先配置广告平台账号、广告位、生产域名白名单和广告平台要求的 consent 或隐私消息。",
-  "第三方广告供应商未来可能通过广告请求、cookie、web beacon、IP 地址、设备信息、浏览器信息、页面 URL、广告展示和互动数据来投放、衡量或防止无效流量。",
-  "本工具不会主动把日程标题、参与者姓名、可用时间、上传图片、识别文本、管理密钥或编辑密钥作为广告定向字段发送给广告平台。",
-  "带管理密钥或编辑密钥的页面在完成 URL 密钥迁移前不加载第三方广告脚本。"
+const adItems = [
+  "Real third-party display ads are off by default. They require production configuration, provider review, allowed hosts, and privacy or consent readiness before launch.",
+  "Future ad providers may process ad request data such as page URL, browser, device, network, region, cookies or ad identifiers, web beacons, ad impressions, ad interactions, and invalid-traffic signals.",
+  "Schedule Share should not intentionally send schedule titles, participant names, availability, uploaded images, recognition text, management keys, or edit keys to ad providers as ad-targeting fields.",
+  "Pages that expose management or edit keys in the URL do not load third-party ad scripts before the key exposure risk is removed."
 ];
 
-const aiImportItems = [
-  "图片识别当前不对公众开放；即使配置了 OpenAI API key，也必须同时通过功能开关、release mode、额度账本、成本护栏和广告验证后才会开放。",
-  "如果用户主动使用图片识别，图片会被发送给配置的 AI provider，用来生成可编辑的可用时间预览。",
-  "识别结果只作为草稿，用户确认提交前不会写入该日程。",
-  "默认不保存原始图片、完整 OCR 文本或未确认的识别明细；后续额度系统只记录必要的状态、成本估算、文件类型、文件大小和失败/退款信息。"
+const aiItems = [
+  "Image schedule recognition is not publicly open. An OpenAI API key alone does not enable it.",
+  "When a user actively uses image recognition, the image may be sent to the configured AI provider to generate an editable availability preview.",
+  "Recognition output is only a draft. The user must review and submit it before it becomes schedule data.",
+  "The system is designed not to store original images, full OCR text, or unconfirmed recognition details by default. Cost and credit records only keep necessary metadata and status."
 ];
 
-export default function PrivacyPage() {
+export default function EnglishPrivacyPage() {
   return (
     <main className={styles.page}>
+      <PageLanguage lang="en" />
       <AdPageChrome pageContext="privacy">
         <div className={styles.shell}>
           <a className={styles.backLink} href="/">
             <ArrowLeft aria-hidden="true" size={17} />
-            返回首页
+            Back to home
           </a>
-          <LanguageSwitcher chineseHref="/privacy" current="zh-CN" englishHref="/en/privacy" />
+          <LanguageSwitcher chineseHref="/zh/privacy" current="en" englishHref="/privacy" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>Privacy</p>
-            <h1>隐私与数据保留说明</h1>
+            <h1>Privacy and Data Retention</h1>
             <p>
-              这是海外网页版 MVP
-              的简版说明，用来解释这个工具会保存哪些数据、为什么保存，以及链接权限意味着什么。正式公开上线前仍需要按目标地区做法律审阅。
+              This page explains the MVP data boundaries for Schedule Share. It is a product and
+              engineering disclosure, not final legal advice. Before broad public launch, the policy
+              should be reviewed against the target regions, ad providers, and operating entity.
             </p>
           </header>
 
           <DisplayAd pageContext="privacy" placement="top-banner" />
 
           <section className={styles.section}>
-            <h2>我们收集什么</h2>
-            <p>当前版本不要求注册账号，不主动收集邮箱、手机号、微信号或日历账号。</p>
+            <h2>What We Store</h2>
+            <p>
+              The current MVP does not require account registration and does not ask for email,
+              phone, social account, or calendar-account access by default.
+            </p>
             <ul>
               {dataItems.map((item) => (
                 <li key={item}>{item}</li>
@@ -75,78 +79,83 @@ export default function PrivacyPage() {
           </section>
 
           <section className={styles.section}>
-            <h2>这些数据用来做什么</h2>
+            <h2>How We Use the Data</h2>
             <ul>
               {usageItems.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <p>当前 MVP 不会把核心填写流程中的数据用于广告定向、第三方营销或训练模型。</p>
+            <p>
+              The current MVP does not use core scheduling data for ad targeting, third-party
+              marketing, or model training.
+            </p>
           </section>
 
           <DisplayAd pageContext="privacy" placement="inline-results" />
 
           <section className={styles.section}>
-            <h2>广告与第三方技术</h2>
+            <h2>Ads and Third-Party Technology</h2>
             <p>
-              网站已经预留外围广告位和 <code>/ads.txt</code> 路由，但生产环境真实广告仍保持关闭。
-              如果未来启用 Google AdSense
-              或其他展示广告供应商，将先补齐正式广告配置、地区化同意机制和隐私说明。
+              The site has reserved display-ad placements and an <code>/ads.txt</code> route, but
+              real production ads remain disabled. If Google AdSense or another display-ad provider
+              is enabled later, this page will be updated with the actual provider, opt-out path,
+              and region-specific consent approach.
             </p>
             <ul>
-              {plannedAdItems.map((item) => (
+              {adItems.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
             <p>
-              用户不需要点击广告来支持本站；也不应通过自动化、重复刷新或诱导点击来增加广告展示或点击。
+              Users do not need to click ads to support the site. Automated refreshing, induced ad
+              clicks, or fake traffic should not be used.
             </p>
           </section>
 
           <section className={styles.section}>
-            <h2>AI 图片识别</h2>
+            <h2>AI Image Recognition</h2>
             <p>
-              图片课表或排班识别属于可能产生成本的高级入口，当前只保留受闸门保护的代码路径，不作为公开功能开放。
+              Image recognition for screenshots of schedules or shift tables is treated as a
+              cost-sensitive advanced path, not as a public default feature.
             </p>
             <ul>
-              {aiImportItems.map((item) => (
+              {aiItems.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </section>
 
           <section className={styles.section}>
-            <h2>链接就是权限</h2>
+            <h2>Links Act as Permissions</h2>
             <p>
-              拿到公开分享链接的人可以查看日程和提交可用时间；拿到管理链接的人可以导出、锁定或归档日程；拿到编辑链接的人可以修改对应参与者的提交。
+              A public share link lets someone view the schedule and submit availability. A
+              management link lets the organizer view results, export, lock, or archive the
+              schedule. An edit link lets a participant modify their own submission.
             </p>
-            <p>请不要把管理链接或编辑链接公开发布。</p>
-          </section>
-
-          <section className={styles.section}>
-            <h2>保留时间</h2>
             <p>
-              MVP 默认日程在创建后 90
-              天过期。过期日程可先归档，后续再删除。当前版本没有自助删除按钮；需要处理时请查看
-              <a href="/feedback">反馈与删除请求</a>。
+              Please do not publish management links or participant edit links in public places.
             </p>
           </section>
 
           <section className={styles.section}>
-            <h2>安全原则</h2>
+            <h2>Retention</h2>
             <p>
-              数据库存储精确时间统一使用 UTC。服务端只保存管理密钥和编辑密钥的哈希，不保存明文密钥。
+              New schedules expire by default after 90 days. The maintenance job can archive expired
+              schedules and later hard-delete archived records after a grace period. Before broad
+              public launch, production monitoring, backup-retention notes, and deletion-failure
+              alerts still need to be finalized.
             </p>
           </section>
 
           <section className={styles.section}>
-            <h2>相关页面</h2>
+            <h2>Related Pages</h2>
             <p>
-              你也可以查看 <a href="/about">关于本工具</a>、<a href="/terms">使用条款</a> 和{" "}
-              <a href="/feedback">反馈与删除请求</a>。 English version:{" "}
-              <a href="/en/privacy">Privacy Policy</a>.
+              You can also read <a href="/about">About</a>, <a href="/terms">Terms</a>, and{" "}
+              <a href="/feedback">Feedback and deletion requests</a>. Chinese version:{" "}
+              <a href="/zh/privacy">隐私与数据保留说明</a>.
             </p>
           </section>
+
           <DisplayAd pageContext="privacy" placement="bottom-banner" />
         </div>
       </AdPageChrome>

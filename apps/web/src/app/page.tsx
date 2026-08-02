@@ -1,45 +1,57 @@
 import { CalendarPlus } from "lucide-react";
+import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "./ads/display-ad";
 import { LanguageSwitcher } from "./i18n/language-switcher";
+import { PageLanguage } from "./i18n/page-language";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  title: "Schedule Share | Cross-time-zone availability planner",
+  description:
+    "Create a shared scheduling page, collect availability across time zones, vote on candidate times, and export the final time to a calendar."
+};
 
 const workflowSteps = [
   {
-    title: "创建日程",
-    description: "设置日期范围、每天可选时间和时间粒度。"
+    title: "Create",
+    description: "Set the date range, time zone, daily time window, and slot length."
   },
   {
-    title: "分享链接",
-    description: "参与者无需注册，打开链接就能填写可用时间。"
+    title: "Share",
+    description:
+      "Invite people with a link. Participants can fill in availability without an account."
   },
   {
-    title: "查看交集",
-    description: "系统自动高亮所有人都有空和多数人方便的时间段。"
+    title: "Decide",
+    description:
+      "See overlapping availability, best partial matches, candidate votes, and calendar exports."
   }
 ];
 
-export default function HomePage() {
+export default function EnglishHomePage() {
   return (
     <main className={styles.page}>
+      <PageLanguage lang="en" />
       <AdPageChrome pageContext="home">
         <div className={styles.shell}>
-          <LanguageSwitcher chineseHref="/" current="zh-CN" englishHref="/en" />
-          <p className={styles.eyebrow}>Schedule Share MVP</p>
-          <h1 className={styles.title}>快速找出大家都有空的时间</h1>
+          <LanguageSwitcher chineseHref="/zh" current="en" englishHref="/" />
+          <p className={styles.eyebrow}>Schedule Share</p>
+          <h1 className={styles.title}>Find the time everyone can make</h1>
           <p className={styles.intro}>
-            面向跨时区群组的轻量日程协调工具。第一版先验证创建、分享、填写和结果计算这条核心链路。
+            A lightweight shared scheduling tool for cross-time-zone groups. Create a schedule,
+            collect availability, compare the group overlap, and export the final time.
           </p>
           <div className={styles.actions}>
             <a className={styles.primary} href="/new">
               <CalendarPlus aria-hidden="true" size={18} />
-              创建日程
+              Create Schedule
             </a>
           </div>
 
           <DisplayAd pageContext="home" placement="top-banner" />
 
-          <section className={styles.workflow} aria-label="核心流程">
+          <section className={styles.workflow} aria-label="Core workflow">
             {workflowSteps.map((step, index) => (
               <article className={styles.step} key={step.title}>
                 <span className={styles.stepNumber}>{index + 1}</span>
@@ -52,11 +64,11 @@ export default function HomePage() {
           <DisplayAd pageContext="home" placement="inline-results" />
 
           <footer className={styles.footer}>
-            <a href="/about">关于本工具</a>
-            <a href="/privacy">隐私与数据保留说明</a>
-            <a href="/feedback">反馈与删除请求</a>
-            <a href="/terms">使用条款</a>
-            <a href="/en">English</a>
+            <a href="/about">About</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/feedback">Feedback and deletion requests</a>
+            <a href="/terms">Terms</a>
+            <a href="/zh">中文</a>
           </footer>
 
           <DisplayAd pageContext="home" placement="bottom-banner" />

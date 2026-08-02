@@ -244,9 +244,9 @@ export const manageShareLinksPanelCopy: Record<SchedulePageLocale, ManageShareLi
     copied: "已复制",
     copy: "复制",
     copyFailed: "无法自动复制，可以手动选中链接。",
-    managerPathPrefix: "/s/",
+    managerPathPrefix: "/zh/s/",
     ownerLabel: "管理链接",
-    publicPathPrefix: "/s/",
+    publicPathPrefix: "/zh/s/",
     shareLabel: "公开填写链接",
     subtitle: "可随时复制",
     title: "分享链接"
@@ -256,9 +256,9 @@ export const manageShareLinksPanelCopy: Record<SchedulePageLocale, ManageShareLi
     copied: "Copied",
     copy: "Copy",
     copyFailed: "Automatic copy failed. Select the link manually.",
-    managerPathPrefix: "/en/s/",
+    managerPathPrefix: "/s/",
     ownerLabel: "Organizer Link",
-    publicPathPrefix: "/en/s/",
+    publicPathPrefix: "/s/",
     shareLabel: "Public Availability Link",
     subtitle: "Copy whenever you need",
     title: "Share Links"

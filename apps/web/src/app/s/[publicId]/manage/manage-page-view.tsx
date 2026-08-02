@@ -873,7 +873,7 @@ function participantNameOptions(locale: SchedulePageLocale): {
 }
 
 function schedulePath(publicId: string, locale: SchedulePageLocale): string {
-  return `${locale === "en" ? "/en/s/" : "/s/"}${encodeURIComponent(publicId)}`;
+  return `${locale === "en" ? "/s/" : "/zh/s/"}${encodeURIComponent(publicId)}`;
 }
 
 function manageSchedulePath(

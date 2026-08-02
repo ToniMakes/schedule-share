@@ -3,66 +3,73 @@ import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
+import { PageLanguage } from "../i18n/page-language";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "关于日程表共享 | 日程表共享",
-  description: "了解日程表共享如何帮助跨时区团队、同学、社群和朋友快速协调可用时间。"
+  title: "About Schedule Share | Cross-time-zone scheduling",
+  description:
+    "Learn how Schedule Share helps groups collect availability, compare overlap, vote on candidate times, and export calendar files."
 };
 
 const featureItems = [
   {
-    title: "跨时区共享",
-    description: "组织者设置活动时区，参与者按同一份日程填写，结果用统一时间格汇总，减少来回确认。"
+    title: "Cross-time-zone planning",
+    description:
+      "Organizers choose the event time zone, while participants fill one shared schedule. Results stay aligned to the same time grid."
   },
   {
-    title: "多种填写方式",
+    title: "Multiple entry methods",
     description:
-      "当前支持手动时间格、候选时间投票、文本粘贴、CSV、ICS 和受闸门保护的图片导入预览路径。"
+      "The current MVP supports manual availability grids, candidate time voting, text import, CSV import, ICS import, and a guarded image-import preview path."
   },
   {
-    title: "自动推荐时间",
+    title: "Best-time recommendations",
     description:
-      "系统会优先展示全员可用时间；没有全员共同时间时，也会列出覆盖人数最多的较优时间槽。"
+      "The results page highlights full-group overlap first, then lists the best partial matches when no time works for everyone."
   },
   {
-    title: "轻量分享",
+    title: "Lightweight sharing",
     description:
-      "参与者不需要注册账号，打开链接即可填写；组织者用管理链接查看结果、导出日历或确认最终时间。"
+      "Participants do not need an account. Organizers use a private management link to review results, export calendars, or confirm the final time."
   }
 ];
 
 const audienceItems = [
-  "海外同学约小组作业、社团活动或周末聚会。",
-  "跨城市朋友协调聚餐、旅行讨论或线上语音时间。",
-  "小团队安排一次性会议、面试、志愿者排班或临时值班。",
-  "老师、助教、社群组织者收集一组人的可用时间。"
+  "Students planning group projects, club events, or weekend meetups across countries.",
+  "Friends coordinating meals, trips, calls, or online hangouts across cities.",
+  "Small teams arranging interviews, volunteer shifts, community events, or one-off meetings.",
+  "Teachers, tutors, and community organizers collecting availability from a small group."
 ];
 
-export default function AboutPage() {
+export default function EnglishAboutPage() {
   return (
     <main className={styles.page}>
+      <PageLanguage lang="en" />
       <AdPageChrome pageContext="about">
         <div className={styles.shell}>
           <a className={styles.backLink} href="/">
             <ArrowLeft aria-hidden="true" size={17} />
-            返回首页
+            Back to home
           </a>
-          <LanguageSwitcher chineseHref="/about" current="zh-CN" englishHref="/en/about" />
+          <LanguageSwitcher chineseHref="/zh/about" current="en" englishHref="/about" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>About</p>
-            <h1>一个轻量的跨时区多人日程共享工具</h1>
+            <h1>A lightweight shared scheduling tool for cross-time-zone groups</h1>
             <p>
-              日程表共享用于快速收集大家的可用时间，并自动找出最适合沟通、见面或协作的时间段。它优先服务一次性排期场景：不用建账号，不用安装应用，把链接发出去就能开始。
+              Schedule Share helps organizers collect availability from a group and quickly find
+              time slots that work for everyone, or for the largest number of people. It is built
+              for one-off scheduling where a link is faster than asking everyone to create an
+              account.
             </p>
             <div className={styles.actions}>
               <a className={styles.primary} href="/new">
                 <CalendarPlus aria-hidden="true" size={17} />
-                创建日程
+                Create Schedule
               </a>
               <a className={styles.secondary} href="/privacy">
-                查看隐私说明
+                View Privacy
               </a>
             </div>
           </header>
@@ -70,9 +77,11 @@ export default function AboutPage() {
           <DisplayAd pageContext="about" placement="top-banner" />
 
           <section className={styles.section}>
-            <h2>这个工具解决什么问题</h2>
+            <h2>What problem does it solve?</h2>
             <p>
-              群聊里问“大家什么时候有空”很容易变成一串时间、截图和时区换算。这个网站把这些信息收进一个共享页面，参与者只提交自己的可用时间，组织者直接查看重叠结果和推荐时间。
+              Group chats often turn into a messy stream of screenshots, time-zone conversions, and
+              tentative answers. Schedule Share turns that into one shared page: participants submit
+              availability, and organizers see a clear overlap summary.
             </p>
             <div className={styles.featureGrid}>
               {featureItems.map((item) => (
@@ -87,7 +96,7 @@ export default function AboutPage() {
           <DisplayAd pageContext="about" placement="inline-results" />
 
           <section className={styles.section}>
-            <h2>适合谁使用</h2>
+            <h2>Who is it for?</h2>
             <ul>
               {audienceItems.map((item) => (
                 <li key={item}>{item}</li>
@@ -96,21 +105,24 @@ export default function AboutPage() {
           </section>
 
           <section className={styles.section}>
-            <h2>当前商业化状态</h2>
+            <h2>Advertising and AI status</h2>
             <p>
-              网站已经预留常驻广告位框架和 <code>/ads.txt</code>{" "}
-              路由，但真实广告默认关闭。未来如果开放展示广告，也会避开表单、时间格、上传预览、提交按钮和带管理/编辑密钥的敏感页面。
+              The site has a reserved display-ad framework and an <code>/ads.txt</code> route, but
+              real ads are off by default. Future display ads should stay outside form fields, time
+              grids, upload previews, submit buttons, and URLs that contain management or edit keys.
             </p>
             <p>
-              图片识别属于可能产生成本的高级入口，目前仍受功能开关、release
-              mode、成本护栏和广告额度方案限制；手动填写、文本、CSV 和 ICS 方式仍保持免费可用。
+              Image schedule recognition is treated as a cost-sensitive advanced feature. It remains
+              behind feature flags, release-mode checks, cost guardrails, and future credit or
+              rewarded-ad validation. Manual entry, text import, CSV import, and ICS import remain
+              available as non-AI paths.
             </p>
           </section>
 
           <footer className={styles.footer}>
-            <a href="/terms">使用条款</a>
-            <a href="/feedback">反馈与删除请求</a>
-            <a href="/en/about">English</a>
+            <a href="/terms">Terms</a>
+            <a href="/feedback">Feedback and deletion requests</a>
+            <a href="/zh/about">中文</a>
           </footer>
 
           <DisplayAd pageContext="about" placement="bottom-banner" />

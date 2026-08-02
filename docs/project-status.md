@@ -15,7 +15,7 @@
 
 数据保留目前处于“自动清理链路已接入并在生产环境验证通过”的阶段：新日程默认带 90 天 `expires_at`，数据库有按过期时间查询的索引，组织者可手动归档；新增 `/api/maintenance/cleanup-expired-schedules` 受 `CRON_SECRET` 保护的维护 API 和 Vercel Cron，每天自动归档过期日程，并在归档宽限期后硬删除。Vercel Production/Preview 已配置 `CRON_SECRET` 并重新部署；未授权访问返回 `401`，带授权手动调用已返回 `200` 和归档/删除统计。日程增多主要增长 Neon Postgres 存储，而不是 Vercel 运行内存；公开推广前还需要补生产 cron 日志巡检、备份保留和删除失败监控。
 
-中英双语已从“只有导入解析支持部分英文时间表达”推进到“公开说明页、创建页、公开日程主流程、参与者编辑主流程和组织者管理主流程有英文入口”的阶段：`/en`、`/en/about`、`/en/privacy`、`/en/feedback`、`/en/terms`、`/en/new`、`/en/s/:publicId`、`/en/s/:publicId/edit/:participantId` 和 `/en/s/:publicId/manage` 已接入英文内容、语言切换入口、英文页面语言标记修正、robots 和 sitemap；公开日程的开放网格填写、手动涂选、结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑，以及组织者侧分享链接、管理操作、结果摘要、较优时间槽、候选结果、最终时间确认和导出/复制入口已有英文主流程。图片识别入口仍受 `AI_IMAGE_IMPORT_ENABLED` / release mode / 额度闸门控制，公开环境默认不展示；语言切换会写入本地语言偏好，默认中文路径会按英文偏好跳转到对应 `/en/...`，当前 API 错误码也已有中英文兜底文案。完整 i18n 字典、更多深层组件文案抽离和更广生产 smoke 覆盖仍未完成。
+中英双语已从“只有导入解析支持部分英文时间表达”推进到“英文作为默认公开入口、中文迁移到 `/zh` 专属入口”的阶段：`/`、`/about`、`/privacy`、`/feedback`、`/terms`、`/new`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage` 现在是英文主流程；`/zh`、`/zh/new`、`/zh/about`、`/zh/privacy`、`/zh/feedback`、`/zh/terms`、`/zh/s/:publicId`、`/zh/s/:publicId/edit/:participantId` 和 `/zh/s/:publicId/manage` 保留中文入口；旧 `/en/...` 路径会兼容重定向到新的英文根路径。公开日程的开放网格填写、手动涂选、结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑，以及组织者侧分享链接、管理操作、结果摘要、较优时间槽、候选结果、最终时间确认和导出/复制入口已有英文主流程。图片识别入口仍受 `AI_IMAGE_IMPORT_ENABLED` / release mode / 额度闸门控制，公开环境默认不展示；语言切换会写入本地语言偏好，但根路径不再按偏好自动跳转，当前 API 错误码也已有中英文兜底文案。完整 i18n 字典、更多深层组件文案抽离和更广生产 smoke 覆盖仍未完成。
 
 当前本机限制：
 
@@ -65,7 +65,7 @@
 - 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`，已补广告 cookie、第三方广告技术、无效流量防护和 AI 图片识别处理边界的基础披露。
 - 日程生命周期基础字段和自动清理任务：新日程默认 90 天 `expires_at`，数据库有过期时间索引，组织者可手动归档日程；`vercel.json` 已配置每日调用受 `CRON_SECRET` 保护的维护 API，自动归档过期日程，并在归档宽限期后硬删除 archived 日程。
 - 反馈与删除请求说明：`docs/feedback.md`、`/feedback`，支持通过 `NEXT_PUBLIC_SUPPORT_EMAIL` 配置公开支持邮箱。
-- 英文公开审核资产、创建入口、公开日程入口、参与者编辑入口和组织者管理入口：`/en`、`/en/new`、`/en/about`、`/en/privacy`、`/en/feedback`、`/en/terms`、`/en/s/:publicId`、`/en/s/:publicId/edit/:participantId` 和 `/en/s/:publicId/manage` 已接入，中文公开页、创建页、公开日程页、编辑页和管理页增加 English 语言切换入口，公开日程英文入口已覆盖开放网格手动填写、基础结果热力图、候选投票填写和候选投票结果面板；编辑英文入口已覆盖普通可用时间和候选投票修改，并会在英文提交成功后记住 `/en/.../edit/...` 编辑链接；组织者英文入口已覆盖分享链接、管理操作、开放网格结果摘要、较优时间槽、候选投票结果、最终时间确认、导出和复制入口，英文创建页生成的组织者链接会指向 `/en/.../manage`。sitemap 和 robots 已允许英文公开说明/创建页面，动态日程页继续不进入 sitemap。
+- 英文公开审核资产、创建入口、公开日程入口、参与者编辑入口和组织者管理入口：英文主入口已从 `/en/...` 切换到根路径 `/`、`/new`、`/about`、`/privacy`、`/feedback`、`/terms`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage`；中文入口迁移到 `/zh/...`；旧 `/en/...` 路径保留兼容重定向。公开日程英文入口已覆盖开放网格手动填写、基础结果热力图、候选投票填写和候选投票结果面板；编辑英文入口已覆盖普通可用时间和候选投票修改，并会在英文提交成功后记住 `/s/.../edit/...` 编辑链接；组织者英文入口已覆盖分享链接、管理操作、开放网格结果摘要、较优时间槽、候选投票结果、最终时间确认、导出和复制入口，英文创建页生成的组织者链接会指向 `/s/.../manage`。sitemap 和 robots 已允许英文根路径公开说明/创建页面与 `/zh/...` 中文公开页面，动态日程页继续不进入 sitemap。
 - GitHub Actions CI：format、脚本和 workspace lint、typecheck、test、build。
 - 多种可用时间添加方式的产品规格：`docs/availability-entry-methods.md`。
 - 多种可用时间添加方式的领域、API、隐私和架构边界文档。
@@ -94,7 +94,7 @@
 - AI 图片识别额度账本数据库结构、migration、服务层和只读状态 API：`ai_recognition_credit_grants`、`ai_recognition_attempts`、`rewarded_ad_verifications`，`apps/web/src/server/ai-credits.ts` 的额度状态汇总、发放、原子消耗、成功标记、失败标记、退款和广告验证事件去重方法，以及 `GET /api/ai-credits/status?schedulePublicId=...` 的日程 scope 额度状态查询；`image_import` 已在 `AI_IMAGE_CREDITS_ENFORCED=true` 时按日程 scope 先扣额度，成功后标记 succeeded，provider 不可用或内部失败时退款，低置信度只标记 `low_confidence` 不自动退款；当前尚未实现免费额度自动发放、广告服务端验证、动态成本计数或前端兑换入口。
 - 创建页的候选时间投票模式，支持组织者添加明确候选时间。
 - 参与者页和编辑页的三态候选投票 v1，支持对每个候选项选择方便、也许或不方便，并可为方便/也许的候选项通过按钮或拖拽设置偏好顺位；`available` 继续复用现有提交、编辑、汇总、锁定、归档和导出链路。
-- 公开日程页和管理页的候选投票专门结果视图，支持最佳候选、排序依据、综合支持度、每项支持率、候选项洞察、缺口标签、对比最佳分析、方便名单、也许名单、不方便/未选择名单、首选名单和平均偏好顺位展示；公开英文入口 `/en/s/:publicId` 和组织者英文入口 `/en/s/:publicId/manage` 的候选投票结果面板已接入英文文案。
+- 公开日程页和管理页的候选投票专门结果视图，支持最佳候选、排序依据、综合支持度、每项支持率、候选项洞察、缺口标签、对比最佳分析、方便名单、也许名单、不方便/未选择名单、首选名单和平均偏好顺位展示；公开英文入口 `/s/:publicId` 和组织者英文入口 `/s/:publicId/manage` 的候选投票结果面板已接入英文文案，中文入口为 `/zh/s/:publicId` 和 `/zh/s/:publicId/manage`。
 - `packages/core` 中的候选投票综合排序逻辑，默认按 `available = 1`、`maybe = 0.5` 计算决策分；综合分相同时依次优先确定可用人数更多、也许人数更多、首选人数更多、平均偏好顺位更靠前的候选。
 - `GET /api/schedules/:publicId/export?format=ics` 组织者日历导出 API，按全员可用连续时间段生成 `VEVENT`，支持通过 `startUtc` / `endUtc` 精确导出其中某一段，并支持通过 `target=final-time` 导出已确认最终时间。
 - 管理页支持同时下载 CSV 结果、`.ics` 全员可用时间日历文件、单个全员可用时间段 `.ics`，以及确认后的最终时间 `.ics`。
@@ -106,7 +106,7 @@
 - 管理页支持复制结果摘要：开放网格会优先列出全员可用时间段，没有全员共同时间时列出当前较优时间格；候选投票会列出当前最佳候选、综合支持度、首选人数和平均偏好顺位。摘要不包含管理密钥。
 - 管理页开放网格的当前较优时间槽支持逐条复制，复制内容包含日程标题、备选时间、可用人数比例、方便名单和未选此时间名单，不包含管理密钥。
 - 默认关闭的常驻展示广告位框架：`DisplayAd` / `AdPageChrome` 已接入首页、创建页、公开日程页、管理页、编辑页、关于页、隐私页、反馈页和使用条款页；创建、填写、编辑等核心操作区不插广告，管理/编辑密钥页不加载第三方广告脚本。
-- 广告审核基础公开资产：`/about`、`/privacy`、`/feedback`、`/terms`、英文公开页、`/robots.txt` 和 `/sitemap.xml` 已接入；首页 footer 已连接关于、隐私、反馈、条款和 English 页面。
+- 广告审核基础公开资产：英文根路径 `/`、`/about`、`/privacy`、`/feedback`、`/terms`、中文 `/zh/...` 公开页、`/robots.txt` 和 `/sitemap.xml` 已接入；首页 footer 已连接关于、隐私、反馈、条款和中文入口。
 - 公开隐私和条款披露已补充：真实广告当前关闭、广告平台可能使用 cookie / web beacon / IP / 设备 / 浏览器 / 页面 URL / 展示互动数据、普通广告不发放奖励、不要诱导广告点击、图片识别只生成可编辑预览且公开模式继续受闸门阻断。
 - `/ads.txt` 路由已接入；未设置 `ADS_TXT_PUBLISHER_ID` 时返回未配置注释，拿到广告平台 publisher ID 后可通过环境变量生成正式记录。
 - 部署配置预检已覆盖常驻展示广告：真实 AdSense 开启时必须配置公开支持邮箱、`ADS_TXT_PUBLISHER_ID`、隐私披露确认、广告政策审阅确认、consent 策略确认、client、slot、生产域名白名单，并阻断 `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE=full` 和生产 test mode。
@@ -141,7 +141,7 @@ corepack pnpm build
 corepack pnpm db:setup
 ```
 
-当前测试总数：506。
+当前测试总数：507。
 
 真实数据库验证：
 
@@ -210,9 +210,9 @@ corepack pnpm db:setup
 - 本地临时最终时间 `.ics` 导出日程已验证：`candidate_poll` 候选 Option A 即使只有 `maybe` 投票，也可由组织者确认最终时间；`GET /api/schedules/:publicId/export?format=ics&target=final-time` 返回 `text/calendar; charset=utf-8`、1 个 `VEVENT`、文件名 `schedule-...-final-20260803T080000Z.ics`、`DTSTART:20260803T080000Z`、`DTEND:20260803T090000Z` 和 `TRANSP:OPAQUE`；管理页已显示“导出最终时间”且链接包含 `format=ics` 和 `target=final-time`；临时日程已归档。
 - 本地临时预填反馈日程已验证：参与者页粘贴无法解析的文本后，会显示统一预填反馈条、“需复核”状态、忙碌段数/可用时间数摘要和常见 warnings 中文提示；识别明细 helper 单元测试覆盖逐条忙碌时间的标题、日期/星期、时间、单段 warning 和置信度文案；本地临时日程在桌面和 375px 移动宽度下验证 `节次\t周一` / `3-4\t物理` 预填后显示识别明细、默认节次 warning、`10:00-11:40` 时间和 `4/8` 已选时间格，移动端无横向溢出；开放网格编辑页复用同一预填面板，文本预填后会刷新原有选择并保留提交前可手动修正，保存后参与者详情 API 读回 4 个可用时间格；临时日程已归档。
 - 本地临时开放网格日程已验证：两位参与者提交后，公开页和管理页均显示“结果热力图”，峰值为 `2/2`，`09:30-10:00` 正确显示 `2/2 可用`，候选投票结果区没有误显示；临时日程已归档。
-- 本地临时候选投票英文公开页已验证：两位参与者提交 `available/maybe/unavailable` 和偏好顺位后，`/en/s/:publicId` 显示 `Candidate Poll Results`、`Current Best`、`Weighted support`、`Yes`、`Maybe` 和 `No/not selected`，且未混入中文候选结果标题；`/s/:publicId` 仍显示中文候选投票结果；临时日程已归档。
-- 本地临时参与者英文编辑页已验证：普通开放网格和候选投票的 `/en/s/:publicId/edit/:participantId?key=...` 均可打开，显示 `Back to Schedule`、`Your Name`、`Save Changes`、英文手动网格或 `Yes` / `Maybe` / `No` 候选投票控件；中文编辑页仍保留中文文案。英文公开页提交成功后生成并记住 `/en/s/:publicId/edit/:participantId?key=...` 编辑链接；临时日程已归档。
-- 本地临时英文组织者管理页已验证：开放网格和候选投票的 `/en/s/:publicId/manage?key=...` 均可打开，页面 `lang="en"`，显示 `Manage Schedule`、`Share Links`、`Organizer Link`、英文锁定/归档/导出/复制、开放网格 `Result Summary` / `Best Available Slots` 和候选投票 `Candidate Poll Results` / `Current Best`；英文创建页生成的组织者链接使用 `/en/s/:publicId/manage?key=...`；中文管理页仍保留中文文案；临时日程已归档。
+- 本地临时候选投票英文公开页已验证：两位参与者提交 `available/maybe/unavailable` 和偏好顺位后，英文公开页显示 `Candidate Poll Results`、`Current Best`、`Weighted support`、`Yes`、`Maybe` 和 `No/not selected`，且未混入中文候选结果标题；中文入口保留中文候选投票结果；临时日程已归档。英文入口现为 `/s/:publicId`，中文入口现为 `/zh/s/:publicId`。
+- 本地临时参与者英文编辑页已验证：普通开放网格和候选投票的英文编辑页均可打开，显示 `Back to Schedule`、`Your Name`、`Save Changes`、英文手动网格或 `Yes` / `Maybe` / `No` 候选投票控件；中文编辑页仍保留中文文案。英文公开页提交成功后生成并记住 `/s/:publicId/edit/:participantId?key=...` 编辑链接；中文提交会生成 `/zh/s/:publicId/edit/:participantId?key=...` 编辑链接；临时日程已归档。
+- 本地临时英文组织者管理页已验证：开放网格和候选投票的英文管理页均可打开，页面 `lang="en"`，显示 `Manage Schedule`、`Share Links`、`Organizer Link`、英文锁定/归档/导出/复制、开放网格 `Result Summary` / `Best Available Slots` 和候选投票 `Candidate Poll Results` / `Current Best`；英文创建页生成的组织者链接使用 `/s/:publicId/manage?key=...`；中文管理页仍保留中文文案并使用 `/zh/s/:publicId/manage?key=...`；临时日程已归档。
 - 本地临时开放网格热力图密度日程已验证：5 天 20 个时间格、两位参与者提交后，公开页和管理页默认展开前 3 天并折叠后 2 天；“只看峰值”显示 `1/20` 格，“有人可用”显示 `4/20` 格；临时日程已归档。
 - 本地移动端手动时间格已验证：390px 视口下页面声明 `device-width` 后无横向溢出，时间格为两列布局；移动端默认“点按”模式并保持 `touch-action: pan-y`，点击首个时间格后当天计数从 `0/4 已选` 变为 `1/4 已选`；切换“涂选”模式后 `touch-action: none`，从第一个时间格拖到第二个时间格后两格均选中且当天计数为 `2/4 已选`；临时日程已归档。
 - 本地长日期手动时间格已验证：10 天 60 个时间格的临时日程在 390px 视口下显示 `0/60 已选` 和 `0/10 天有选择`，横向日期快速跳转包含 `9/1` 到 `9/10`；点击最后一天后日期导航保持 sticky 吸顶，`2026-09-10` 标题显示在导航下方且无横向溢出；点选最后一天首个时间格后总进度变为 `1/60 已选`，日期 chip 和当天标题均同步为 `1/6`；临时日程已归档。
@@ -231,7 +231,7 @@ corepack pnpm db:setup
 - 尚未配置生产日志、监控、告警和备份演练。
 - 隐私与数据保留说明仍需正式法律审阅，正式反馈联系渠道和删除请求处理时限尚未确定。
 - 自动数据清理已接入代码和 `vercel.json`，Vercel Production/Preview 已设置 `CRON_SECRET` 并完成生产 redeploy；2026-08-02 带授权手动调用 `/api/maintenance/cleanup-expired-schedules` 已返回 `200` 和归档/删除统计，未授权调用返回 `401`。公开推广前仍需用生产日志确认每日 cron 实际触发，并补删除失败告警、备份保留周期和人工删除请求处理时限。
-- 尚未实现完整中英双语：英文公开说明页、英文创建页、`/en/s/:publicId` 公开日程主流程、`/en/s/:publicId/edit/:participantId` 参与者编辑主流程和 `/en/s/:publicId/manage` 组织者管理主流程已接入；开放网格手动填写、基础结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑、组织者分享链接、管理操作、结果摘要、导出/复制和语言切换可用；本地语言偏好记忆和当前 API 错误码中英文兜底已接入。海外用户正式推广前仍应补完整 `zh-CN` / `en` 文案字典、更多深层组件文案抽离和更广生产 smoke 覆盖。
+- 尚未实现完整中英双语：英文默认根路径、英文创建页、`/s/:publicId` 公开日程主流程、`/s/:publicId/edit/:participantId` 参与者编辑主流程和 `/s/:publicId/manage` 组织者管理主流程已接入；中文入口迁移到 `/zh/...`；开放网格手动填写、基础结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑、组织者分享链接、管理操作、结果摘要、导出/复制和语言切换可用；本地语言偏好记忆和当前 API 错误码中英文兜底已接入。海外用户正式推广前仍应补完整 `zh-CN` / `en` 文案字典、更多深层组件文案抽离和更广生产 smoke 覆盖。
 - 尚未做微信小程序版。
 - 尚未开放真实广告、激励广告、商业化或支付能力；默认关闭的常驻展示广告位框架、中文/英文公开审核资产、基础广告/AI 隐私披露、真实广告上线硬闸门、AI 图片识别静态成本闸门、AI 额度账本数据库结构、额度账本服务层、图片识别 API 额度强制校验开关和 `/ads.txt` 路由已实现，仍缺正式法律审阅、实际公开联系邮箱或表单、实际广告供应商披露、publisher / slot ID、AdSense 审核通过、真实广告平台接入验收、密钥 URL 迁移、广告 consent、真实广告监控、免费额度自动发放、广告服务端验证、动态成本计数和前端兑换流程。
 - 图片课表/排班导入已接入基础 provider，但公开模式被代码层阻断；本地或内测需要配置 `OPENAI_API_KEY`、功能开关、release mode 和必要 token 后才能真实识别截图，仍缺少真实课表/排班样本调优。

@@ -2,15 +2,12 @@
 
 import { useEffect } from "react";
 
-import { rememberPreferredLocale } from "./language-preference";
+import { rememberPreferredLocale, type SiteLocale } from "./language-preference";
 
-export function PageLanguage({ lang }: { readonly lang: string }) {
+export function PageLanguage({ lang }: { readonly lang: SiteLocale }) {
   useEffect(() => {
     document.documentElement.lang = lang;
-
-    if (lang === "en") {
-      rememberPreferredLocale(window.localStorage, "en");
-    }
+    rememberPreferredLocale(window.localStorage, lang);
   }, [lang]);
 
   return <span aria-hidden="true" data-page-language={lang} hidden />;

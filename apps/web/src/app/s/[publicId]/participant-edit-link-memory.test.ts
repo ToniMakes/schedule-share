@@ -42,6 +42,24 @@ describe("participant edit link memory", () => {
     });
   });
 
+  it("normalizes valid remembered Chinese edit links", () => {
+    expect(
+      normalizeRememberedParticipantEditLink({
+        displayName: "  Ada  ",
+        editUrl: "https://example.com/zh/s/schedule-1/edit/participant-1?key=secret",
+        participantId: "participant-1",
+        publicId: "schedule-1",
+        rememberedAt: "2026-08-01T10:20:30.000Z"
+      })
+    ).toEqual({
+      displayName: "Ada",
+      editUrl: "https://example.com/zh/s/schedule-1/edit/participant-1?key=secret",
+      participantId: "participant-1",
+      publicId: "schedule-1",
+      rememberedAt: "2026-08-01T10:20:30.000Z"
+    });
+  });
+
   it("rejects edit links that do not match the participant path", () => {
     expect(
       normalizeRememberedParticipantEditLink({

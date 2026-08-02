@@ -1,6 +1,6 @@
-import { renderSchedulePage } from "../../../s/[publicId]/schedule-page-view";
+import { redirect } from "next/navigation";
 
-interface EnglishSchedulePageProps {
+interface LegacyEnglishSchedulePageProps {
   readonly params: Promise<{
     readonly publicId: string;
   }>;
@@ -8,8 +8,10 @@ interface EnglishSchedulePageProps {
 
 export const dynamic = "force-dynamic";
 
-export default async function EnglishSchedulePage({ params }: EnglishSchedulePageProps) {
+export default async function LegacyEnglishSchedulePage({
+  params
+}: LegacyEnglishSchedulePageProps) {
   const { publicId } = await params;
 
-  return renderSchedulePage(publicId, "en");
+  redirect(`/s/${encodeURIComponent(publicId)}`);
 }

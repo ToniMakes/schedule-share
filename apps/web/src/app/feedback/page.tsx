@@ -3,25 +3,27 @@ import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
+import { PageLanguage } from "../i18n/page-language";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "反馈与删除请求 | 日程表共享",
-  description: "了解如何在内测阶段提交问题反馈、体验建议、归档请求或删除请求。"
+  title: "Feedback and Deletion Requests | Schedule Share",
+  description:
+    "Learn how to report issues, share feedback, request archive or deletion, and avoid exposing management or edit links."
 };
 
 const feedbackItems = [
-  "遇到问题的页面链接、浏览器和设备类型。",
-  "你原本想完成的操作，以及实际发生了什么。",
-  "如果问题和时间结果有关，请补充日程时区、日期范围和时间粒度。",
-  "如果方便，可以附上不包含管理密钥或编辑密钥的截图。"
+  "The page URL where the issue happened, plus browser and device type.",
+  "What you expected to do, and what actually happened.",
+  "For time-result issues, include the schedule time zone, date range, and slot length.",
+  "If you share a screenshot, remove management keys, edit keys, and private participant details."
 ];
 
 const deletionItems = [
-  "组织者可以通过管理链接进入日程页并先归档日程，避免新参与者继续提交。",
-  "需要人工删除时，请提供公开日程链接和请求原因。",
-  "如需证明组织者身份，只在私信或受信任渠道提供管理链接，不要发到公开群聊。",
-  "参与者想删除自己的提交时，请联系日程组织者，并避免公开发送自己的编辑链接。"
+  "Organizers can use the management link to archive a schedule and stop new submissions.",
+  "For manual deletion, provide the public schedule link and the reason for the request.",
+  "If organizer proof is needed, only share the management link through a private trusted channel.",
+  "Participants who want to remove their own submission should contact the organizer and avoid posting their edit link publicly."
 ];
 
 function getSupportEmail() {
@@ -29,50 +31,55 @@ function getSupportEmail() {
   return value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : undefined;
 }
 
-export default function FeedbackPage() {
+export default function EnglishFeedbackPage() {
   const supportEmail = getSupportEmail();
 
   return (
     <main className={styles.page}>
+      <PageLanguage lang="en" />
       <AdPageChrome pageContext="feedback">
         <div className={styles.shell}>
           <a className={styles.backLink} href="/">
             <ArrowLeft aria-hidden="true" size={17} />
-            返回首页
+            Back to home
           </a>
-          <LanguageSwitcher chineseHref="/feedback" current="zh-CN" englishHref="/en/feedback" />
+          <LanguageSwitcher chineseHref="/zh/feedback" current="en" englishHref="/feedback" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>Feedback</p>
-            <h1>反馈与删除请求</h1>
+            <h1>Feedback and Deletion Requests</h1>
             <p>
-              这里先作为内测阶段的处理说明。正式公开测试前，应补充专用联系邮箱或站内表单，并明确处理时限。
+              This page describes how feedback, archive requests, and deletion requests are handled
+              during the MVP stage. A dedicated public support email or form should be finalized
+              before broad public testing.
             </p>
           </header>
 
           <DisplayAd pageContext="feedback" placement="top-banner" />
 
-          <section className={styles.notice} aria-label="当前状态">
+          <section className={styles.notice} aria-label="Current contact status">
             <MessageSquareText aria-hidden="true" size={22} />
             <div>
-              <h2>{supportEmail ? "当前联系渠道" : "当前还没有公开表单"}</h2>
+              <h2>{supportEmail ? "Current contact channel" : "No public form yet"}</h2>
               {supportEmail ? (
                 <p>
-                  反馈、归档或删除请求可以发送到{" "}
-                  <a href={`mailto:${supportEmail}`}>{supportEmail}</a>。
-                  不要在邮件主题、公开群聊、论坛或评论区发布管理链接、编辑链接或含有密钥的截图。
+                  Feedback, archive requests, or deletion requests can be sent to{" "}
+                  <a href={`mailto:${supportEmail}`}>{supportEmail}</a>. Do not put management
+                  links, edit links, or screenshots containing keys in public posts, forums, or
+                  group chats.
                 </p>
               ) : (
                 <p>
-                  内测期间请通过组织者提供的私下渠道提交反馈。正式公开测试前会补充专用联系邮箱或站内表单。
-                  不要在公开群聊、论坛或评论区发布管理链接、编辑链接或含有密钥的截图。
+                  During internal testing, please use the private channel provided by the organizer.
+                  Do not publish management links, edit links, or screenshots containing keys in
+                  public posts, forums, or group chats.
                 </p>
               )}
             </div>
           </section>
 
           <section className={styles.section}>
-            <h2>提交问题反馈时请包含</h2>
+            <h2>When Reporting an Issue, Include</h2>
             <ul>
               {feedbackItems.map((item) => (
                 <li key={item}>{item}</li>
@@ -83,7 +90,7 @@ export default function FeedbackPage() {
           <DisplayAd pageContext="feedback" placement="inline-results" />
 
           <section className={styles.section}>
-            <h2>归档或删除请求</h2>
+            <h2>Archive or Deletion Requests</h2>
             <ul>
               {deletionItems.map((item) => (
                 <li key={item}>{item}</li>
@@ -92,17 +99,18 @@ export default function FeedbackPage() {
           </section>
 
           <section className={styles.section}>
-            <h2>请不要发送</h2>
+            <h2>Please Do Not Send</h2>
             <p>
-              不要发送数据库连接、后台配置、与日程无关的身份证件信息，或包含管理链接和编辑链接完整地址的公开截图。
+              Do not send database URLs, backend configuration, unrelated identity documents, or
+              public screenshots that contain complete management or edit links.
             </p>
           </section>
 
           <footer className={styles.footer}>
-            <a href="/about">关于本工具</a>
-            <a href="/privacy">查看隐私与数据保留说明</a>
-            <a href="/terms">使用条款</a>
-            <a href="/en/feedback">English</a>
+            <a href="/about">About</a>
+            <a href="/privacy">Privacy and Data Retention</a>
+            <a href="/terms">Terms</a>
+            <a href="/zh/feedback">中文</a>
           </footer>
           <DisplayAd pageContext="feedback" placement="bottom-banner" />
         </div>

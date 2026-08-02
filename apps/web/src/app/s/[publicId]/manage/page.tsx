@@ -3,5 +3,5 @@ import { renderManageSchedulePage, type ManageSchedulePageProps } from "./manage
 export const dynamic = "force-dynamic";
 
 export default function ManageSchedulePage(props: ManageSchedulePageProps) {
-  return renderManageSchedulePage(props, "zh-CN");
+  return renderManageSchedulePage(props, "en");
 }

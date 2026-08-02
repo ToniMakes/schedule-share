@@ -3,65 +3,72 @@ import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "../ads/display-ad";
 import { LanguageSwitcher } from "../i18n/language-switcher";
+import { PageLanguage } from "../i18n/page-language";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "使用条款 | 日程表共享",
-  description: "了解使用日程表共享 MVP 时的基本规则、内容边界和服务限制。"
+  title: "Terms of Use | Schedule Share",
+  description:
+    "Basic MVP terms for using Schedule Share, including acceptable use, link permissions, ad status, AI recognition boundaries, and service limitations."
 };
 
 const acceptableUseItems = [
-  "不要提交违法、骚扰、歧视、侵权、恶意软件或明显垃圾信息。",
-  "不要上传或粘贴与排期无关的敏感身份材料、财务信息、医疗记录或他人的私密内容。",
-  "不要公开发布管理链接、编辑链接、数据库连接、API key 或其他密钥。",
-  "不要用自动化脚本刷创建、提交、广告展示、图片识别、奖励额度或导出接口。",
-  "不要鼓励、诱导、要求自己或他人点击广告，也不要用重复刷新、脚本或虚假流量制造广告展示。"
+  "Do not submit illegal, abusive, discriminatory, infringing, malicious, or spam content.",
+  "Do not upload or paste sensitive identity documents, financial data, medical records, or private content unrelated to scheduling.",
+  "Do not publicly share management links, edit links, database URLs, API keys, or other secrets.",
+  "Do not use automation to spam schedule creation, submissions, ad impressions, AI recognition, reward credits, or export endpoints.",
+  "Do not encourage, require, or induce ad clicks, and do not create artificial ad views with refresh loops, scripts, or fake traffic."
 ];
 
 const organizerItems = [
-  "组织者负责确认分享范围，并妥善保存管理链接。",
-  "组织者应在公开群聊中只分享普通填写链接，不分享管理链接。",
-  "如果参与者要求修改或删除自己的提交，组织者应协助处理或通过反馈入口联系维护者。"
+  "Organizers are responsible for choosing an appropriate sharing scope and keeping management links private.",
+  "Organizers should share normal participant links in public group chats, not management links.",
+  "If a participant asks to edit or remove their submission, the organizer should help through the schedule flow or direct them to the feedback channel."
 ];
 
 const aiAndAdItems = [
-  "手动填写、候选投票、文本粘贴、CSV 和 ICS 导入应保持免费可用，不以观看广告为前置条件。",
-  "图片识别如果未来开放，可能需要免费额度、激励广告额度或后续付费额度；额度规则会在功能开放前显示。",
-  "激励广告只能由用户主动选择观看，并且必须通过服务端验证后才发放图片识别额度。",
-  "普通展示广告不等于激励广告；用户点击普通广告不会获得额外额度。"
+  "Manual entry, candidate voting, text paste, CSV import, and ICS import should remain usable without watching ads.",
+  "If image recognition opens later, it may require free credits, rewarded-ad credits, or future paid credits. The credit rules will be shown before launch.",
+  "Rewarded ads must be actively chosen by the user and verified by the server before any image-recognition credit is granted.",
+  "Ordinary display ads are not rewarded ads. Clicking a normal display ad does not grant extra credits."
 ];
 
-export default function TermsPage() {
+export default function EnglishTermsPage() {
   return (
     <main className={styles.page}>
+      <PageLanguage lang="en" />
       <AdPageChrome pageContext="terms">
         <div className={styles.shell}>
           <a className={styles.backLink} href="/">
             <ArrowLeft aria-hidden="true" size={17} />
-            返回首页
+            Back to home
           </a>
-          <LanguageSwitcher chineseHref="/terms" current="zh-CN" englishHref="/en/terms" />
+          <LanguageSwitcher chineseHref="/zh/terms" current="en" englishHref="/terms" />
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>Terms</p>
-            <h1>使用条款</h1>
+            <h1>Terms of Use</h1>
             <p>
-              这是日程表共享海外网页版 MVP
-              的基础使用规则。它用于说明当前内测服务的边界，不替代正式法律条款；正式公开运营前仍需要按目标地区、广告平台和运营主体做法律审阅。
+              These are basic MVP rules for Schedule Share. They describe the current internal-test
+              service boundaries and do not replace final legal terms. Before broad public launch,
+              they should be reviewed against the target regions, ad platform requirements, and the
+              chosen operating entity.
             </p>
           </header>
 
           <DisplayAd pageContext="terms" placement="top-banner" />
 
           <section className={styles.section}>
-            <h2>服务用途</h2>
+            <h2>Service Purpose</h2>
             <p>
-              本工具用于创建一次性或短期的多人排期页面，让组织者收集参与者的可用时间、候选时间偏好，并导出或确认最终时间。请只把它用于合法、低风险、与排期相关的场景。
+              Schedule Share creates one-off or short-term group scheduling pages. Organizers can
+              collect participant availability, compare candidate times, export calendar files, and
+              confirm a final time. Please use it only for lawful, low-risk scheduling scenarios.
             </p>
           </section>
 
           <section className={styles.section}>
-            <h2>可接受使用</h2>
+            <h2>Acceptable Use</h2>
             <ul>
               {acceptableUseItems.map((item) => (
                 <li key={item}>{item}</li>
@@ -72,7 +79,7 @@ export default function TermsPage() {
           <DisplayAd pageContext="terms" placement="inline-results" />
 
           <section className={styles.section}>
-            <h2>组织者责任</h2>
+            <h2>Organizer Responsibilities</h2>
             <ul>
               {organizerItems.map((item) => (
                 <li key={item}>{item}</li>
@@ -81,18 +88,22 @@ export default function TermsPage() {
           </section>
 
           <section className={styles.section}>
-            <h2>数据和链接权限</h2>
+            <h2>Data and Link Permissions</h2>
             <p>
-              公开填写链接、管理链接和参与者编辑链接承担不同权限。拿到管理链接的人可以查看结果、锁定、归档和导出；拿到编辑链接的人可以修改对应参与者的提交。更多说明见{" "}
-              <a href="/privacy">隐私与数据保留说明</a>。
+              Share links, management links, and participant edit links carry different permissions.
+              A management link can review results, lock, archive, and export the schedule. An edit
+              link can modify the corresponding participant submission. More details are available
+              in the <a href="/privacy">Privacy and Data Retention</a> page.
             </p>
           </section>
 
           <section className={styles.section}>
-            <h2>广告和付费状态</h2>
+            <h2>Advertising and Paid Features</h2>
             <p>
-              当前真实广告、激励广告、付费能力和图片识别公开模式都没有开放。网站保留低干扰外围广告位框架，用于未来覆盖基础服务成本；普通手动填写、文本、CSV
-              和 ICS 导入不应被广告强制阻断。
+              Real display ads, rewarded ads, payment features, and public image-recognition mode
+              are not open yet. The site keeps a low-interruption ad framework for future service
+              cost coverage, but core scheduling actions should not be blocked by ordinary display
+              ads.
             </p>
             <ul>
               {aiAndAdItems.map((item) => (
@@ -102,26 +113,29 @@ export default function TermsPage() {
           </section>
 
           <section className={styles.section}>
-            <h2>识别结果和最终确认</h2>
+            <h2>Recognition Results and Final Confirmation</h2>
             <p>
-              文本、CSV、ICS、模板和未来图片识别都只用于生成可编辑预览。系统可能误读日期、时区、课程节次、跨日时间或截图内容；用户应在提交前检查和修正。
-              组织者确认最终时间前，也应自行核对结果摘要和参与者反馈。
+              Text, CSV, ICS, template, and future image recognition flows only create editable
+              previews. The system can misread dates, time zones, course periods, overnight ranges,
+              or screenshot content. Users should review and correct the preview before submitting.
+              Organizers should also verify results before confirming a final time.
             </p>
           </section>
 
           <section className={styles.section}>
-            <h2>服务限制</h2>
+            <h2>Service Limitations</h2>
             <p>
-              MVP
-              可能出现功能调整、临时不可用、数据迁移或内测清理。请不要把它作为医疗、法律、财务、安全生产或其他高风险决策的唯一依据。遇到问题、归档或删除请求，请查看{" "}
-              <a href="/feedback">反馈与删除请求</a>。
+              This MVP may change, become temporarily unavailable, migrate data, or clean up test
+              schedules. Do not use it as the only source of truth for medical, legal, financial,
+              safety-critical, or other high-risk decisions. For issues, archive requests, or
+              deletion requests, see <a href="/feedback">Feedback and deletion requests</a>.
             </p>
           </section>
 
           <footer className={styles.footer}>
-            <a href="/about">关于本工具</a>
-            <a href="/privacy">隐私与数据保留说明</a>
-            <a href="/en/terms">English</a>
+            <a href="/about">About</a>
+            <a href="/privacy">Privacy and Data Retention</a>
+            <a href="/zh/terms">中文</a>
           </footer>
 
           <DisplayAd pageContext="terms" placement="bottom-banner" />

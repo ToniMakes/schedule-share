@@ -100,7 +100,7 @@ function EditView({
 
   return (
     <main className={styles.page}>
-      {locale === "en" ? <PageLanguage lang="en" /> : null}
+      <PageLanguage lang={locale === "en" ? "en" : "zh-CN"} />
       <AdPageChrome mobileAnchor={false} pageContext="edit-sensitive" thirdPartyAllowed={false}>
         <div className={styles.shell}>
           <LanguageSwitcher
@@ -112,7 +112,7 @@ function EditView({
             <Link
               className={styles.backLink}
               href={
-                locale === "en" ? `/en/s/${data.schedule.publicId}` : `/s/${data.schedule.publicId}`
+                locale === "en" ? `/s/${data.schedule.publicId}` : `/zh/s/${data.schedule.publicId}`
               }
             >
               <ArrowLeft aria-hidden="true" size={17} />
@@ -219,7 +219,7 @@ function ErrorView({
 
   return (
     <main className={styles.page}>
-      {locale === "en" ? <PageLanguage lang="en" /> : null}
+      <PageLanguage lang={locale === "en" ? "en" : "zh-CN"} />
       <div className={styles.shell}>
         <LanguageSwitcher
           chineseHref={languageHrefs.chineseHref}
@@ -229,7 +229,7 @@ function ErrorView({
         <header className={styles.header}>
           <Link
             className={styles.backLink}
-            href={locale === "en" ? `/en/s/${publicId}` : `/s/${publicId}`}
+            href={locale === "en" ? `/s/${publicId}` : `/zh/s/${publicId}`}
           >
             <ArrowLeft aria-hidden="true" size={17} />
             {editCopy.backSchedule}
@@ -249,8 +249,8 @@ function buildEditLanguageHrefs(publicId: string, participantId: string, editKey
   const query = editKey.length > 0 ? `?key=${encodeURIComponent(editKey)}` : "";
 
   return {
-    chineseHref: `/s/${publicId}/edit/${participantId}${query}`,
-    englishHref: `/en/s/${publicId}/edit/${participantId}${query}`
+    chineseHref: `/zh/s/${publicId}/edit/${participantId}${query}`,
+    englishHref: `/s/${publicId}/edit/${participantId}${query}`
   };
 }
 

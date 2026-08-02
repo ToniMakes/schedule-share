@@ -7,12 +7,12 @@ const publicRoutes = [
   "/privacy",
   "/feedback",
   "/terms",
-  "/en",
-  "/en/new",
-  "/en/about",
-  "/en/privacy",
-  "/en/feedback",
-  "/en/terms"
+  "/zh",
+  "/zh/new",
+  "/zh/about",
+  "/zh/privacy",
+  "/zh/feedback",
+  "/zh/terms"
 ] as const;
 
 export function GET(): Response {

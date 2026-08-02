@@ -1,4 +1,4 @@
-import { renderSchedulePage } from "./schedule-page-view";
+import { renderSchedulePage } from "../../../s/[publicId]/schedule-page-view";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +11,5 @@ interface SchedulePageProps {
 export default async function SchedulePage({ params }: SchedulePageProps) {
   const { publicId } = await params;
 
-  return renderSchedulePage(publicId, "en");
+  return renderSchedulePage(publicId, "zh-CN");
 }

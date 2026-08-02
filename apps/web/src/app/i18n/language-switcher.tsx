@@ -1,12 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-
-import {
-  readPreferredLocale,
-  rememberPreferredLocale,
-  type SiteLocale
-} from "./language-preference";
+import { rememberPreferredLocale, type SiteLocale } from "./language-preference";
 import styles from "./language-switcher.module.css";
 
 interface LanguageSwitcherProps {
@@ -16,24 +10,6 @@ interface LanguageSwitcherProps {
 }
 
 export function LanguageSwitcher({ chineseHref, current, englishHref }: LanguageSwitcherProps) {
-  useEffect(() => {
-    if (current !== "zh-CN") {
-      return;
-    }
-
-    const preferredLocale = readPreferredLocale(window.localStorage);
-
-    if (preferredLocale !== "en") {
-      return;
-    }
-
-    const targetUrl = new URL(englishHref, window.location.href);
-
-    if (targetUrl.href !== window.location.href) {
-      window.location.replace(targetUrl.href);
-    }
-  }, [current, englishHref]);
-
   return (
     <nav aria-label="Language" className={styles.switcher}>
       <a

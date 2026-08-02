@@ -430,7 +430,7 @@ function toErrorMessage(
 }
 
 function localizeEditUrl(editUrl: string, locale: SchedulePageLocale): string {
-  if (locale !== "en") {
+  if (locale !== "zh-CN") {
     return editUrl;
   }
 
@@ -438,13 +438,13 @@ function localizeEditUrl(editUrl: string, locale: SchedulePageLocale): string {
     const url = new URL(editUrl);
 
     if (url.pathname.startsWith("/s/")) {
-      url.pathname = `/en${url.pathname}`;
+      url.pathname = `/zh${url.pathname}`;
     }
 
     return url.toString();
   } catch {
     if (editUrl.startsWith("/s/")) {
-      return `/en${editUrl}`;
+      return `/zh${editUrl}`;
     }
 
     return editUrl;
