@@ -1468,13 +1468,13 @@
 }
 
 .availabilityMatrixDateHeaderActive {
-  background: #ecfdf5;
+  background: #eff6ff;
 }
 
 .availabilityMatrixDateHeaderActive span,
 .availabilityMatrixDateHeaderActive strong,
 .availabilityMatrixDateHeaderActive em {
-  color: #047857;
+  color: #1d4ed8;
 }
 
 .availabilityMatrixTimeHeader {
@@ -1506,13 +1506,13 @@
 
 .availabilityMatrixCell {
   position: relative;
-  background: #fff1f2;
+  background: #f1f5f9;
   cursor: pointer;
   touch-action: none;
 }
 
 .availabilityMatrixCell:hover {
-  background: #ffe4e6;
+  background: #e2e8f0;
 }
 
 .availabilityMatrixCell:focus-visible {
@@ -1522,12 +1522,12 @@
 }
 
 .availabilityMatrixCellSelected {
-  background: #16a34a;
-  border-color: #15803d;
+  background: #2563eb;
+  border-color: #1d4ed8;
 }
 
 .availabilityMatrixCellSelected:hover {
-  background: #15803d;
+  background: #1d4ed8;
 }
 
 .availabilityMatrixCellSelected::after {
