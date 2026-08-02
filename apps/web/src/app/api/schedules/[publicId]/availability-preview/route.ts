@@ -3,6 +3,7 @@ import { availabilityPreviewRequestSchema } from "@schedule-share/api-client";
 import { HttpError, withApiErrorHandling } from "@/server/errors";
 import { parseJsonRequest } from "@/server/request-json";
 import { readScheduleRouteParams, type ScheduleRouteContext } from "@/server/route-inputs";
+import { createAiRecognitionCreditLedger } from "@/server/ai-credits";
 import { parseCsvImportFormDataFields } from "@/server/schedules/csv-import";
 import {
   createConfiguredImageImportProvider,
@@ -35,6 +36,10 @@ export async function POST(request: Request, context: ScheduleRouteContext): Pro
           maxBytes: imageImportConfig.maxBytes
         });
         const response = await previewAvailabilityDraftFromImage(publicId, input, {
+          imageCreditLedger: imageImportConfig.creditsEnforced
+            ? createAiRecognitionCreditLedger()
+            : undefined,
+          imageImportConfig,
           imageImportProvider: createConfiguredImageImportProvider(
             process.env,
             fetch,

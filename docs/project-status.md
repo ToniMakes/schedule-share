@@ -11,7 +11,7 @@
 
 下一阶段的产品差异化决策已经补充到 `docs/adr/0008-availability-import-and-templates.md` 和 `docs/adr/0009-multiple-availability-entry-methods.md`：优先把课表/排班导入、登录用户长期可用模板、When2meet 风格手动拖拽网格和 Doodle/Rallly 风格候选时间投票纳入“多种可用时间添加方式”策略。除手动拖拽外，这些能力只生成预填建议，不绕过用户确认，也不替代当前匿名主流程。
 
-常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、真实广告上线硬闸门、广告/AI 基础隐私披露、可配置公开支持邮箱入口，以及 AI 额度账本数据库和服务层；真实广告和图片识别公开额度校验仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
+常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、真实广告上线硬闸门、广告/AI 基础隐私披露、可配置公开支持邮箱入口，以及 AI 额度账本数据库、服务层和 `image_import` 强制额度校验开关；真实广告和图片识别公开入口仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
 
 当前本机限制：
 
@@ -69,7 +69,7 @@
 - 文本粘贴导入支持中文上午/下午写法、英文 `from 9 to 11 on Monday`、`between 9 and 11 on Monday`、`noon-1pm`、`midnight to 1am`、`6 to 7pm`、`9am until 11am`、`2pm till 4pm`、`9am for 2 hours`、`14:30 for 90 min` 自然句、英文月份日期、`Mon, 9-11` 日期/星期逗号上下文、列表/编号和 `Busy:`/`忙碌:` 状态前缀归一化、tab 或逗号分隔课表/排班表格、Markdown 表格、复制自合并日期表头的多行表头、日期/星期 + 时间的双层表头、`Start/End` 拆分表头行、左右并排区域各自独立 `Time/时间` 列的课表、导出标题行后的 `Date/Start/End/Title`、`Date/Time/Title`、`Day/Time/Activity`、`Day of Week/Period/Activity` 这类行式排班表格、空白日期/时间单元格上一行继承、独立 `Notes/备注` 列纯备注续行、常见导出标题/汇总/页脚/说明行跳过、带明确钟点的课程节次行，以及无明确钟点课程节次按用户粘贴的自定义节次表、裸数字自定义节次定义、`Period/节次` 列裸 `1-2` 范围或默认作息表换算并提示复核。
 - `POST /api/schedules/:publicId/availability-preview` 的 `image_import` multipart 图片预览 API。
 - 图片课表/排班导入的 PNG、JPEG、WebP 文件类型限制、4MB 大小限制和 OpenAI provider 适配器。
-- 参与者填写页和开放网格编辑页的图片上传预填代码路径；`OPENAI_API_KEY` 只是 provider 凭证，当前还有 `AI_IMAGE_IMPORT_ENABLED`、`AI_IMAGE_IMPORT_RELEASE_MODE`、内测 token、上传大小、超时、输出 token、置信度、单次估算成本、单次成本上限、每日请求上限和每日预算等运行时闸门；公开模式在代码层阻断，公开前端入口默认隐藏，直到图片识别 API 强制接入额度账本、广告验证和完整成本护栏。
+- 参与者填写页和开放网格编辑页的图片上传预填代码路径；`OPENAI_API_KEY` 只是 provider 凭证，当前还有 `AI_IMAGE_IMPORT_ENABLED`、`AI_IMAGE_IMPORT_RELEASE_MODE`、内测 token、上传大小、超时、输出 token、置信度、单次估算成本、单次成本上限、每日请求上限、每日预算和 `AI_IMAGE_CREDITS_ENFORCED` 额度强制校验等运行时闸门；公开模式在代码层阻断，公开前端入口默认隐藏，直到广告验证、动态成本护栏和公开入口验收完成。
 - `POST /api/schedules/:publicId/availability-preview` 的 `ics_import` multipart 日历文件预览 API，支持单个 `.ics` 文件、1MB 限制、基础 `VEVENT`、`VFREEBUSY` 忙闲区间、UTC/`TZID` 时间、常见 Windows 时区别名、`DTSTART` + `DURATION`（含周、日、时、分、秒，秒级时长向上折算到分钟）、`FREEBUSY` 的 `start/end` 与 `start/duration` 区间、全天事件（含缺少 `DTEND` 的 date-only `DTSTART`）、常见每日 `RRULE`、常见每周 `RRULE`、常见月度 `RRULE`（含 `BYMONTH` 指定月份和 `BYSETPOS` 位置过滤）、常见年度 `RRULE`（含 `BYSETPOS` 位置过滤）、`COUNT` / `UNTIL` 有限重复、`RDATE` 额外日期或 `VALUE=PERIOD` 额外时段、`EXDATE` 例外日期和同 `UID` 的 `RECURRENCE-ID` 单次取消/改期。
 - 参与者填写页和开放网格编辑页的 `.ics` 日历文件预填入口；日历文件只生成可编辑草稿，不保存原文件。
 - `POST /api/schedules/:publicId/availability-preview` 的 `csv_import` multipart CSV 文件预览 API，支持单个 `.csv` 文件、1MB 限制、“时间 x 星期/日期列”课表/排班 CSV、复制自合并日期表头的多行表头、日期/星期 + 时间的双层表头、`Start/End` 拆分表头行、左右并排区域各自独立 `Time/时间` 列的 CSV、多种常见行式排班 CSV 表头、导出标题行跳过、常见导出标题/汇总/页脚/说明行跳过、单列时间范围表头、`Period/节次` 课程节次表头裸 `1-2` 范围、自定义节次表、空白日期/时间单元格上一行继承和独立 `Notes/备注` 列纯备注续行。
@@ -85,7 +85,7 @@
 - `POST /api/schedules/:publicId/availability-preview` 的 `template` 内联模板预览 API。
 - 参与者填写页和开放网格编辑页的每周模板预填入口，支持选择星期和起止时间后生成本次日程可用时间草稿，并在本机浏览器记住上次成功使用的模板控件值，也可保存、选择和删除多个本机模板。
 - `schedule_mode`、`candidate_time_options`、`candidate_vote_response`、`candidate_votes` 和 `candidate_votes.preference_rank` 数据库结构及 migration。
-- AI 图片识别额度账本数据库结构、migration 和服务层：`ai_recognition_credit_grants`、`ai_recognition_attempts`、`rewarded_ad_verifications`，以及 `apps/web/src/server/ai-credits.ts` 的额度状态汇总、发放、原子消耗、成功标记、退款和广告验证事件去重方法；当前尚未接入图片识别 API，也尚未实现免费额度自动发放或广告服务端验证。
+- AI 图片识别额度账本数据库结构、migration 和服务层：`ai_recognition_credit_grants`、`ai_recognition_attempts`、`rewarded_ad_verifications`，以及 `apps/web/src/server/ai-credits.ts` 的额度状态汇总、发放、原子消耗、成功标记、失败标记、退款和广告验证事件去重方法；`image_import` 已在 `AI_IMAGE_CREDITS_ENFORCED=true` 时按日程 scope 先扣额度，成功后标记 succeeded，provider 不可用或内部失败时退款，低置信度只标记 `low_confidence` 不自动退款；当前尚未实现免费额度自动发放、广告服务端验证、动态成本计数或前端兑换入口。
 - 创建页的候选时间投票模式，支持组织者添加明确候选时间。
 - 参与者页和编辑页的三态候选投票 v1，支持对每个候选项选择方便、也许或不方便，并可为方便/也许的候选项通过按钮或拖拽设置偏好顺位；`available` 继续复用现有提交、编辑、汇总、锁定、归档和导出链路。
 - 公开日程页和管理页的候选投票专门结果视图，支持最佳候选、排序依据、综合支持度、每项支持率、候选项洞察、缺口标签、对比最佳分析、方便名单、也许名单、不方便/未选择名单、首选名单和平均偏好顺位展示。
@@ -135,7 +135,7 @@ corepack pnpm build
 corepack pnpm db:setup
 ```
 
-当前测试总数：471。
+当前测试总数：477。
 
 真实数据库验证：
 
@@ -222,7 +222,7 @@ corepack pnpm db:setup
 - 尚未配置生产日志、监控、告警和备份演练。
 - 隐私与数据保留说明仍需正式法律审阅，正式反馈联系渠道和删除请求处理时限尚未确定。
 - 尚未做微信小程序版。
-- 尚未开放真实广告、激励广告、商业化或支付能力；默认关闭的常驻展示广告位框架、公开审核资产、基础广告/AI 隐私披露、真实广告上线硬闸门、AI 图片识别静态成本闸门、AI 额度账本数据库结构、额度账本服务层和 `/ads.txt` 路由已实现，仍缺正式法律审阅、实际公开联系邮箱或表单、实际广告供应商披露、publisher / slot ID、AdSense 审核通过、真实广告平台接入验收、密钥 URL 迁移、广告 consent、真实广告监控、免费额度自动发放、图片识别 API 强制额度校验、广告服务端验证、动态成本计数和前端兑换流程。
+- 尚未开放真实广告、激励广告、商业化或支付能力；默认关闭的常驻展示广告位框架、公开审核资产、基础广告/AI 隐私披露、真实广告上线硬闸门、AI 图片识别静态成本闸门、AI 额度账本数据库结构、额度账本服务层、图片识别 API 额度强制校验开关和 `/ads.txt` 路由已实现，仍缺正式法律审阅、实际公开联系邮箱或表单、实际广告供应商披露、publisher / slot ID、AdSense 审核通过、真实广告平台接入验收、密钥 URL 迁移、广告 consent、真实广告监控、免费额度自动发放、广告服务端验证、动态成本计数和前端兑换流程。
 - 图片课表/排班导入已接入基础 provider，但公开模式被代码层阻断；本地或内测需要配置 `OPENAI_API_KEY`、功能开关、release mode 和必要 token 后才能真实识别截图，仍缺少真实课表/排班样本调优。
 - 文本粘贴导入目前支持常见结构化时间文本、英文月份日期、日期/星期逗号上下文保留、英文 `from/to/until/till/between ... and ...` 自然句、英文 `noon/midnight` 时间词、结束时间 am/pm 反推开始时间、开始时间加数字时长、列表/编号和忙碌状态前缀、基础课表/排班表格粘贴、复制自合并日期表头的多行表头、日期/星期 + 时间双层表头、`Start/End` 拆分表头行、左右并排区域独立时间列、`Date/Start/End/Title`、`Date/Time/Title`、`Day/Time/Activity`、`Day of Week/Period/Activity` 这类行式排班表格、空白日期/时间继承、独立备注续行、常见导出标题/汇总/说明/页脚跳过、带明确钟点的课程节次、用户粘贴的自定义节次表、裸数字自定义节次定义、`Period/节次` 列裸数字范围和无明确钟点课程节次默认作息表预填；更复杂自然语言、更多学校特殊节次格式、更多深层分组表头和非结构化多行说明待真实样本评估。
 - `.ics` 日历导入已支持基础事件、`VFREEBUSY` 忙闲区间、常见 Windows 时区别名、`DTSTART` + `DURATION`（含周、日、时、分、秒，秒级时长向上折算到分钟）、全天事件（含缺少 `DTEND` 的 date-only `DTSTART`）、常见每日重复事件、常见每周重复事件、常见月度重复事件（含指定月份、月内日期、月末、每月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、常见年度重复事件（含同月同日、指定月份、指定月内日期、每年某月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、有限重复、`RDATE` 额外日期或 `VALUE=PERIOD` 额外时段、例外日期和同 `UID` 的 `RECURRENCE-ID` 单次取消/改期；更复杂 recurrence、更多非 IANA 时区和真实日历样本仍待补充验证。
@@ -239,7 +239,7 @@ corepack pnpm db:setup
 4. 根据真实候选投票使用情况评估是否需要参与者自定义偏好权重。
 5. 继续用真实移动设备走查手动网格的边缘滚动、惯性滚动和超长日期范围下的结果密度体验。
 6. 在决定登录方案前新增或更新认证 ADR，再实现用户、模板数据库表，并把当前本机模板升级为账号保存型模板选择。
-7. 继续完善广告审核资产的正式内容：补运营主体、实际公开联系方式、法律审阅、实际广告供应商、个性化广告退出方式、地区化 consent、publisher / slot ID 和生产域名白名单；通过 AdSense 审核后，再把当前默认关闭的常驻广告位框架切到小流量真实广告。带 `?key=` 的管理/编辑页继续只允许内部广告或关闭第三方广告。之后把图片识别 API 接入已实现的额度账本服务，补免费额度自动发放、单日程/全站限额、动态成本计数和紧急关闭开关，确认有效 eCPM 后接入可服务端验证的激励广告。
+7. 继续完善广告审核资产的正式内容：补运营主体、实际公开联系方式、法律审阅、实际广告供应商、个性化广告退出方式、地区化 consent、publisher / slot ID 和生产域名白名单；通过 AdSense 审核后，再把当前默认关闭的常驻广告位框架切到小流量真实广告。带 `?key=` 的管理/编辑页继续只允许内部广告或关闭第三方广告。之后补免费额度自动发放、单日程/全站限额、动态成本计数和紧急关闭开关，确认有效 eCPM 后接入可服务端验证的激励广告。
 8. 找 3 到 5 个朋友按内测清单试用，重点观察手动填写是否已经够用、导入是否明显降低填写成本。
 9. 配置生产日志、监控、告警和备份演练。
 

@@ -122,6 +122,7 @@ export interface ImageImportRuntimeConfig {
   readonly maxEstimatedCostPerRequestUsd: number;
   readonly maxOutputTokens: number;
   readonly minConfidence: number;
+  readonly model: string;
   readonly nodeEnv?: string;
   readonly releaseMode: ImageImportReleaseMode;
   readonly timeoutMs: number;
@@ -244,7 +245,7 @@ export function createConfiguredImageImportProvider(
     fetch: fetchImpl,
     maxOutputTokens: config.maxOutputTokens,
     minConfidence: config.minConfidence,
-    model: environment.OPENAI_IMAGE_IMPORT_MODEL,
+    model: config.model,
     timeoutMs: config.timeoutMs
   });
 }
@@ -296,6 +297,8 @@ export function readImageImportRuntimeConfig(
       maxValue: 1,
       minValue: 0
     }),
+    model:
+      trimToUndefined(environment.OPENAI_IMAGE_IMPORT_MODEL) ?? DEFAULT_OPENAI_IMAGE_IMPORT_MODEL,
     nodeEnv: trimToUndefined(environment.NODE_ENV),
     releaseMode: parseReleaseMode(environment.AI_IMAGE_IMPORT_RELEASE_MODE),
     timeoutMs: parseBoundedInteger(environment.OPENAI_IMAGE_IMPORT_TIMEOUT_MS, {

@@ -1,9 +1,18 @@
 import type { Database } from "@schedule-share/db";
 import { describe, expect, it } from "vitest";
 
-import { DrizzleAiRecognitionCreditLedger } from "./ai-credits";
+import { createScheduleAiCreditScope, DrizzleAiRecognitionCreditLedger } from "./ai-credits";
 
 describe("DrizzleAiRecognitionCreditLedger", () => {
+  it("creates a stable hashed schedule credit scope", () => {
+    const first = createScheduleAiCreditScope("abc123");
+    const second = createScheduleAiCreditScope("abc123");
+
+    expect(first).toEqual(second);
+    expect(first.scopeType).toBe("schedule");
+    expect(first.scopeIdHash).not.toContain("abc123");
+  });
+
   it("summarizes active credits and the next expiration", async () => {
     const firstExpiration = new Date("2026-08-03T00:00:00.000Z");
     const secondExpiration = new Date("2026-08-04T00:00:00.000Z");
@@ -184,6 +193,16 @@ describe("DrizzleAiRecognitionCreditLedger", () => {
     );
 
     await expect(ledger.markRecognitionAttemptSucceeded("attempt-1")).resolves.toBe(true);
+  });
+
+  it("marks a started attempt as failed without refunding by itself", async () => {
+    const ledger = new DrizzleAiRecognitionCreditLedger(
+      buildUpdateOnlyDatabase([{ id: "attempt-1" }])
+    );
+
+    await expect(
+      ledger.markRecognitionAttemptFailed("attempt-1", "provider_unavailable")
+    ).resolves.toBe(true);
   });
 
   it("refunds a failed attempt once and reports later duplicate refunds", async () => {

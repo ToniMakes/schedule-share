@@ -15,11 +15,13 @@ import {
   type LocalTime
 } from "@schedule-share/core";
 
+import { createScheduleAiCreditScope, type AiRecognitionCreditLedger } from "../ai-credits";
 import { HttpError } from "../errors";
 import { parseCsvImportBusyBlocks, type CsvImportPreviewInput } from "./csv-import";
 import {
   ImageImportLowConfidenceError,
   ImageImportProviderUnavailableError,
+  type ImageImportRuntimeConfig,
   type ImageImportPreviewInput,
   type ImageImportProvider
 } from "./image-import";
@@ -30,6 +32,11 @@ import { toTimeSlotConfig } from "./schedule-config";
 import { parseTextImportBusyBlocks } from "./text-import";
 
 export interface PreviewAvailabilityDependencies {
+  readonly imageCreditLedger?: AiRecognitionCreditLedger;
+  readonly imageImportConfig?: Pick<
+    ImageImportRuntimeConfig,
+    "creditsEnforced" | "estimatedCostPerRequestUsd" | "model"
+  >;
   readonly imageImportProvider?: ImageImportProvider;
   readonly repository: ReadScheduleRepository;
 }
@@ -88,6 +95,12 @@ export async function previewAvailabilityDraftFromImage(
   }
 
   const record = await getOpenScheduleRecord(publicId, dependencies.repository);
+  const creditAttempt = await consumeImageRecognitionCreditIfNeeded(
+    publicId,
+    input,
+    record,
+    dependencies
+  );
 
   try {
     const recognized = await provider.recognizeBusyBlocks({
@@ -99,6 +112,12 @@ export async function previewAvailabilityDraftFromImage(
       timezone: input.timezone
     });
 
+    if (creditAttempt !== undefined) {
+      await dependencies.imageCreditLedger?.markRecognitionAttemptSucceeded(
+        creditAttempt.attemptId
+      );
+    }
+
     return createPreviewFromBusyBlocks({
       busyBlocks: recognized.busyBlocks,
       confidence: recognized.confidence,
@@ -108,11 +127,38 @@ export async function previewAvailabilityDraftFromImage(
     });
   } catch (error) {
     if (error instanceof ImageImportProviderUnavailableError) {
+      if (creditAttempt !== undefined) {
+        await dependencies.imageCreditLedger?.markRecognitionAttemptFailed(
+          creditAttempt.attemptId,
+          "provider_unavailable"
+        );
+        await dependencies.imageCreditLedger?.refundRecognitionAttempt({
+          attemptId: creditAttempt.attemptId
+        });
+      }
+
       throw new HttpError(503, "IMPORT_PROVIDER_UNAVAILABLE", error.message);
     }
 
     if (error instanceof ImageImportLowConfidenceError) {
+      if (creditAttempt !== undefined) {
+        await dependencies.imageCreditLedger?.markRecognitionAttemptFailed(
+          creditAttempt.attemptId,
+          "low_confidence"
+        );
+      }
+
       throw new HttpError(422, "IMPORT_LOW_CONFIDENCE", error.message);
+    }
+
+    if (creditAttempt !== undefined) {
+      await dependencies.imageCreditLedger?.markRecognitionAttemptFailed(
+        creditAttempt.attemptId,
+        "failed"
+      );
+      await dependencies.imageCreditLedger?.refundRecognitionAttempt({
+        attemptId: creditAttempt.attemptId
+      });
     }
 
     throw error;
@@ -224,6 +270,46 @@ function createPreviewFromTemplate({
 
     throw error;
   }
+}
+
+async function consumeImageRecognitionCreditIfNeeded(
+  publicId: string,
+  input: ImageImportPreviewInput,
+  record: ScheduleWithAvailabilityRecord,
+  dependencies: PreviewAvailabilityDependencies
+): Promise<{ readonly attemptId: string } | undefined> {
+  const config = dependencies.imageImportConfig;
+
+  if (config?.creditsEnforced !== true) {
+    return undefined;
+  }
+
+  const ledger = dependencies.imageCreditLedger;
+
+  if (ledger === undefined) {
+    throw new HttpError(503, "IMPORT_PROVIDER_UNAVAILABLE", "AI credit ledger is not configured.");
+  }
+
+  const consumed = await ledger.consumeImageRecognitionCredit({
+    ...createScheduleAiCreditScope(publicId),
+    estimatedCostUsd: config.estimatedCostPerRequestUsd,
+    imageByteSize: input.file.size,
+    imageMimeType: input.file.mimeType,
+    model: config.model,
+    scheduleId: record.schedule.id
+  });
+
+  if (!consumed.consumed) {
+    throw new HttpError(
+      402,
+      "AI_CREDIT_REQUIRED",
+      "An AI image recognition credit is required before using image import."
+    );
+  }
+
+  return {
+    attemptId: consumed.attemptId
+  };
 }
 
 function createPreviewFromBusyBlocks({

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import type {
+  AiRecognitionCreditLedger,
+  ConsumeImageRecognitionCreditInput,
+  ConsumeImageRecognitionCreditResult
+} from "../ai-credits";
 import { HttpError } from "../errors";
 import {
   ImageImportLowConfidenceError,
@@ -49,6 +54,73 @@ class FakeImageImportProvider implements ImageImportProvider {
     }
 
     return this.result;
+  }
+}
+
+class FakeAiRecognitionCreditLedger implements AiRecognitionCreditLedger {
+  readonly consumedInputs: ConsumeImageRecognitionCreditInput[] = [];
+  readonly events: string[] = [];
+  readonly failedAttempts: Array<{ readonly attemptId: string; readonly status: string }> = [];
+  readonly refundedAttemptIds: string[] = [];
+  readonly succeededAttemptIds: string[] = [];
+
+  constructor(private readonly consumeResult: ConsumeImageRecognitionCreditResult) {}
+
+  async consumeImageRecognitionCredit(
+    input: ConsumeImageRecognitionCreditInput
+  ): Promise<ConsumeImageRecognitionCreditResult> {
+    this.consumedInputs.push(input);
+    return this.consumeResult;
+  }
+
+  async getCreditStatus() {
+    return {
+      activeGrantCount: 0,
+      creditsRemaining: 0
+    };
+  }
+
+  async grantCredits() {
+    return {
+      creditsGranted: 1,
+      creditsRemaining: 1,
+      duplicate: false,
+      grantId: "grant-1"
+    };
+  }
+
+  async markRecognitionAttemptFailed(
+    attemptId: string,
+    status: "failed" | "low_confidence" | "provider_unavailable"
+  ) {
+    this.events.push(`failed:${status}:${attemptId}`);
+    this.failedAttempts.push({ attemptId, status });
+    return true;
+  }
+
+  async markRecognitionAttemptSucceeded(attemptId: string) {
+    this.events.push(`succeeded:${attemptId}`);
+    this.succeededAttemptIds.push(attemptId);
+    return true;
+  }
+
+  async recordRewardedAdVerification() {
+    return {
+      duplicate: false,
+      verificationId: "verification-1",
+      verificationStatus: "verified" as const
+    };
+  }
+
+  async refundRecognitionAttempt(input: { readonly attemptId: string }) {
+    this.events.push(`refunded:${input.attemptId}`);
+    this.refundedAttemptIds.push(input.attemptId);
+
+    return {
+      creditGrantId: "grant-1",
+      creditsRemainingInGrant: 1,
+      refunded: true as const
+    };
   }
 }
 
@@ -615,6 +687,102 @@ describe("previewAvailabilityDraftFromImage", () => {
     ]);
   });
 
+  it("consumes and finalizes an AI credit when credit enforcement is enabled", async () => {
+    const repository = new FakeScheduleRepository(buildScheduleRecord());
+    const provider = new FakeImageImportProvider({
+      busyBlocks: [],
+      confidence: 0.9,
+      warnings: []
+    });
+    const ledger = new FakeAiRecognitionCreditLedger({
+      attemptId: "attempt-1",
+      consumed: true,
+      creditGrantId: "grant-1",
+      creditsRemainingInGrant: 0
+    });
+
+    await previewAvailabilityDraftFromImage(
+      "abc123",
+      {
+        file: {
+          bytes: new Uint8Array([1, 2, 3]),
+          filename: "timetable.png",
+          mimeType: "image/png",
+          size: 3
+        },
+        interpretsAs: "busy",
+        timezone: "Australia/Sydney"
+      },
+      {
+        imageCreditLedger: ledger,
+        imageImportConfig: {
+          creditsEnforced: true,
+          estimatedCostPerRequestUsd: 0.01,
+          model: "gpt-5.6-luna"
+        },
+        imageImportProvider: provider,
+        repository
+      }
+    );
+
+    expect(ledger.consumedInputs).toEqual([
+      expect.objectContaining({
+        estimatedCostUsd: 0.01,
+        imageByteSize: 3,
+        imageMimeType: "image/png",
+        model: "gpt-5.6-luna",
+        scheduleId: "schedule-1",
+        scopeType: "schedule"
+      })
+    ]);
+    expect(ledger.succeededAttemptIds).toEqual(["attempt-1"]);
+    expect(ledger.refundedAttemptIds).toEqual([]);
+  });
+
+  it("requires an AI credit before calling the image provider when credits are enforced", async () => {
+    const repository = new FakeScheduleRepository(buildScheduleRecord());
+    const provider = new FakeImageImportProvider({
+      busyBlocks: [],
+      confidence: 0.9,
+      warnings: []
+    });
+    const ledger = new FakeAiRecognitionCreditLedger({
+      consumed: false,
+      reason: "no_credits"
+    });
+
+    await expect(
+      previewAvailabilityDraftFromImage(
+        "abc123",
+        {
+          file: {
+            bytes: new Uint8Array([1, 2, 3]),
+            filename: "timetable.png",
+            mimeType: "image/png",
+            size: 3
+          },
+          interpretsAs: "busy",
+          timezone: "Australia/Sydney"
+        },
+        {
+          imageCreditLedger: ledger,
+          imageImportConfig: {
+            creditsEnforced: true,
+            estimatedCostPerRequestUsd: 0.01,
+            model: "gpt-5.6-luna"
+          },
+          imageImportProvider: provider,
+          repository
+        }
+      )
+    ).rejects.toMatchObject({
+      code: "AI_CREDIT_REQUIRED",
+      status: 402
+    } satisfies Partial<HttpError>);
+
+    expect(provider.inputs).toEqual([]);
+  });
+
   it("returns provider unavailable when image import has no provider", async () => {
     const repository = new FakeScheduleRepository(buildScheduleRecord());
 
@@ -693,6 +861,106 @@ describe("previewAvailabilityDraftFromImage", () => {
       code: "IMPORT_PROVIDER_UNAVAILABLE",
       status: 503
     } satisfies Partial<HttpError>);
+  });
+
+  it("refunds the consumed credit when the image provider is unavailable", async () => {
+    const repository = new FakeScheduleRepository(buildScheduleRecord());
+    const ledger = new FakeAiRecognitionCreditLedger({
+      attemptId: "attempt-1",
+      consumed: true,
+      creditGrantId: "grant-1",
+      creditsRemainingInGrant: 0
+    });
+
+    await expect(
+      previewAvailabilityDraftFromImage(
+        "abc123",
+        {
+          file: {
+            bytes: new Uint8Array([1, 2, 3]),
+            filename: "timetable.png",
+            mimeType: "image/png",
+            size: 3
+          },
+          interpretsAs: "busy",
+          timezone: "Australia/Sydney"
+        },
+        {
+          imageCreditLedger: ledger,
+          imageImportConfig: {
+            creditsEnforced: true,
+            estimatedCostPerRequestUsd: 0.01,
+            model: "gpt-5.6-luna"
+          },
+          imageImportProvider: new FakeImageImportProvider(
+            new ImageImportProviderUnavailableError("Provider failed.")
+          ),
+          repository
+        }
+      )
+    ).rejects.toMatchObject({
+      code: "IMPORT_PROVIDER_UNAVAILABLE",
+      status: 503
+    } satisfies Partial<HttpError>);
+
+    expect(ledger.failedAttempts).toEqual([
+      {
+        attemptId: "attempt-1",
+        status: "provider_unavailable"
+      }
+    ]);
+    expect(ledger.events).toEqual(["failed:provider_unavailable:attempt-1", "refunded:attempt-1"]);
+    expect(ledger.refundedAttemptIds).toEqual(["attempt-1"]);
+  });
+
+  it("does not auto-refund low-confidence image recognition attempts", async () => {
+    const repository = new FakeScheduleRepository(buildScheduleRecord());
+    const ledger = new FakeAiRecognitionCreditLedger({
+      attemptId: "attempt-1",
+      consumed: true,
+      creditGrantId: "grant-1",
+      creditsRemainingInGrant: 0
+    });
+
+    await expect(
+      previewAvailabilityDraftFromImage(
+        "abc123",
+        {
+          file: {
+            bytes: new Uint8Array([1, 2, 3]),
+            filename: "timetable.png",
+            mimeType: "image/png",
+            size: 3
+          },
+          interpretsAs: "busy",
+          timezone: "Australia/Sydney"
+        },
+        {
+          imageCreditLedger: ledger,
+          imageImportConfig: {
+            creditsEnforced: true,
+            estimatedCostPerRequestUsd: 0.01,
+            model: "gpt-5.6-luna"
+          },
+          imageImportProvider: new FakeImageImportProvider(
+            new ImageImportLowConfidenceError("Could not read image.")
+          ),
+          repository
+        }
+      )
+    ).rejects.toMatchObject({
+      code: "IMPORT_LOW_CONFIDENCE",
+      status: 422
+    } satisfies Partial<HttpError>);
+
+    expect(ledger.failedAttempts).toEqual([
+      {
+        attemptId: "attempt-1",
+        status: "low_confidence"
+      }
+    ]);
+    expect(ledger.events).toEqual(["failed:low_confidence:attempt-1"]);
+    expect(ledger.refundedAttemptIds).toEqual([]);
   });
 });
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const apiErrorCodes = [
+  "AI_CREDIT_REQUIRED",
   "CANDIDATE_OPTION_NOT_FOUND",
   "DATABASE_UNAVAILABLE",
   "FORBIDDEN",

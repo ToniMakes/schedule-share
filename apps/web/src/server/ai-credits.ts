@@ -9,6 +9,7 @@ import {
 } from "@schedule-share/db";
 import { and, asc, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
+import { hashKey } from "./credentials";
 import { getDatabase as getDefaultDatabase } from "./db";
 
 export type AiCreditScopeType = "anonymous_session" | "participant" | "schedule";
@@ -96,6 +97,11 @@ export interface AiRecognitionCreditLedger {
   ): Promise<ConsumeImageRecognitionCreditResult>;
   getCreditStatus(scope: AiCreditScope, now?: Date): Promise<AiCreditStatus>;
   grantCredits(input: GrantAiRecognitionCreditsInput): Promise<GrantAiRecognitionCreditsResult>;
+  markRecognitionAttemptFailed(
+    attemptId: string,
+    status: Exclude<AiRecognitionAttemptStatus, "refunded" | "started" | "succeeded">,
+    now?: Date
+  ): Promise<boolean>;
   markRecognitionAttemptSucceeded(attemptId: string, now?: Date): Promise<boolean>;
   recordRewardedAdVerification(
     input: RecordRewardedAdVerificationInput
@@ -117,6 +123,13 @@ export function createAiRecognitionCreditLedger(
   const database = dependencies.database ?? (dependencies.getDatabase ?? getDefaultDatabase)();
 
   return new DrizzleAiRecognitionCreditLedger(database);
+}
+
+export function createScheduleAiCreditScope(publicId: string): AiCreditScope {
+  return {
+    scopeType: "schedule",
+    scopeIdHash: hashKey(`schedule:${normalizeNonEmptyString(publicId, "publicId")}`)
+  };
 }
 
 export class DrizzleAiRecognitionCreditLedger implements AiRecognitionCreditLedger {
@@ -292,6 +305,31 @@ export class DrizzleAiRecognitionCreditLedger implements AiRecognitionCreditLedg
       .update(aiRecognitionAttempts)
       .set({
         status: "succeeded",
+        updatedAt: now
+      })
+      .where(
+        and(
+          eq(aiRecognitionAttempts.id, normalizedAttemptId),
+          eq(aiRecognitionAttempts.status, "started")
+        )
+      )
+      .returning({
+        id: aiRecognitionAttempts.id
+      });
+
+    return updated !== undefined;
+  }
+
+  async markRecognitionAttemptFailed(
+    attemptId: string,
+    status: Exclude<AiRecognitionAttemptStatus, "refunded" | "started" | "succeeded">,
+    now = new Date()
+  ): Promise<boolean> {
+    const normalizedAttemptId = normalizeNonEmptyString(attemptId, "attemptId");
+    const [updated] = await this.database
+      .update(aiRecognitionAttempts)
+      .set({
+        status,
         updatedAt: now
       })
       .where(
