@@ -13,7 +13,9 @@ export type DisplayAdPageContext =
   | "public-schedule"
   | "manage-sensitive"
   | "edit-sensitive"
+  | "about"
   | "privacy"
+  | "terms"
   | "feedback";
 
 export type DisplayAdPlacement =
@@ -82,7 +84,23 @@ const pagePlacementPolicy: Record<DisplayAdPageContext, readonly DisplayAdPlacem
     "desktop-rail-right"
   ],
   "edit-sensitive": ["top-banner", "bottom-banner", "desktop-rail-left", "desktop-rail-right"],
+  about: [
+    "top-banner",
+    "bottom-banner",
+    "inline-results",
+    "desktop-rail-left",
+    "desktop-rail-right",
+    "mobile-anchor"
+  ],
   privacy: [
+    "top-banner",
+    "bottom-banner",
+    "inline-results",
+    "desktop-rail-left",
+    "desktop-rail-right",
+    "mobile-anchor"
+  ],
+  terms: [
     "top-banner",
     "bottom-banner",
     "inline-results",

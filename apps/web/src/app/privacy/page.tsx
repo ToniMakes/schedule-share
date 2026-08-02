@@ -93,6 +93,14 @@ export default function PrivacyPage() {
               数据库存储精确时间统一使用 UTC。服务端只保存管理密钥和编辑密钥的哈希，不保存明文密钥。
             </p>
           </section>
+
+          <section className={styles.section}>
+            <h2>相关页面</h2>
+            <p>
+              你也可以查看 <a href="/about">关于本工具</a>、<a href="/terms">使用条款</a> 和{" "}
+              <a href="/feedback">反馈与删除请求</a>。
+            </p>
+          </section>
           <DisplayAd pageContext="privacy" placement="bottom-banner" />
         </div>
       </AdPageChrome>

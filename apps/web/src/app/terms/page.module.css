@@ -1,0 +1,113 @@
+.page {
+  min-height: 100vh;
+  padding: 36px 20px 64px;
+}
+
+.shell {
+  width: min(100%, 860px);
+  margin: 0 auto;
+}
+
+.backLink {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  border-bottom-color: currentColor;
+}
+
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 28px 0;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.header p,
+.section p,
+.section li {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.header p {
+  max-width: 760px;
+  margin: 16px 0 0;
+  font-size: 17px;
+}
+
+.section {
+  border-bottom: 1px solid var(--border);
+  padding: 28px 0;
+}
+
+.section h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.section p {
+  margin: 0 0 12px;
+}
+
+.section p:last-child {
+  margin-bottom: 0;
+}
+
+.section ul {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.section a,
+.footer a {
+  color: var(--accent-strong);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.section a:hover,
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  padding-top: 22px;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .header h1 {
+    font-size: 34px;
+  }
+}

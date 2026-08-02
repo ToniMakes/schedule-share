@@ -70,6 +70,8 @@
 - `docs/product.md`：产品定位、MVP 范围和成功标准。
 - `docs/availability-entry-methods.md`：手动拖拽、图片/文本导入、长期模板、候选时间投票和文件轻导入的产品规格。
 - `docs/monetization.md`：常驻广告、AI 图片识别成本、激励广告换额度和风控护栏方案。
+- `docs/about.md`：公开关于页的产品说明和审核资产清单。
+- `docs/terms.md`：公开使用条款草案。
 - `docs/domain-model.md`：核心实体、时间规则和权限规则。
 - `docs/architecture.md`：推荐技术栈、目录结构和模块边界。
 - `docs/api.md`：API 草案。
@@ -166,7 +168,7 @@ docs/
 只是凭证，不能单独开放功能；`AI_IMAGE_IMPORT_ENABLED` 和 `AI_IMAGE_IMPORT_RELEASE_MODE`
 默认会让图片识别保持关闭，公开模式当前也被代码层阻断，前端图片入口默认隐藏。不可用时图片预填会返回
 `IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴、CSV、ICS 和手动填写仍可使用。
-常驻展示广告框架已经接入但默认关闭：页面外围广告位、提交后广告位、桌面 rail、移动 anchor 和 `/ads.txt` 路由已有基础代码；真实 AdSense 仍需要广告审核、隐私披露、publisher / slot ID、生产域名白名单和部署预检通过后再打开。带管理/编辑密钥的页面在完成 URL 密钥迁移前不加载第三方广告脚本；通过激励广告换取图片识别额度时，广告位、成本、额度、隐私和风控方案见 `docs/monetization.md`。
+常驻展示广告框架已经接入但默认关闭：页面外围广告位、提交后广告位、桌面 rail、移动 anchor、`/about`、`/terms`、`/robots.txt`、`/sitemap.xml` 和 `/ads.txt` 路由已有基础代码；真实 AdSense 仍需要广告审核、隐私披露、publisher / slot ID、生产域名白名单和部署预检通过后再打开。带管理/编辑密钥的页面在完成 URL 密钥迁移前不加载第三方广告脚本；通过激励广告换取图片识别额度时，广告位、成本、额度、隐私和风控方案见 `docs/monetization.md`。
 
 ## 下一步
 

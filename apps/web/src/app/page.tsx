@@ -50,8 +50,10 @@ export default function HomePage() {
           <DisplayAd pageContext="home" placement="inline-results" />
 
           <footer className={styles.footer}>
+            <a href="/about">关于本工具</a>
             <a href="/privacy">隐私与数据保留说明</a>
             <a href="/feedback">反馈与删除请求</a>
+            <a href="/terms">使用条款</a>
           </footer>
 
           <DisplayAd pageContext="home" placement="bottom-banner" />

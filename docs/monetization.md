@@ -103,23 +103,23 @@
 
 AdSense 更像“网站内容和流量审核”，不是接上代码就能长期稳定出广告。公开开放前需要先准备：
 
-- 生产域名、HTTPS 和基础导航已经稳定。当前正式域名可以作为审核入口，但页面内容还需要补齐。
+- 生产域名、HTTPS 和基础导航已经稳定。当前正式域名可以作为审核入口。
 - 首页不能只有空表单，要有可被搜索引擎和广告审核理解的原创内容：这个工具解决什么问题、适合谁、如何处理时区、隐私如何保护、用户如何反馈。
-- 至少提供稳定可访问的 `/privacy`、`/feedback`，并补上 `/terms`、`/about` 或等价说明页。
+- 已提供稳定可访问的 `/about`、`/privacy`、`/feedback` 和 `/terms` 基础页面；正式开放广告前仍需要做法律和广告政策审阅。
 - 动态日程页属于用户生成内容和临时链接，不应作为广告审核的主要内容来源；审核重点放在公开首页、说明页、隐私页和真实可用的创建入口。
 - 隐私说明需要明确广告 cookie、Google 和其他第三方广告供应商、个性化广告退出方式、地区化 consent、广告请求会包含哪些设备/网络/页面信息。
-- 拿到 publisher ID 后发布 `/ads.txt`，并确认根域可抓取。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
-- `robots.txt` 和 `sitemap.xml` 应该让公开说明页可抓取；带管理密钥、编辑密钥或临时 UGC 的日程页首期可以 `noindex`。
+- `/ads.txt` 路由已接入；拿到 publisher ID 后设置 `ADS_TXT_PUBLISHER_ID` 并确认根域可抓取。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
+- `robots.txt` 和 `sitemap.xml` 已接入，公开说明页可抓取；动态日程页、API 和带密钥 URL 首期不进入 sitemap。
 - 本地、Vercel Preview、自动化测试、站长自测和内部 QA 不加载真实广告，避免无效流量。
 
-建议在广告审核前新增或确认这些公开资产：
+广告审核前需要确认这些公开资产：
 
-- `/about`：一句话产品定位、适合人群、核心功能和联系方式。
-- `/privacy`：广告版隐私说明。
-- `/feedback`：反馈和删除请求入口。
-- `/terms`：基础使用条款、免责声明和用户内容规则。
-- `/ads.txt`：拿到 AdSense publisher ID 后发布。
-- `robots.txt` 和 `sitemap.xml`：让公开内容可被审核和抓取，避免密钥页进入索引。
+- `/about`：已接入基础产品定位、适合人群和核心功能说明；正式上线前补联系方式或运营主体。
+- `/privacy`：已接入隐私说明基础版；真实广告前补第三方广告供应商、cookie、个性化广告退出和 consent。
+- `/feedback`：已接入反馈和删除请求说明；正式上线前补专用邮箱或站内表单。
+- `/terms`：已接入基础使用条款草案；正式上线前做法律审阅。
+- `/ads.txt`：路由已接入；拿到 AdSense publisher ID 后配置生产环境变量。
+- `robots.txt` 和 `sitemap.xml`：已接入；继续避免密钥页进入索引。
 
 ## 密钥 URL 与第三方广告脚本
 
@@ -434,8 +434,8 @@ AI 图片识别和激励广告：
 ## 分阶段落地
 
 1. 文档阶段：明确成本、广告、隐私、数据模型和 API 计划，不改现有可用主链路。
-2. 审核准备阶段：补齐首页原创说明、`/about`、`/terms`、广告版 `/privacy`、`robots.txt`、`sitemap.xml`、`/ads.txt` 和生产域名白名单。
-3. 常驻广告试水阶段：接入默认全站外围广告框架。核心操作页只启用顶部、底部、桌面 rail 或移动 anchor；结果页、提交成功页和说明页可以增加内容间广告。带 `?key=` 页面只允许 `off` 或 `internal`。
+2. 审核准备阶段：基础 `/about`、`/terms`、`/privacy`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已接入；继续补法律审阅、联系方式、广告版隐私披露、publisher / slot ID 和生产域名白名单。
+3. 常驻广告试水阶段：默认全站外围广告框架已接入且关闭。真实广告开启时，核心操作页只启用顶部、底部、桌面 rail 或移动 anchor；结果页、提交成功页和说明页可以增加内容间广告。带 `?key=` 页面只允许 `off` 或 `internal`。
 4. 密钥安全阶段：如果要在管理/编辑页展示第三方广告，先把 URL 密钥迁移到不暴露给第三方脚本的机制，并增加第三方脚本检查。
 5. 免费额度阶段：做本机或匿名 session 的少量免费图片识别额度和全站限额，不接 rewarded ad。
 6. 小流量激励广告阶段：接入 rewarded ad provider，使用服务端验证发放额度，并保留手动 fallback。
@@ -447,7 +447,7 @@ AI 图片识别和激励广告：
 公开开放常驻广告前，至少需要满足：
 
 - 广告平台账号、站点审核、广告位置和政策要求已经确认。
-- 公开首页、`/about`、`/privacy`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 已准备好，拿到 publisher ID 后 `/ads.txt` 可从生产根域访问。
+- 公开首页、`/about`、`/privacy`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已能从生产根域访问；拿到 publisher ID 后 `/ads.txt` 返回正式记录。
 - 生产环境有 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`、`NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`、`NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`、`NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`、`NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE` 和必要的 AdSense client / slot ID；`deployment:config` 不报错。
 - 创建、填写、编辑、上传预览和密钥页面可以有外围广告，但不会被广告遮挡、诱导误触或泄露完整密钥 URL；带 `?key=` 页面不加载第三方广告脚本。
 - 隐私说明已经补充广告平台、广告请求数据、广告 cookie、个性化广告退出方式和用户同意/拒绝规则。

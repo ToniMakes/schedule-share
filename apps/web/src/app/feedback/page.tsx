@@ -81,7 +81,9 @@ export default function FeedbackPage() {
           </section>
 
           <footer className={styles.footer}>
+            <a href="/about">关于本工具</a>
             <a href="/privacy">查看隐私与数据保留说明</a>
+            <a href="/terms">使用条款</a>
           </footer>
           <DisplayAd pageContext="feedback" placement="bottom-banner" />
         </div>

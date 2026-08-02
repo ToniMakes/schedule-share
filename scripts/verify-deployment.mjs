@@ -5,12 +5,28 @@ loadRootEnv();
 
 const publicPages = [
   {
+    expectedText: "一个轻量的跨时区多人日程共享工具",
+    path: "/about"
+  },
+  {
     expectedText: "隐私与数据保留说明",
     path: "/privacy"
   },
   {
     expectedText: "反馈与删除请求",
     path: "/feedback"
+  },
+  {
+    expectedText: "使用条款",
+    path: "/terms"
+  },
+  {
+    expectedText: "User-agent: *",
+    path: "/robots.txt"
+  },
+  {
+    expectedText: "<urlset",
+    path: "/sitemap.xml"
   }
 ];
 
