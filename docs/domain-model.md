@@ -133,6 +133,57 @@
 - `warnings`：需要用户复核的问题。
 - `confidence`：整体置信度。
 
+### AiRecognitionCreditGrant
+
+计划中的 AI 图片识别额度发放记录。用于限制 `image_import` 的成本暴露，并支持免费额度、激励广告奖励、人工发放和失败退款。当前数据库还未实现该实体，详细方案见 `docs/monetization.md`。
+
+字段草案：
+
+- `id`：内部唯一 ID。
+- `scope_type`：额度归属范围，例如匿名 session、浏览器设备或登录用户。
+- `scope_id_hash`：归属标识的哈希。
+- `schedule_id`：可选，额度如限定在某个日程内使用则填写。
+- `source`：`free_quota`、`rewarded_ad`、`admin` 或 `refund`。
+- `provider`：额度来源或广告平台。
+- `provider_event_id_hash`：广告奖励事件 ID 的哈希，用于防重复发放。
+- `credits_granted`：发放额度数。
+- `credits_remaining`：剩余额度数。
+- `expires_at`：UTC 时间。
+- `created_at`：UTC 时间。
+
+### AiRecognitionAttempt
+
+计划中的图片识别尝试记录。用于成本归因、风控、失败退款和效果分析。它不保存原始图片、不保存完整 OCR 文本，也不保存未确认识别明细。
+
+字段草案：
+
+- `id`：内部唯一 ID。
+- `schedule_id`：所属日程。
+- `participant_id`：可选参与者，用户确认提交后可回填。
+- `credit_grant_id`：本次消耗的额度来源。
+- `entry_method`：固定为 `image_import`。
+- `image_mime_type`：上传图片类型。
+- `image_byte_size`：上传图片大小。
+- `model`：调用的图片识别模型。
+- `estimated_cost_usd`：估算成本。
+- `status`：`started`、`succeeded`、`low_confidence`、`provider_unavailable`、`failed` 或 `refunded`。
+- `created_at`：UTC 时间。
+
+### RewardedAdVerification
+
+计划中的激励广告完成事件验证记录。用于服务端确认广告完成、避免重复发放额度，并把广告收益和 AI 成本做粗略归因。
+
+字段草案：
+
+- `id`：内部唯一 ID。
+- `provider`：广告平台。
+- `ad_unit_id`：广告单元 ID。
+- `reward_event_id_hash`：奖励事件 ID 的哈希。
+- `scope_id_hash`：获得奖励的匿名 session、浏览器设备或用户范围。
+- `verification_status`：`pending`、`verified`、`rejected` 或 `duplicate`。
+- `gross_revenue_usd`：可选，平台回传或后续报表归因的粗略收入。
+- `created_at`：UTC 时间。
+
 ### CandidateTimeOption
 
 候选时间投票模式中的组织者预设时间。它适合 Doodle/Rallly 风格的“几个候选时间里选一个或几个”场景。
@@ -213,6 +264,7 @@
 
 - MVP 不要求用户注册。
 - 登录账号是后续高频用户能力，不应成为查看、创建和参与普通日程的前置条件。
+- 计划中的 AI 图片识别额度可以绑定匿名 session、浏览器设备或登录用户，但不能成为手动填写、候选投票、文本导入、CSV/ICS 导入的前置条件。
 - 创建日程后，组织者获得一个只显示一次的管理链接或管理密钥。
 - 参与者提交后，获得一个编辑链接或编辑密钥；当前 Web 端也会在本机浏览器按日程记住该参与者的编辑入口，方便同一浏览器再次修改。
 - 公共分享链接只能查看和填写，不能删除日程、锁定日程或修改他人提交。
@@ -248,6 +300,7 @@
 - 过期日程可先归档，后续再删除。
 - 用户提交中不收集邮箱、手机号、微信号等敏感信息。
 - 导入 v1 默认不保存原始图片、原始文件、原始文本或未确认的识别中间结果。
+- 计划中的 AI 图片识别额度和广告验证只保存必要的额度、事件哈希、图片元数据、成本估算和状态；广告平台不应接收日程内容、上传图片、参与者姓名或识别明细。
 - 内联模板预填服务端默认不保存模板内容，只用于生成当前页面的预填草稿；Web 端可在浏览器本机记住上次成功使用的星期和时间段，作为下次填写的默认控件值，也可把多个命名每周模板保存到当前浏览器。
 - 长期模板属于登录用户主动保存的数据，删除账号或模板时应同步删除对应模板窗口。
 - 如果后续添加登录或通知功能，需要更新隐私说明和数据保留策略。

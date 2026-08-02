@@ -69,6 +69,7 @@
 
 - `docs/product.md`：产品定位、MVP 范围和成功标准。
 - `docs/availability-entry-methods.md`：手动拖拽、图片/文本导入、长期模板、候选时间投票和文件轻导入的产品规格。
+- `docs/monetization.md`：AI 图片识别成本、激励广告换额度和风控护栏方案。
 - `docs/domain-model.md`：核心实体、时间规则和权限规则。
 - `docs/architecture.md`：推荐技术栈、目录结构和模块边界。
 - `docs/api.md`：API 草案。
@@ -163,6 +164,7 @@ docs/
 
 图片导入需要配置 `OPENAI_API_KEY`；可选 `OPENAI_IMAGE_IMPORT_MODEL` 覆盖默认识别模型。未配置时，图片预填会返回
 `IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴和手动填写仍可使用。
+如果后续通过激励广告换取图片识别额度，成本、额度、隐私和风控方案见 `docs/monetization.md`。
 
 ## 下一步
 
@@ -171,5 +173,5 @@ docs/
 - 在登录方案确定后实现用户、模板数据表，并把当前本机模板升级为账号保存型个人长期模板。
 - 根据真实候选投票使用情况评估参与者自定义偏好权重。
 - 继续改进移动端手动拖拽手感和更长日期范围下的结果密度体验。
-- 把当前代码推到远程 Git 仓库，并接入 Vercel Git 自动部署。
+- 实现 AI 图片识别的免费额度、成本护栏和激励广告验证闭环，再考虑公开放量。
 - 找 3 到 5 个朋友按 `docs/internal-test-checklist.md` 做真实内测。

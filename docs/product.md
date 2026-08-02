@@ -6,7 +6,7 @@
 
 第一阶段优先服务海外用户和少量国内用户，通过移动优先的网页版验证需求。微信小程序作为第二阶段入口，复用同一套后端 API 和核心业务逻辑。
 
-多种可用时间添加方式的详细产品规格见 `docs/availability-entry-methods.md`。架构决策见 `docs/adr/0008-availability-import-and-templates.md` 和 `docs/adr/0009-multiple-availability-entry-methods.md`。
+多种可用时间添加方式的详细产品规格见 `docs/availability-entry-methods.md`。AI 图片识别的成本、激励广告换额度和风控方案见 `docs/monetization.md`。架构决策见 `docs/adr/0008-availability-import-and-templates.md` 和 `docs/adr/0009-multiple-availability-entry-methods.md`。
 
 ## 目标用户
 
@@ -75,7 +75,7 @@ MVP 暂不包含：
 - 参与者不需要注册。
 - 创建和填写流程必须短。
 - 结果页必须一眼看出最佳时间。
-- 核心填写流程不放干扰性广告。
+- 手动填写、候选投票、文本导入、CSV/ICS 导入不放干扰性广告；AI 图片识别可以使用用户主动触发的激励广告换额度。
 - AI 识别和个人模板只减少重复操作，不替用户做最终决定。
 - 每一种添加方式最后都必须归一化为同一份可用时间数据，不能为单个入口复制业务规则。
 - 支持跨时区是基础能力，不是高级功能。
@@ -88,6 +88,7 @@ MVP 暂不包含：
 - 高频组织者功能：模板、群组、导出、提醒、隐藏广告。
 - 高频参与者功能：长期可用模板、课表/排班导入、历史昵称和默认时区。
 - 填写方式扩展：候选时间投票、`.ics` 文件导入、CSV/表格粘贴导入、上次活动设置复用。
+- 成本可控的 AI 图片识别：免费试用额度、激励广告换识别额度、全站成本护栏和失败退款。
 - 机构版：品牌页、多人管理、批量活动。
 - 微信小程序：微信群分享、微信生态内填写体验。
 - 日历集成：导入忙闲状态、导出最终时间。
@@ -99,4 +100,5 @@ MVP 暂不包含：
 - 涉及实体、时间、权限和保留规则时，同步更新 `docs/domain-model.md`。
 - 涉及接口契约时，同步更新 `docs/api.md`。
 - 涉及隐私和上传内容处理时，同步更新 `docs/privacy.md`。
+- 涉及广告、AI 成本、额度或商业化策略时，同步更新 `docs/monetization.md`。
 - 涉及阶段状态、已完成能力和下一步时，同步更新 `docs/project-status.md`。

@@ -620,6 +620,7 @@ ICS 内容包含：
 - 请求会先通过 `packages/api-client` 的 schema 校验。
 - 服务端再调用 `packages/core` 把输入来源转换为当前日程内的建议可用时间槽。
 - 图片识别需要配置 `OPENAI_API_KEY`，可选 `OPENAI_IMAGE_IMPORT_MODEL`；未配置时返回 `IMPORT_PROVIDER_UNAVAILABLE`。
+- 后续如果开启激励广告换 AI 图片识别额度，`image_import` 还需要先通过计划中的额度校验；无额度时返回计划错误码 `AI_CREDIT_REQUIRED`。当前代码尚未实现该校验。
 - 图片上传限制为 PNG、JPEG 或 WebP，最大 4MB；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 - `.ics` 上传限制为单个 `.ics` 文件最大 1MB；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
 - CSV 上传限制为单个 `.csv` 文件最大 1MB；超限返回 `IMPORT_FILE_TOO_LARGE`，类型不支持返回 `IMPORT_UNSUPPORTED_FILE_TYPE`。
@@ -862,6 +863,73 @@ Web 端本机多模板保存、选择和删除只使用浏览器 localStorage，
   "warnings": []
 }
 ```
+
+## AI 图片识别额度与激励广告
+
+以下接口状态均为计划中。它们用于把 `image_import` 的 AI 成本限制在免费额度、激励广告奖励或未来付费额度内；当前代码尚未实现。
+
+详细产品、成本和风控方案见 `docs/monetization.md`。
+
+### 查询 AI 识别额度
+
+`GET /api/ai-credits/status`
+
+用途：
+
+- 返回当前匿名 session、浏览器设备或登录用户可用的 AI 图片识别额度。
+- 告诉前端图片识别入口是否可直接使用、是否需要展示激励广告入口，或者是否因为成本护栏临时关闭。
+- 不返回原始广告标识或图片内容。
+
+响应计划：
+
+```json
+{
+  "imageRecognition": {
+    "enabled": true,
+    "creditsRemaining": 1,
+    "dailyLimitRemaining": 3,
+    "requiresRewardedAd": false,
+    "rewardedAdsEnabled": true
+  }
+}
+```
+
+### 验证激励广告完成事件
+
+`POST /api/ai-credits/rewarded-ad/verify`
+
+用途：
+
+- 接收前端广告完成事件或广告平台服务端验证 token。
+- 服务端校验签名、广告单元、事件唯一性和过期时间。
+- 校验成功后发放 AI 图片识别额度。
+
+请求计划：
+
+```json
+{
+  "provider": "rewarded_ad_provider",
+  "adUnitId": "image-import-reward",
+  "verificationToken": "provider-issued-token"
+}
+```
+
+响应计划：
+
+```json
+{
+  "creditsRemaining": 1,
+  "expiresAt": "2026-08-03T00:00:00.000Z"
+}
+```
+
+计划错误码：
+
+- `AI_CREDIT_REQUIRED`
+- `AI_CREDIT_LIMIT_REACHED`
+- `REWARDED_AD_UNAVAILABLE`
+- `REWARDED_AD_VERIFICATION_FAILED`
+- `REWARDED_AD_EVENT_DUPLICATE`
 
 ## 错误格式
 
