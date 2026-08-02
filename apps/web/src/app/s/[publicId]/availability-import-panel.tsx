@@ -89,6 +89,18 @@ const previewMethodLabels = {
   template: "模板预填"
 } as const satisfies Record<PreviewMethod, string>;
 
+const importMethodOptions = [
+  { helper: "粘贴忙碌时间", label: "文本", method: "text" },
+  { helper: "课表或排班截图", label: "图片", method: "image" },
+  { helper: ".ics 日历文件", label: "日历", method: "ics" },
+  { helper: "CSV 排班文件", label: "CSV", method: "csv" },
+  { helper: "固定每周作息", label: "模板", method: "template" }
+] as const satisfies readonly {
+  readonly helper: string;
+  readonly label: string;
+  readonly method: PreviewMethod;
+}[];
+
 export function AvailabilityImportPanel({
   imageImportVisible,
   onPreviewApplied,
@@ -110,6 +122,7 @@ export function AvailabilityImportPanel({
   const [templateStorageNotice, setTemplateStorageNotice] = useState<
     TemplateStorageNotice | undefined
   >(undefined);
+  const [activeImportMethod, setActiveImportMethod] = useState<PreviewMethod>("text");
   const [previewState, setPreviewState] = useState<PreviewState>({ status: "idle" });
   const isPreviewing = previewState.status === "previewing";
   const isPreviewingText = previewState.status === "previewing" && previewState.method === "text";
@@ -118,6 +131,9 @@ export function AvailabilityImportPanel({
   const isPreviewingCsv = previewState.status === "previewing" && previewState.method === "csv";
   const isPreviewingTemplate =
     previewState.status === "previewing" && previewState.method === "template";
+  const availableImportMethods = importMethodOptions.filter(
+    ({ method }) => imageImportVisible || method !== "image"
+  );
 
   useEffect(() => {
     const rememberedTemplate = readRememberedParticipantTemplate(window.localStorage);
@@ -417,152 +433,189 @@ export function AvailabilityImportPanel({
 
   return (
     <div className={styles.importPanel}>
-      <label className={styles.importField}>
-        <span>粘贴忙碌时间</span>
-        <textarea
-          maxLength={5000}
-          onChange={(event) => setImportText(event.target.value)}
-          placeholder="Mon 9-11 COMP101; 8/1 9am-10:30am Work; 8月1日 14.00-16.00 Lab"
-          rows={3}
-          value={importText}
-        />
-      </label>
-      {imageImportVisible ? (
-        <label className={styles.importField}>
-          <span>上传课表截图</span>
-          <input
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(event) => setImportFile(event.target.files?.[0])}
-            type="file"
-          />
-        </label>
-      ) : null}
-      <label className={styles.importField}>
-        <span>上传 .ics 日历</span>
-        <input
-          accept=".ics,text/calendar"
-          onChange={(event) => setIcsFile(event.target.files?.[0])}
-          type="file"
-        />
-      </label>
-      <label className={styles.importField}>
-        <span>上传 CSV 排班</span>
-        <input
-          accept=".csv,text/csv"
-          onChange={(event) => setCsvFile(event.target.files?.[0])}
-          type="file"
-        />
-      </label>
-      <fieldset className={styles.templatePanel}>
-        <legend>每周模板</legend>
-        {savedTemplates.length > 0 ? (
-          <div className={styles.savedTemplateGrid}>
-            <label className={styles.importField}>
-              <span>保存的本机模板</span>
-              <select
-                aria-label="选择保存的模板"
-                onChange={handleSavedTemplateChange}
-                value={selectedSavedTemplateId}
-              >
-                <option value="">选择模板</option>
-                {savedTemplates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              className={styles.secondaryButton}
-              disabled={selectedSavedTemplateId === ""}
-              onClick={handleDeleteSavedTemplate}
-              type="button"
-            >
-              <Trash2 aria-hidden="true" size={18} />
-              删除
-            </button>
-          </div>
-        ) : null}
-        <label className={styles.importField}>
-          <span>模板名称</span>
-          <input
-            maxLength={40}
-            onChange={(event) => setTemplateName(event.target.value)}
-            placeholder="如 工作日晚上"
-            type="text"
-            value={templateName}
-          />
-        </label>
-        <div className={styles.templateDayList}>
-          {templateDayOptions.map((day) => (
-            <label className={styles.templateDayChoice} key={day.value}>
-              <input
-                checked={templateDays.has(day.value)}
-                onChange={() => toggleTemplateDay(day.value)}
-                type="checkbox"
-              />
-              <span>{day.label}</span>
-            </label>
-          ))}
-        </div>
-        <div className={styles.templateTimeGrid}>
-          <label className={styles.importField}>
-            <span>开始时间</span>
-            <input
-              onChange={(event) => setTemplateStartTime(event.target.value)}
-              type="time"
-              value={templateStartTime}
-            />
-          </label>
-          <label className={styles.importField}>
-            <span>结束时间</span>
-            <input
-              onChange={(event) => setTemplateEndTime(event.target.value)}
-              type="time"
-              value={templateEndTime}
-            />
-          </label>
-        </div>
-        <div className={styles.templateSaveRow}>
+      <div className={styles.importSourceTabs} role="tablist" aria-label="预填来源">
+        {availableImportMethods.map(({ helper, label, method }) => (
           <button
-            className={styles.secondaryButton}
-            disabled={isPreviewing}
-            onClick={handleSaveCurrentTemplate}
+            aria-selected={activeImportMethod === method}
+            className={[
+              styles.importSourceTab,
+              activeImportMethod === method ? styles.importSourceTabActive : undefined
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            key={method}
+            onClick={() => setActiveImportMethod(method)}
+            role="tab"
             type="button"
           >
-            <Save aria-hidden="true" size={18} />
-            保存到本机
+            {importMethodIcon(method, activeImportMethod === method)}
+            <span>
+              <strong>{label}</strong>
+              <small>{helper}</small>
+            </span>
           </button>
-          {templateStorageNotice === undefined ? null : (
-            <p
-              className={
-                templateStorageNotice.tone === "error"
-                  ? styles.templateNoticeError
-                  : styles.templateNotice
-              }
-              role={templateStorageNotice.tone === "error" ? "alert" : undefined}
-            >
-              {templateStorageNotice.message}
-            </p>
-          )}
-        </div>
-      </fieldset>
+        ))}
+      </div>
+
+      <div className={styles.importSourcePanel} role="tabpanel">
+        {activeImportMethod === "text" ? (
+          <label className={styles.importField}>
+            <span>粘贴忙碌时间</span>
+            <textarea
+              maxLength={5000}
+              onChange={(event) => setImportText(event.target.value)}
+              placeholder="Mon 9-11 COMP101; 8/1 9am-10:30am Work; 8月1日 14.00-16.00 Lab"
+              rows={3}
+              value={importText}
+            />
+          </label>
+        ) : null}
+        {activeImportMethod === "image" && imageImportVisible ? (
+          <label className={styles.importField}>
+            <span>上传课表截图</span>
+            <input
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => setImportFile(event.target.files?.[0])}
+              type="file"
+            />
+          </label>
+        ) : null}
+        {activeImportMethod === "ics" ? (
+          <label className={styles.importField}>
+            <span>上传 .ics 日历</span>
+            <input
+              accept=".ics,text/calendar"
+              onChange={(event) => setIcsFile(event.target.files?.[0])}
+              type="file"
+            />
+          </label>
+        ) : null}
+        {activeImportMethod === "csv" ? (
+          <label className={styles.importField}>
+            <span>上传 CSV 排班</span>
+            <input
+              accept=".csv,text/csv"
+              onChange={(event) => setCsvFile(event.target.files?.[0])}
+              type="file"
+            />
+          </label>
+        ) : null}
+        {activeImportMethod === "template" ? (
+          <fieldset className={styles.templatePanel}>
+            <legend>每周模板</legend>
+            {savedTemplates.length > 0 ? (
+              <div className={styles.savedTemplateGrid}>
+                <label className={styles.importField}>
+                  <span>保存的本机模板</span>
+                  <select
+                    aria-label="选择保存的模板"
+                    onChange={handleSavedTemplateChange}
+                    value={selectedSavedTemplateId}
+                  >
+                    <option value="">选择模板</option>
+                    {savedTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className={styles.secondaryButton}
+                  disabled={selectedSavedTemplateId === ""}
+                  onClick={handleDeleteSavedTemplate}
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" size={18} />
+                  删除
+                </button>
+              </div>
+            ) : null}
+            <label className={styles.importField}>
+              <span>模板名称</span>
+              <input
+                maxLength={40}
+                onChange={(event) => setTemplateName(event.target.value)}
+                placeholder="如 工作日晚上"
+                type="text"
+                value={templateName}
+              />
+            </label>
+            <div className={styles.templateDayList}>
+              {templateDayOptions.map((day) => (
+                <label className={styles.templateDayChoice} key={day.value}>
+                  <input
+                    checked={templateDays.has(day.value)}
+                    onChange={() => toggleTemplateDay(day.value)}
+                    type="checkbox"
+                  />
+                  <span>{day.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className={styles.templateTimeGrid}>
+              <label className={styles.importField}>
+                <span>开始时间</span>
+                <input
+                  onChange={(event) => setTemplateStartTime(event.target.value)}
+                  type="time"
+                  value={templateStartTime}
+                />
+              </label>
+              <label className={styles.importField}>
+                <span>结束时间</span>
+                <input
+                  onChange={(event) => setTemplateEndTime(event.target.value)}
+                  type="time"
+                  value={templateEndTime}
+                />
+              </label>
+            </div>
+            <div className={styles.templateSaveRow}>
+              <button
+                className={styles.secondaryButton}
+                disabled={isPreviewing}
+                onClick={handleSaveCurrentTemplate}
+                type="button"
+              >
+                <Save aria-hidden="true" size={18} />
+                保存到本机
+              </button>
+              {templateStorageNotice === undefined ? null : (
+                <p
+                  className={
+                    templateStorageNotice.tone === "error"
+                      ? styles.templateNoticeError
+                      : styles.templateNotice
+                  }
+                  role={templateStorageNotice.tone === "error" ? "alert" : undefined}
+                >
+                  {templateStorageNotice.message}
+                </p>
+              )}
+            </div>
+          </fieldset>
+        ) : null}
+      </div>
+
       <div className={styles.importActions}>
         <div className={styles.importButtonGroup}>
-          <button
-            className={styles.secondaryButton}
-            disabled={isPreviewing || importText.trim().length === 0}
-            onClick={handlePreviewAvailability}
-            type="button"
-          >
-            {isPreviewingText ? (
-              <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
-            ) : (
-              <FileText aria-hidden="true" size={18} />
-            )}
-            文本预填
-          </button>
-          {imageImportVisible ? (
+          {activeImportMethod === "text" ? (
+            <button
+              className={styles.secondaryButton}
+              disabled={isPreviewing || importText.trim().length === 0}
+              onClick={handlePreviewAvailability}
+              type="button"
+            >
+              {isPreviewingText ? (
+                <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
+              ) : (
+                <FileText aria-hidden="true" size={18} />
+              )}
+              用文本预填
+            </button>
+          ) : null}
+          {activeImportMethod === "image" && imageImportVisible ? (
             <button
               className={styles.secondaryButton}
               disabled={isPreviewing || importFile === undefined}
@@ -574,48 +627,54 @@ export function AvailabilityImportPanel({
               ) : (
                 <ImagePlus aria-hidden="true" size={18} />
               )}
-              图片预填
+              用图片预填
             </button>
           ) : null}
-          <button
-            className={styles.secondaryButton}
-            disabled={isPreviewing || icsFile === undefined}
-            onClick={handlePreviewIcsAvailability}
-            type="button"
-          >
-            {isPreviewingIcs ? (
-              <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
-            ) : (
-              <FileUp aria-hidden="true" size={18} />
-            )}
-            日历预填
-          </button>
-          <button
-            className={styles.secondaryButton}
-            disabled={isPreviewing || csvFile === undefined}
-            onClick={handlePreviewCsvAvailability}
-            type="button"
-          >
-            {isPreviewingCsv ? (
-              <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
-            ) : (
-              <FileText aria-hidden="true" size={18} />
-            )}
-            CSV 预填
-          </button>
-          <button
-            className={styles.secondaryButton}
-            disabled={isPreviewing || templateDays.size === 0}
-            onClick={handlePreviewTemplateAvailability}
-            type="button"
-          >
-            {isPreviewingTemplate ? (
-              <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
-            ) : (
-              <CalendarClock aria-hidden="true" size={18} />
-            )}
-            模板预填
-          </button>
+          {activeImportMethod === "ics" ? (
+            <button
+              className={styles.secondaryButton}
+              disabled={isPreviewing || icsFile === undefined}
+              onClick={handlePreviewIcsAvailability}
+              type="button"
+            >
+              {isPreviewingIcs ? (
+                <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
+              ) : (
+                <FileUp aria-hidden="true" size={18} />
+              )}
+              用日历预填
+            </button>
+          ) : null}
+          {activeImportMethod === "csv" ? (
+            <button
+              className={styles.secondaryButton}
+              disabled={isPreviewing || csvFile === undefined}
+              onClick={handlePreviewCsvAvailability}
+              type="button"
+            >
+              {isPreviewingCsv ? (
+                <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
+              ) : (
+                <FileText aria-hidden="true" size={18} />
+              )}
+              用 CSV 预填
+            </button>
+          ) : null}
+          {activeImportMethod === "template" ? (
+            <button
+              className={styles.secondaryButton}
+              disabled={isPreviewing || templateDays.size === 0}
+              onClick={handlePreviewTemplateAvailability}
+              type="button"
+            >
+              {isPreviewingTemplate ? (
+                <Loader2 aria-hidden="true" className={styles.spinIcon} size={18} />
+              ) : (
+                <CalendarClock aria-hidden="true" size={18} />
+              )}
+              用模板预填
+            </button>
+          ) : null}
         </div>
         {previewState.status === "success" ? <span>{previewSummaryText(previewState)}</span> : null}
       </div>
@@ -627,6 +686,22 @@ export function AvailabilityImportPanel({
       {previewState.status === "success" ? <PreviewFeedback previewState={previewState} /> : null}
     </div>
   );
+}
+
+function importMethodIcon(method: PreviewMethod, active: boolean) {
+  const color = active ? "#1d4ed8" : "currentColor";
+
+  switch (method) {
+    case "csv":
+    case "text":
+      return <FileText aria-hidden="true" color={color} size={18} />;
+    case "image":
+      return <ImagePlus aria-hidden="true" color={color} size={18} />;
+    case "ics":
+      return <FileUp aria-hidden="true" color={color} size={18} />;
+    case "template":
+      return <CalendarClock aria-hidden="true" color={color} size={18} />;
+  }
 }
 
 function PreviewFeedback({

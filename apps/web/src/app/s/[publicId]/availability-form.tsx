@@ -218,45 +218,109 @@ export function AvailabilityForm({
       </div>
 
       <form className={styles.availabilityForm} onSubmit={handleSubmit}>
-        <label className={styles.participantField}>
-          <span>你的名字</span>
-          <input
-            required
-            maxLength={80}
-            onChange={(event) => setDisplayName(event.target.value)}
-            placeholder="Aki"
-            value={displayName}
-          />
-        </label>
+        <ol className={styles.availabilityFlowSteps} aria-label="填写流程">
+          <li className={displayName.trim().length > 0 ? styles.availabilityFlowStepDone : ""}>
+            <span>1</span>
+            <strong>名字</strong>
+          </li>
+          {!isCandidatePoll ? (
+            <li>
+              <span>2</span>
+              <strong>可选预填</strong>
+            </li>
+          ) : null}
+          <li
+            className={
+              isCandidatePoll
+                ? candidateVoteCounts.available + candidateVoteCounts.maybe > 0
+                  ? styles.availabilityFlowStepDone
+                  : ""
+                : selectedSlotKeys.size > 0
+                  ? styles.availabilityFlowStepDone
+                  : ""
+            }
+          >
+            <span>{isCandidatePoll ? "2" : "3"}</span>
+            <strong>{isCandidatePoll ? "投票" : "涂选"}</strong>
+          </li>
+          <li>
+            <span>{isCandidatePoll ? "3" : "4"}</span>
+            <strong>提交</strong>
+          </li>
+        </ol>
 
-        {!isCandidatePoll ? (
-          <AvailabilityImportPanel
-            imageImportVisible={imageImportVisible}
-            onPreviewApplied={setSelectedSlotKeys}
-            publicId={publicId}
-            scheduleTimezone={scheduleTimezone}
-          />
-        ) : null}
+        <div className={styles.availabilityFlow}>
+          <section className={styles.availabilityStepBlock} aria-labelledby="participant-step">
+            <div className={styles.availabilityStepHeader}>
+              <span className={styles.availabilityStepBadge}>1</span>
+              <div>
+                <h3 id="participant-step">先写名字</h3>
+                <p>结果页会用它标记你的提交。</p>
+              </div>
+            </div>
+            <label className={styles.participantField}>
+              <span>你的名字</span>
+              <input
+                required
+                maxLength={80}
+                onChange={(event) => setDisplayName(event.target.value)}
+                placeholder="Aki"
+                value={displayName}
+              />
+            </label>
+          </section>
 
-        {isCandidatePoll ? (
-          <CandidateVoteList
-            onChange={setCandidateResponse}
-            onPreferenceMove={moveCandidatePreference}
-            onPreferenceReorder={reorderCandidatePreference}
-            preferenceRanksBySlotKey={candidatePreferenceRanksBySlotKey}
-            responsesBySlotKey={candidateResponsesBySlotKey}
-            slots={slots}
-            totalParticipantCount={totalParticipantCount}
-          />
-        ) : (
-          <AvailabilitySlotGrid
-            ariaLabel="可用时间"
-            selectedSlotKeys={selectedSlotKeys}
-            setSelectedSlotKeys={setSelectedSlotKeys}
-            slots={slots as readonly AvailabilityGridSlot[]}
-            totalParticipantCount={totalParticipantCount}
-          />
-        )}
+          {!isCandidatePoll ? (
+            <section className={styles.availabilityStepBlock} aria-labelledby="quick-fill-step">
+              <div className={styles.availabilityStepHeader}>
+                <span className={styles.availabilityStepBadgeMuted}>2</span>
+                <div>
+                  <h3 id="quick-fill-step">任选一种快速预填</h3>
+                  <p>有课表、日历、排班或固定作息时用；没有就跳过。</p>
+                </div>
+              </div>
+              <AvailabilityImportPanel
+                imageImportVisible={imageImportVisible}
+                onPreviewApplied={setSelectedSlotKeys}
+                publicId={publicId}
+                scheduleTimezone={scheduleTimezone}
+              />
+            </section>
+          ) : null}
+
+          <section className={styles.availabilityStepBlock} aria-labelledby="manual-fill-step">
+            <div className={styles.availabilityStepHeader}>
+              <span className={styles.availabilityStepBadge}>{isCandidatePoll ? "2" : "3"}</span>
+              <div>
+                <h3 id="manual-fill-step">{isCandidatePoll ? "选择你的偏好" : "检查并涂选时间"}</h3>
+                <p>
+                  {isCandidatePoll
+                    ? "对候选时间标记方便程度，想优先安排的时间可以排在前面。"
+                    : "预填结果会落在这里，也可以直接手动填写。"}
+                </p>
+              </div>
+            </div>
+            {isCandidatePoll ? (
+              <CandidateVoteList
+                onChange={setCandidateResponse}
+                onPreferenceMove={moveCandidatePreference}
+                onPreferenceReorder={reorderCandidatePreference}
+                preferenceRanksBySlotKey={candidatePreferenceRanksBySlotKey}
+                responsesBySlotKey={candidateResponsesBySlotKey}
+                slots={slots}
+                totalParticipantCount={totalParticipantCount}
+              />
+            ) : (
+              <AvailabilitySlotGrid
+                ariaLabel="可用时间"
+                selectedSlotKeys={selectedSlotKeys}
+                setSelectedSlotKeys={setSelectedSlotKeys}
+                slots={slots as readonly AvailabilityGridSlot[]}
+                totalParticipantCount={totalParticipantCount}
+              />
+            )}
+          </section>
+        </div>
 
         {submitState.status === "error" ? (
           <p className={styles.error} role="alert">
@@ -265,6 +329,16 @@ export function AvailabilityForm({
         ) : null}
 
         <div className={styles.formActions}>
+          <div>
+            <strong>
+              {isCandidatePoll ? "提交后会更新投票结果" : "提交后会更新大家的重叠时间"}
+            </strong>
+            <p>
+              {isCandidatePoll
+                ? "之后可以用编辑链接修改投票。"
+                : "之后可以用编辑链接修改可用时间。"}
+            </p>
+          </div>
           <button
             className={styles.primaryButton}
             disabled={isSubmitting || slots.length === 0}
