@@ -22,6 +22,7 @@ import {
   type AvailabilityPreviewResponse
 } from "@schedule-share/api-client";
 
+import { localizedApiErrorMessage } from "../../i18n/api-error-messages";
 import {
   buildPreviewBusyBlockSummaries,
   collectPreviewWarnings,
@@ -407,7 +408,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error, copy)
+        message: toPreviewErrorMessage(error, copy, locale)
       });
     }
   }
@@ -434,7 +435,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error, copy)
+        message: toPreviewErrorMessage(error, copy, locale)
       });
     }
   }
@@ -461,7 +462,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error, copy)
+        message: toPreviewErrorMessage(error, copy, locale)
       });
     }
   }
@@ -488,7 +489,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error, copy)
+        message: toPreviewErrorMessage(error, copy, locale)
       });
     }
   }
@@ -539,7 +540,7 @@ export function AvailabilityImportPanel({
     } catch (error) {
       setPreviewState({
         status: "error",
-        message: toPreviewErrorMessage(error, copy)
+        message: toPreviewErrorMessage(error, copy, locale)
       });
     }
   }
@@ -1057,7 +1058,11 @@ function createSavedTemplateId(): string {
   return `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function toPreviewErrorMessage(error: unknown, copy: AvailabilityImportPanelCopy): string {
+function toPreviewErrorMessage(
+  error: unknown,
+  copy: AvailabilityImportPanelCopy,
+  locale: SchedulePageLocale
+): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
       return copy.databaseError;
@@ -1095,7 +1100,7 @@ function toPreviewErrorMessage(error: unknown, copy: AvailabilityImportPanelCopy
       return copy.unsupportedEntryMethodError;
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   if (error instanceof Error && error.name === "ZodError") {

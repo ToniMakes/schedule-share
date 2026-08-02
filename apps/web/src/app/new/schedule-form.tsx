@@ -27,6 +27,7 @@ import {
   type NewScheduleFormLocale
 } from "./schedule-form-copy";
 import { DisplayAd } from "../ads/display-ad";
+import { localizedApiErrorMessage } from "../i18n/api-error-messages";
 import styles from "./page.module.css";
 
 const timezoneOptions = [
@@ -250,7 +251,7 @@ export function NewScheduleForm({ locale = "zh-CN" }: { readonly locale?: NewSch
     } catch (error) {
       setSubmitState({
         status: "error",
-        error: toFormError(error, copy)
+        error: toFormError(error, copy, locale)
       });
     }
   }
@@ -639,7 +640,11 @@ function LinkRow({
   );
 }
 
-function toFormError(error: unknown, copy: NewScheduleFormCopy): FormError {
+function toFormError(
+  error: unknown,
+  copy: NewScheduleFormCopy,
+  locale: NewScheduleFormLocale
+): FormError {
   if (error instanceof CoreError) {
     return {
       title: copy.coreErrorTitle,
@@ -664,7 +669,7 @@ function toFormError(error: unknown, copy: NewScheduleFormCopy): FormError {
 
     return {
       title: copy.createFailedTitle,
-      detail: error.message
+      detail: localizedApiErrorMessage(error.code, locale)
     };
   }
 

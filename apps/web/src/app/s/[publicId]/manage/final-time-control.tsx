@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { ApiClientError, confirmFinalTime, type ScheduleDetail } from "@schedule-share/api-client";
 
+import { localizedApiErrorMessage } from "../../../i18n/api-error-messages";
 import { confirmFinalTimeButtonCopy, type ConfirmFinalTimeButtonCopy } from "./manage-copy";
+import type { SchedulePageLocale } from "../schedule-page-copy";
 import styles from "../page.module.css";
 
 export interface ConfirmableFinalTime {
@@ -17,6 +19,7 @@ export interface ConfirmableFinalTime {
 interface ConfirmFinalTimeButtonProps {
   readonly copy?: ConfirmFinalTimeButtonCopy;
   readonly isSelected: boolean;
+  readonly locale?: SchedulePageLocale;
   readonly ownerKey: string;
   readonly publicId: string;
   readonly status: ScheduleDetail["status"];
@@ -31,6 +34,7 @@ type SubmitState =
 export function ConfirmFinalTimeButton({
   copy = confirmFinalTimeButtonCopy["zh-CN"],
   isSelected,
+  locale = "zh-CN",
   ownerKey,
   publicId,
   status,
@@ -56,7 +60,7 @@ export function ConfirmFinalTimeButton({
     } catch (error) {
       setSubmitState({
         status: "error",
-        message: toErrorMessage(error, copy)
+        message: toErrorMessage(error, copy, locale)
       });
     }
   }
@@ -85,7 +89,11 @@ export function ConfirmFinalTimeButton({
   );
 }
 
-function toErrorMessage(error: unknown, copy: ConfirmFinalTimeButtonCopy): string {
+function toErrorMessage(
+  error: unknown,
+  copy: ConfirmFinalTimeButtonCopy,
+  locale: SchedulePageLocale
+): string {
   if (error instanceof ApiClientError) {
     if (error.code === "INVALID_OWNER_KEY") {
       return copy.errorInvalidOwnerKey;
@@ -99,7 +107,7 @@ function toErrorMessage(error: unknown, copy: ConfirmFinalTimeButtonCopy): strin
       return copy.errorArchived;
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   return copy.errorDefault;

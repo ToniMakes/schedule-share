@@ -32,6 +32,7 @@ import {
   type CandidateVoteSlot
 } from "../../candidate-vote-list";
 import styles from "../../page.module.css";
+import { localizedApiErrorMessage } from "../../../../i18n/api-error-messages";
 import { rememberParticipantEditLink } from "../../participant-edit-link-memory";
 import { rememberParticipantDisplayName } from "../../participant-name-memory";
 import {
@@ -172,7 +173,7 @@ export function EditAvailabilityForm({
     } catch (error) {
       setSubmitState({
         status: "error",
-        message: toErrorMessage(error, copy, editCopy)
+        message: toErrorMessage(error, copy, editCopy, locale)
       });
     }
   }
@@ -329,7 +330,8 @@ export function EditAvailabilityForm({
 function toErrorMessage(
   error: unknown,
   copy: AvailabilityFormCopy,
-  editCopy: EditAvailabilityFormCopy
+  editCopy: EditAvailabilityFormCopy,
+  locale: SchedulePageLocale
 ): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
@@ -348,7 +350,7 @@ function toErrorMessage(
       return copy.errorSlotOutOfRange;
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   if (error instanceof Error && error.name === "ZodError") {

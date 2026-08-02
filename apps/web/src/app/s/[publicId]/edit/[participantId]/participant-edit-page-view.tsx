@@ -12,6 +12,7 @@ import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 import { AdPageChrome, DisplayAd } from "../../../../ads/display-ad";
 import { LanguageSwitcher } from "../../../../i18n/language-switcher";
+import { localizedApiErrorMessage } from "../../../../i18n/api-error-messages";
 import { PageLanguage } from "../../../../i18n/page-language";
 import { EditAvailabilityForm } from "./edit-availability-form";
 import styles from "../../page.module.css";
@@ -279,7 +280,7 @@ function toPageErrorMessage(error: unknown, locale: SchedulePageLocale): string 
         : "这个参与者提交不存在或链接有误。";
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   return locale === "en"

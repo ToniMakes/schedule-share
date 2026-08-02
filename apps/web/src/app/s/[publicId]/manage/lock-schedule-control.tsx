@@ -11,6 +11,7 @@ import {
   type ScheduleDetail
 } from "@schedule-share/api-client";
 
+import { localizedApiErrorMessage } from "../../../i18n/api-error-messages";
 import { lockScheduleControlCopy, type LockScheduleControlCopy } from "./manage-copy";
 import type { SchedulePageLocale } from "../schedule-page-copy";
 import styles from "../page.module.css";
@@ -65,7 +66,7 @@ export function LockScheduleControl({
     } catch (error) {
       setLockState({
         status: "error",
-        message: toErrorMessage(error, copy)
+        message: toErrorMessage(error, copy, locale)
       });
     }
   }
@@ -80,7 +81,7 @@ export function LockScheduleControl({
     } catch (error) {
       setArchiveState({
         status: "error",
-        message: toErrorMessage(error, copy)
+        message: toErrorMessage(error, copy, locale)
       });
     }
   }
@@ -157,7 +158,11 @@ export function LockScheduleControl({
   );
 }
 
-function toErrorMessage(error: unknown, copy: LockScheduleControlCopy): string {
+function toErrorMessage(
+  error: unknown,
+  copy: LockScheduleControlCopy,
+  locale: SchedulePageLocale
+): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
       return copy.errorDatabase;
@@ -171,7 +176,7 @@ function toErrorMessage(error: unknown, copy: LockScheduleControlCopy): string {
       return copy.errorNotFound;
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   if (error instanceof Error && error.name === "ZodError") {

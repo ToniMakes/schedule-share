@@ -16,6 +16,7 @@ import { isPublicImageImportVisible } from "@/server/schedules/image-import";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 import { AdPageChrome, DisplayAd } from "../../ads/display-ad";
+import { localizedApiErrorMessage } from "../../i18n/api-error-messages";
 import { LanguageSwitcher } from "../../i18n/language-switcher";
 import { PageLanguage } from "../../i18n/page-language";
 import { AvailabilityForm } from "./availability-form";
@@ -402,7 +403,7 @@ function toPageErrorMessage(error: unknown, locale: SchedulePageLocale): string 
       return copy.serverErrorNotFound;
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   return copy.serverErrorDefault;

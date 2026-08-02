@@ -285,6 +285,7 @@ function CandidatePollResultRow({
                 )}
                 <ConfirmFinalTimeButton
                   isSelected={isSelected}
+                  locale={locale}
                   ownerKey={finalTimeControls.ownerKey}
                   publicId={finalTimeControls.publicId}
                   status={finalTimeControls.status}

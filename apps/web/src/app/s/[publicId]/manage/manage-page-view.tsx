@@ -13,6 +13,7 @@ import { getOwnerScheduleView } from "@/server/schedules/get-owner-schedule";
 import { DrizzleScheduleRepository } from "@/server/schedules/repository";
 
 import { AdPageChrome, DisplayAd } from "../../../ads/display-ad";
+import { localizedApiErrorMessage } from "../../../i18n/api-error-messages";
 import { LanguageSwitcher } from "../../../i18n/language-switcher";
 import { PageLanguage } from "../../../i18n/page-language";
 import { ConfirmFinalTimeButton } from "./final-time-control";
@@ -425,6 +426,7 @@ function RecommendedTimeCard({
             <ConfirmFinalTimeButton
               copy={confirmFinalTimeButtonCopy[locale]}
               isSelected={isSelectedFinalTime(selectedFinalTime, item)}
+              locale={locale}
               ownerKey={ownerKey}
               publicId={publicId}
               status={status}
@@ -518,6 +520,7 @@ function ManageAvailabilityBlockItem({
         <ConfirmFinalTimeButton
           copy={confirmFinalTimeButtonCopy[locale]}
           isSelected={isSelected}
+          locale={locale}
           ownerKey={ownerKey}
           publicId={publicId}
           status={status}
@@ -721,7 +724,7 @@ function toPageErrorMessage(error: unknown, locale: SchedulePageLocale): string 
         : "这个日程不存在或链接有误。";
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   return locale === "en"

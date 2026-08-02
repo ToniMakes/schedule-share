@@ -33,6 +33,7 @@ import {
 } from "./participant-name-memory";
 import { rememberParticipantEditLink } from "./participant-edit-link-memory";
 import styles from "./page.module.css";
+import { localizedApiErrorMessage } from "../../i18n/api-error-messages";
 import {
   schedulePageCopy,
   type AvailabilityFormCopy,
@@ -150,7 +151,7 @@ export function AvailabilityForm({
     } catch (error) {
       setSubmitState({
         status: "error",
-        message: toErrorMessage(error, copy)
+        message: toErrorMessage(error, copy, locale)
       });
     }
   }
@@ -396,7 +397,11 @@ export function AvailabilityForm({
   );
 }
 
-function toErrorMessage(error: unknown, copy: AvailabilityFormCopy): string {
+function toErrorMessage(
+  error: unknown,
+  copy: AvailabilityFormCopy,
+  locale: SchedulePageLocale
+): string {
   if (error instanceof ApiClientError) {
     if (error.code === "DATABASE_UNAVAILABLE") {
       return copy.errorDatabase;
@@ -414,7 +419,7 @@ function toErrorMessage(error: unknown, copy: AvailabilityFormCopy): string {
       return copy.errorSlotOutOfRange;
     }
 
-    return error.message;
+    return localizedApiErrorMessage(error.code, locale);
   }
 
   if (error instanceof Error && error.name === "ZodError") {
