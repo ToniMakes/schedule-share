@@ -116,7 +116,7 @@ export default function TermsPage() {
             <p>
               MVP
               可能出现功能调整、临时不可用、数据迁移或内测清理。请不要把它作为医疗、法律、财务、安全生产或其他高风险决策的唯一依据。遇到问题、归档或删除请求，请查看{" "}
-              <a href="/zh/feedback">反馈与删除请求</a>。
+              <a href="/zh/contact">联系与删除请求</a>。
             </p>
           </section>
 

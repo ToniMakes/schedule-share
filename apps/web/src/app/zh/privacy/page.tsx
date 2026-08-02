@@ -130,7 +130,7 @@ export default function PrivacyPage() {
             <p>
               MVP 默认日程在创建后 90
               天过期。过期日程可先归档，后续再删除。当前版本没有自助删除按钮；需要处理时请查看
-              <a href="/zh/feedback">反馈与删除请求</a>。
+              <a href="/zh/contact">联系与删除请求</a>。
             </p>
           </section>
 
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
             <h2>相关页面</h2>
             <p>
               你也可以查看 <a href="/zh/about">关于本工具</a>、<a href="/zh/terms">使用条款</a> 和{" "}
-              <a href="/zh/feedback">反馈与删除请求</a>。 English version:{" "}
+              <a href="/zh/contact">联系与删除请求</a>。 English version:{" "}
               <a href="/privacy">Privacy Policy</a>.
             </p>
           </section>

@@ -5,12 +5,14 @@ const publicRoutes = [
   "/new",
   "/about",
   "/privacy",
+  "/contact",
   "/feedback",
   "/terms",
   "/zh",
   "/zh/new",
   "/zh/about",
   "/zh/privacy",
+  "/zh/contact",
   "/zh/feedback",
   "/zh/terms"
 ] as const;

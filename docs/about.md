@@ -36,6 +36,7 @@
 - `/new`
 - `/about`
 - `/privacy`
+- `/contact`
 - `/feedback`
 - `/terms`
 - `/robots.txt`

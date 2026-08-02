@@ -111,7 +111,7 @@ export default function AboutPage() {
 
           <footer className={styles.footer}>
             <a href="/zh/terms">使用条款</a>
-            <a href="/zh/feedback">反馈与删除请求</a>
+            <a href="/zh/contact">联系</a>
             <a href="/about">English</a>
           </footer>
 

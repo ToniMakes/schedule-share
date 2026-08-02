@@ -15,7 +15,7 @@
 
 数据保留目前处于“自动清理链路已接入并在生产环境验证通过”的阶段：新日程默认带 90 天 `expires_at`，数据库有按过期时间查询的索引，组织者可手动归档；新增 `/api/maintenance/cleanup-expired-schedules` 受 `CRON_SECRET` 保护的维护 API 和 Vercel Cron，每天自动归档过期日程，并在归档宽限期后硬删除。Vercel Production/Preview 已配置 `CRON_SECRET` 并重新部署；未授权访问返回 `401`，带授权手动调用已返回 `200` 和归档/删除统计。日程增多主要增长 Neon Postgres 存储，而不是 Vercel 运行内存；公开推广前还需要补生产 cron 日志巡检、备份保留和删除失败监控。
 
-中英双语已从“只有导入解析支持部分英文时间表达”推进到“英文作为默认公开入口、中文迁移到 `/zh` 专属入口”的阶段：`/`、`/about`、`/privacy`、`/feedback`、`/terms`、`/new`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage` 现在是英文主流程；`/zh`、`/zh/new`、`/zh/about`、`/zh/privacy`、`/zh/feedback`、`/zh/terms`、`/zh/s/:publicId`、`/zh/s/:publicId/edit/:participantId` 和 `/zh/s/:publicId/manage` 保留中文入口；旧 `/en/...` 路径会兼容重定向到新的英文根路径。公开日程的开放网格填写、手动涂选、结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑，以及组织者侧分享链接、管理操作、结果摘要、较优时间槽、候选结果、最终时间确认和导出/复制入口已有英文主流程。图片识别入口仍受 `AI_IMAGE_IMPORT_ENABLED` / release mode / 额度闸门控制，公开环境默认不展示；语言切换会写入本地语言偏好，但根路径不再按偏好自动跳转，当前 API 错误码也已有中英文兜底文案。完整 i18n 字典、更多深层组件文案抽离和更广生产 smoke 覆盖仍未完成。
+中英双语已从“只有导入解析支持部分英文时间表达”推进到“英文作为默认公开入口、中文迁移到 `/zh` 专属入口”的阶段：`/`、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`/new`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage` 现在是英文主流程；`/zh`、`/zh/new`、`/zh/about`、`/zh/privacy`、`/zh/contact`、`/zh/feedback`、`/zh/terms`、`/zh/s/:publicId`、`/zh/s/:publicId/edit/:participantId` 和 `/zh/s/:publicId/manage` 保留中文入口；旧 `/en/...` 路径会兼容重定向到新的英文根路径。公开日程的开放网格填写、手动涂选、结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑，以及组织者侧分享链接、管理操作、结果摘要、较优时间槽、候选结果、最终时间确认和导出/复制入口已有英文主流程。图片识别入口仍受 `AI_IMAGE_IMPORT_ENABLED` / release mode / 额度闸门控制，公开环境默认不展示；语言切换会写入本地语言偏好，但根路径不再按偏好自动跳转，当前 API 错误码也已有中英文兜底文案。完整 i18n 字典、更多深层组件文案抽离和更广生产 smoke 覆盖仍未完成。
 
 当前本机限制：
 
@@ -64,8 +64,8 @@
 - 命令行脚本自动读取本地 `.env.local` / `.env`。
 - 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`，已补广告 cookie、第三方广告技术、无效流量防护和 AI 图片识别处理边界的基础披露。
 - 日程生命周期基础字段和自动清理任务：新日程默认 90 天 `expires_at`，数据库有过期时间索引，组织者可手动归档日程；`vercel.json` 已配置每日调用受 `CRON_SECRET` 保护的维护 API，自动归档过期日程，并在归档宽限期后硬删除 archived 日程。
-- 反馈与删除请求说明：`docs/feedback.md`、`/feedback`，支持通过 `NEXT_PUBLIC_SUPPORT_EMAIL` 配置公开支持邮箱。
-- 英文公开审核资产、创建入口、公开日程入口、参与者编辑入口和组织者管理入口：英文主入口已从 `/en/...` 切换到根路径 `/`、`/new`、`/about`、`/privacy`、`/feedback`、`/terms`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage`；中文入口迁移到 `/zh/...`；旧 `/en/...` 路径保留兼容重定向。公开日程英文入口已覆盖开放网格手动填写、基础结果热力图、候选投票填写和候选投票结果面板；编辑英文入口已覆盖普通可用时间和候选投票修改，并会在英文提交成功后记住 `/s/.../edit/...` 编辑链接；组织者英文入口已覆盖分享链接、管理操作、开放网格结果摘要、较优时间槽、候选投票结果、最终时间确认、导出和复制入口，英文创建页生成的组织者链接会指向 `/s/.../manage`。sitemap 和 robots 已允许英文根路径公开说明/创建页面与 `/zh/...` 中文公开页面，动态日程页继续不进入 sitemap。
+- 公开联系、反馈与删除请求说明：`docs/feedback.md`、`/contact` 和兼容 `/feedback`，支持通过 `NEXT_PUBLIC_SUPPORT_EMAIL` 配置公开支持邮箱。
+- 英文公开审核资产、创建入口、公开日程入口、参与者编辑入口和组织者管理入口：英文主入口已从 `/en/...` 切换到根路径 `/`、`/new`、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage`；中文入口迁移到 `/zh/...`；旧 `/en/...` 路径保留兼容重定向。公开日程英文入口已覆盖开放网格手动填写、基础结果热力图、候选投票填写和候选投票结果面板；编辑英文入口已覆盖普通可用时间和候选投票修改，并会在英文提交成功后记住 `/s/.../edit/...` 编辑链接；组织者英文入口已覆盖分享链接、管理操作、开放网格结果摘要、较优时间槽、候选投票结果、最终时间确认、导出和复制入口，英文创建页生成的组织者链接会指向 `/s/.../manage`。sitemap 和 robots 已允许英文根路径公开说明/创建页面与 `/zh/...` 中文公开页面，动态日程页继续不进入 sitemap。
 - GitHub Actions CI：format、脚本和 workspace lint、typecheck、test、build。
 - 多种可用时间添加方式的产品规格：`docs/availability-entry-methods.md`。
 - 多种可用时间添加方式的领域、API、隐私和架构边界文档。
@@ -106,7 +106,7 @@
 - 管理页支持复制结果摘要：开放网格会优先列出全员可用时间段，没有全员共同时间时列出当前较优时间格；候选投票会列出当前最佳候选、综合支持度、首选人数和平均偏好顺位。摘要不包含管理密钥。
 - 管理页开放网格的当前较优时间槽支持逐条复制，复制内容包含日程标题、备选时间、可用人数比例、方便名单和未选此时间名单，不包含管理密钥。
 - 默认关闭的常驻展示广告位框架：`DisplayAd` / `AdPageChrome` 已接入首页、创建页、公开日程页、管理页、编辑页、关于页、隐私页、反馈页和使用条款页；创建、填写、编辑等核心操作区不插广告，管理/编辑密钥页不加载第三方广告脚本。
-- 广告审核基础公开资产：英文根路径 `/`、`/about`、`/privacy`、`/feedback`、`/terms`、中文 `/zh/...` 公开页、`/robots.txt` 和 `/sitemap.xml` 已接入；首页 footer 已连接关于、隐私、反馈、条款和中文入口。
+- 广告审核基础公开资产：英文根路径 `/`、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、中文 `/zh/...` 公开页、`/robots.txt` 和 `/sitemap.xml` 已接入；首页 footer 已连接关于、隐私、联系、条款和中文入口。
 - 公开隐私和条款披露已补充：真实广告当前关闭、广告平台可能使用 cookie / web beacon / IP / 设备 / 浏览器 / 页面 URL / 展示互动数据、普通广告不发放奖励、不要诱导广告点击、图片识别只生成可编辑预览且公开模式继续受闸门阻断。
 - `/ads.txt` 路由已接入；未设置 `ADS_TXT_PUBLISHER_ID` 时返回未配置注释，拿到广告平台 publisher ID 后可通过环境变量生成正式记录。
 - 部署配置预检已覆盖常驻展示广告：真实 AdSense 开启时必须配置公开支持邮箱、`ADS_TXT_PUBLISHER_ID`、隐私披露确认、广告政策审阅确认、consent 策略确认、client、slot、生产域名白名单，并阻断 `NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE=full` 和生产 test mode。

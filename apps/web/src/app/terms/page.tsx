@@ -128,7 +128,7 @@ export default function EnglishTermsPage() {
               This MVP may change, become temporarily unavailable, migrate data, or clean up test
               schedules. Do not use it as the only source of truth for medical, legal, financial,
               safety-critical, or other high-risk decisions. For issues, archive requests, or
-              deletion requests, see <a href="/feedback">Feedback and deletion requests</a>.
+              deletion requests, see <a href="/contact">Contact and deletion requests</a>.
             </p>
           </section>
 

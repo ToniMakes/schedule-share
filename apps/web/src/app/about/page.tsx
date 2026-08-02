@@ -121,7 +121,7 @@ export default function EnglishAboutPage() {
 
           <footer className={styles.footer}>
             <a href="/terms">Terms</a>
-            <a href="/feedback">Feedback and deletion requests</a>
+            <a href="/contact">Contact</a>
             <a href="/zh/about">中文</a>
           </footer>
 

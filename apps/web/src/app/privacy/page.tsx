@@ -151,7 +151,7 @@ export default function EnglishPrivacyPage() {
             <h2>Related Pages</h2>
             <p>
               You can also read <a href="/about">About</a>, <a href="/terms">Terms</a>, and{" "}
-              <a href="/feedback">Feedback and deletion requests</a>. Chinese version:{" "}
+              <a href="/contact">Contact and deletion requests</a>. Chinese version:{" "}
               <a href="/zh/privacy">隐私与数据保留说明</a>.
             </p>
           </section>

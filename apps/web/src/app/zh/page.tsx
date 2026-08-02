@@ -56,7 +56,7 @@ export default function HomePage() {
           <footer className={styles.footer}>
             <a href="/zh/about">关于本工具</a>
             <a href="/zh/privacy">隐私与数据保留说明</a>
-            <a href="/zh/feedback">反馈与删除请求</a>
+            <a href="/zh/contact">联系</a>
             <a href="/zh/terms">使用条款</a>
             <a href="/">English</a>
           </footer>

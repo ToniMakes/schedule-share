@@ -66,7 +66,7 @@ export default function EnglishHomePage() {
           <footer className={styles.footer}>
             <a href="/about">About</a>
             <a href="/privacy">Privacy</a>
-            <a href="/feedback">Feedback and deletion requests</a>
+            <a href="/contact">Contact</a>
             <a href="/terms">Terms</a>
             <a href="/zh">中文</a>
           </footer>
