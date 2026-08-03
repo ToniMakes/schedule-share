@@ -11,7 +11,7 @@
 
 下一阶段的产品差异化决策已经补充到 `docs/adr/0008-availability-import-and-templates.md` 和 `docs/adr/0009-multiple-availability-entry-methods.md`：优先把课表/排班导入、登录用户长期可用模板、When2meet 风格手动拖拽网格和 Doodle/Rallly 风格候选时间投票纳入“多种可用时间添加方式”策略。除手动拖拽外，这些能力只生成预填建议，不绕过用户确认，也不替代当前匿名主流程。
 
-常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、真实广告上线硬闸门、广告/AI 基础隐私披露、公开支持邮箱入口、公开运营主体可配置展示，以及 AI 额度账本数据库、服务层、只读额度状态 API 和 `image_import` 强制额度校验开关；Vercel Production/Preview 已配置 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com`，生产 `/contact` 已验证能显示该邮箱；真实广告和图片识别公开入口仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
+常驻展示广告、AI 图片识别成本控制和激励广告换额度方案已经补充到 `docs/monetization.md`。当前已接入默认关闭的常驻广告位框架、`/ads.txt` 路由、配置预检、真实广告上线硬闸门、广告/AI 基础隐私披露、公开支持邮箱入口、公开运营主体展示，以及 AI 额度账本数据库、服务层、只读额度状态 API 和 `image_import` 强制额度校验开关；Vercel Production/Preview 已配置 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com`、`NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia`，生产 `/contact`、`/about`、`/privacy`、`/terms` 和 `/zh/contact` 已验证能显示公开邮箱或运营主体；真实广告和图片识别公开入口仍未开放。常驻广告默认每个页面尽量保留外围广告位，但避开核心操作区和密钥泄露风险；图片识别后续通过免费额度、用户主动触发的 rewarded ad、额度账本、失败退款和全站成本护栏控制成本；组织者侧保留移除广告、自定义品牌、群组和批量活动等后续增值方向。
 
 数据保留目前处于“自动清理链路已接入并在生产环境验证通过”的阶段：新日程默认带 90 天 `expires_at`，数据库有按过期时间查询的索引，组织者可手动归档；新增 `/api/maintenance/cleanup-expired-schedules` 受 `CRON_SECRET` 保护的维护 API 和 Vercel Cron，每天自动归档过期日程，并在归档宽限期后硬删除。Vercel Production/Preview 已配置 `CRON_SECRET` 并重新部署；未授权访问返回 `401`，带授权手动调用已返回 `200` 和归档/删除统计。日程增多主要增长 Neon Postgres 存储，而不是 Vercel 运行内存；公开推广前还需要补生产 cron 日志巡检、备份保留和删除失败监控。
 
@@ -65,7 +65,7 @@
 - 隐私与数据保留说明草案：`docs/privacy.md`、`/privacy`，已补广告 cookie、第三方广告技术、无效流量防护和 AI 图片识别处理边界的基础披露。
 - 日程生命周期基础字段和自动清理任务：新日程默认 90 天 `expires_at`，数据库有过期时间索引，组织者可手动归档日程；`vercel.json` 已配置每日调用受 `CRON_SECRET` 保护的维护 API，自动归档过期日程，并在归档宽限期后硬删除 archived 日程。
 - 公开联系、反馈与删除请求说明：`docs/feedback.md`、`/contact` 和兼容 `/feedback`，已通过 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com` 配置公开支持邮箱并在生产验证可见。
-- 公开运营主体展示：`NEXT_PUBLIC_SITE_OPERATOR_NAME` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 已接入 About、Privacy、Terms、Contact 和 Feedback 页面；真实 AdSense 生产预检会要求主体名称。
+- 公开运营主体展示：`NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia` 已配置到 Vercel Production/Preview，并接入 About、Privacy、Terms、Contact 和 Feedback 页面；生产 `/contact`、`/about`、`/privacy`、`/terms` 和 `/zh/contact` 已验证可见。
 - 英文公开审核资产、创建入口、公开日程入口、参与者编辑入口和组织者管理入口：英文主入口已从 `/en/...` 切换到根路径 `/`、`/new`、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage`；中文入口迁移到 `/zh/...`；旧 `/en/...` 路径保留兼容重定向。公开日程英文入口已覆盖开放网格手动填写、基础结果热力图、候选投票填写和候选投票结果面板；编辑英文入口已覆盖普通可用时间和候选投票修改，并会在英文提交成功后记住 `/s/.../edit/...` 编辑链接；组织者英文入口已覆盖分享链接、管理操作、开放网格结果摘要、较优时间槽、候选投票结果、最终时间确认、导出和复制入口，英文创建页生成的组织者链接会指向 `/s/.../manage`。sitemap 和 robots 已允许英文根路径公开说明/创建页面与 `/zh/...` 中文公开页面，动态日程页继续不进入 sitemap。
 - GitHub Actions CI：format、脚本和 workspace lint、typecheck、test、build。
 - 多种可用时间添加方式的产品规格：`docs/availability-entry-methods.md`。
@@ -234,7 +234,7 @@ corepack pnpm db:setup
 - 自动数据清理已接入代码和 `vercel.json`，Vercel Production/Preview 已设置 `CRON_SECRET` 并完成生产 redeploy；2026-08-02 带授权手动调用 `/api/maintenance/cleanup-expired-schedules` 已返回 `200` 和归档/删除统计，未授权调用返回 `401`。公开推广前仍需用生产日志确认每日 cron 实际触发，并补删除失败告警、备份保留周期和人工删除请求处理时限。
 - 尚未实现完整中英双语：英文默认根路径、英文创建页、`/s/:publicId` 公开日程主流程、`/s/:publicId/edit/:participantId` 参与者编辑主流程和 `/s/:publicId/manage` 组织者管理主流程已接入；中文入口迁移到 `/zh/...`；开放网格手动填写、基础结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑、组织者分享链接、管理操作、结果摘要、导出/复制和语言切换可用；本地语言偏好记忆和当前 API 错误码中英文兜底已接入。海外用户正式推广前仍应补完整 `zh-CN` / `en` 文案字典、更多深层组件文案抽离和更广生产 smoke 覆盖。
 - 尚未做微信小程序版。
-- 尚未开放真实广告、激励广告、商业化或支付能力；默认关闭的常驻展示广告位框架、中文/英文公开审核资产、基础广告/AI 隐私披露、真实广告上线硬闸门、AI 图片识别静态成本闸门、AI 额度账本数据库结构、额度账本服务层、图片识别 API 额度强制校验开关、公开支持邮箱、公开运营主体可配置展示和 `/ads.txt` 路由已实现，仍缺正式法律审阅、实际运营主体配置、实际广告供应商披露、publisher / slot ID、AdSense 审核通过、真实广告平台接入验收、密钥 URL 迁移、广告 consent、真实广告监控、站内反馈表单或工单系统接入、免费额度自动发放、广告服务端验证、动态成本计数和前端兑换流程。
+- 尚未开放真实广告、激励广告、商业化或支付能力；默认关闭的常驻展示广告位框架、中文/英文公开审核资产、基础广告/AI 隐私披露、真实广告上线硬闸门、AI 图片识别静态成本闸门、AI 额度账本数据库结构、额度账本服务层、图片识别 API 额度强制校验开关、公开支持邮箱、公开运营主体生产配置和 `/ads.txt` 路由已实现，仍缺正式法律审阅、实际广告供应商披露、publisher / slot ID、AdSense 审核通过、真实广告平台接入验收、密钥 URL 迁移、广告 consent、真实广告监控、站内反馈表单或工单系统接入、免费额度自动发放、广告服务端验证、动态成本计数和前端兑换流程。
 - 图片课表/排班导入已接入基础 provider，但公开模式被代码层阻断；本地或内测需要配置 `OPENAI_API_KEY`、功能开关、release mode 和必要 token 后才能真实识别截图，仍缺少真实课表/排班样本调优。
 - 文本粘贴导入目前支持常见结构化时间文本、英文月份日期、日期/星期逗号上下文保留、英文 `from/to/until/till/between ... and ...` 自然句、英文 `noon/midnight` 时间词、结束时间 am/pm 反推开始时间、开始时间加数字时长、列表/编号和忙碌状态前缀、基础课表/排班表格粘贴、复制自合并日期表头的多行表头、日期/星期 + 时间双层表头、`Start/End` 拆分表头行、左右并排区域独立时间列、`Date/Start/End/Title`、`Date/Time/Title`、`Day/Time/Activity`、`Day of Week/Period/Activity` 这类行式排班表格、空白日期/时间继承、独立备注续行、常见导出标题/汇总/说明/页脚跳过、带明确钟点的课程节次、用户粘贴的自定义节次表、裸数字自定义节次定义、`Period/节次` 列裸数字范围和无明确钟点课程节次默认作息表预填；更复杂自然语言、更多学校特殊节次格式、更多深层分组表头和非结构化多行说明待真实样本评估。
 - `.ics` 日历导入已支持基础事件、`VFREEBUSY` 忙闲区间、常见 Windows 时区别名、`DTSTART` + `DURATION`（含周、日、时、分、秒，秒级时长向上折算到分钟）、全天事件（含缺少 `DTEND` 的 date-only `DTSTART`）、常见每日重复事件、常见每周重复事件、常见月度重复事件（含指定月份、月内日期、月末、每月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、常见年度重复事件（含同月同日、指定月份、指定月内日期、每年某月所有指定星期几、顺数/倒数第 N 个星期几、`BYSETPOS` 位置过滤）、有限重复、`RDATE` 额外日期或 `VALUE=PERIOD` 额外时段、例外日期和同 `UID` 的 `RECURRENCE-ID` 单次取消/改期；更复杂 recurrence、更多非 IANA 时区和真实日历样本仍待补充验证。
@@ -252,7 +252,7 @@ corepack pnpm db:setup
 5. 继续用真实移动设备走查手动网格的边缘滚动、惯性滚动和超长日期范围下的结果密度体验。
 6. 跟踪下一次 Vercel Cron 自动触发日志，确认 `/api/maintenance/cleanup-expired-schedules` 每日任务不是只靠手动调用跑通；随后补删除失败告警、备份保留说明和人工删除请求处理时限。
 7. 在决定登录方案前新增或更新认证 ADR，再实现用户、模板数据库表，并把当前本机模板升级为账号保存型模板选择。
-8. 继续完善广告审核资产的正式内容：在 Vercel 配置实际公开运营主体、补法律审阅、实际广告供应商、个性化广告退出方式、地区化 consent、publisher / slot ID 和生产域名白名单；公开支持邮箱已配置为 `hello@tonimakes.com`，后续站内反馈表单可在用户反馈管理系统稳定后接入。申请 AdSense 前先决定个人或公司收款主体，不提前填写收款/税务资料。通过 AdSense 审核后，再把当前默认关闭的常驻广告位框架切到小流量真实广告。带 `?key=` 的管理/编辑页继续只允许内部广告或关闭第三方广告。之后补免费额度自动发放、单日程/全站限额、动态成本计数和紧急关闭开关，确认有效 eCPM 后接入可服务端验证的激励广告。
+8. 继续完善广告审核资产的正式内容：公开支持邮箱已配置为 `hello@tonimakes.com`，公开运营主体已配置为 `Toni Liu` / `Australia`；接下来补法律审阅、实际广告供应商、个性化广告退出方式、地区化 consent、publisher / slot ID 和生产域名白名单。后续站内反馈表单可在用户反馈管理系统稳定后接入。AdSense 第一版倾向按个人主体申请，避免一人零流水公司带来的资料和税务复杂度。通过 AdSense 审核后，再把当前默认关闭的常驻广告位框架切到小流量真实广告。带 `?key=` 的管理/编辑页继续只允许内部广告或关闭第三方广告。之后补免费额度自动发放、单日程/全站限额、动态成本计数和紧急关闭开关，确认有效 eCPM 后接入可服务端验证的激励广告。
 9. 继续补完整中英双语基础设施：`zh-CN` / `en` 文案字典抽离、剩余深层组件文案和更广生产 smoke 覆盖；语言偏好记忆和当前 API 错误码兜底已接入，图片/文本/CSV/ICS/模板预填面板已进入英文主流程，但图片识别公开入口仍保持成本闸门关闭。
 10. 找 3 到 5 个朋友按内测清单试用，重点观察手动填写是否已经够用、导入是否明显降低填写成本。
 11. 配置生产日志、监控、告警和备份演练。

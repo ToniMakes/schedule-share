@@ -9,7 +9,7 @@
 - 真实广告默认关闭，不会向第三方广告平台发请求。
 - `/contact` 已作为公开联系主入口，`/feedback` 继续作为兼容说明页。
 - Vercel Production/Preview 已配置 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com`，生产 `/contact` 已验证能显示该公开支持邮箱。
-- 公开运营主体已支持通过 `NEXT_PUBLIC_SITE_OPERATOR_NAME` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 配置，并展示在 About、Privacy、Terms 和 Contact 页面；真实 AdSense 生产预检会要求主体名称。
+- Vercel Production/Preview 已配置 `NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia`；生产 `/contact`、`/about`、`/privacy`、`/terms` 和 `/zh/contact` 已验证能显示公开运营主体。
 - `/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`/robots.txt`、`/sitemap.xml` 和 `/ads.txt` 已有公开路由。
 - 带 `?key=` 的管理页和编辑页不会加载第三方广告脚本。
 - `deployment:config` 已把真实 AdSense 开启前置条件变成硬闸门。
@@ -20,13 +20,13 @@
 - 专用公开支持邮箱已使用 `hello@tonimakes.com`，后续站内表单可在用户反馈管理系统稳定后再接入。
 - Vercel Production 和 Preview 已设置 `NEXT_PUBLIC_SUPPORT_EMAIL` 并重新部署。
 - `/contact` 已展示公开联系方式，且页面提示不要公开发送管理密钥、编辑密钥或隐私截图。
-- 在决定个人或公司作为广告收款主体后，在 Vercel Production/Preview 设置 `NEXT_PUBLIC_SITE_OPERATOR_NAME`，可选设置 `NEXT_PUBLIC_SITE_OPERATOR_REGION`，然后重新部署；这些信息会公开展示。
+- 公开运营主体已按个人主体试水方案配置为 `Toni Liu` / `Australia`，并已重新部署；这些信息会公开展示，后续如改为公司主体再同步更新 Vercel 环境变量和公开页面。
 - 检查 `/privacy` 和 `/terms` 的广告、cookie、AI 图片识别和数据保留说明。
 - 继续保持 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED=false`。
 
 ## Phase 2：AdSense 申请
 
-- 先决定收款主体：个人或公司。
+- 当前建议按个人主体申请，降低一人零流水公司带来的税务和资料复杂度；如后续改为公司收款，再重新评估账号主体、银行账户和税务资料。
 - 在 AdSense 添加站点 `schedule.tonimakes.com`。
 - 只填写广告平台要求的账号、地址、网站和公开政策页面信息。
 - 不在广告后台填写数据库 URL、OpenAI key、Vercel/Neon 凭证或其他密钥。

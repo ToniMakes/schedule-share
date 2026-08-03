@@ -10,7 +10,7 @@
 - 首页、关于页、隐私说明页和使用条款页都应能进入公开联系说明页。
 - 当前不在页面公开个人 Git 邮箱，避免把开发身份误用为长期客服入口。
 - `/contact` 和 `/feedback` 支持读取 `NEXT_PUBLIC_SUPPORT_EMAIL` 显示正式公开邮箱；当前 Vercel Production/Preview 已配置 `hello@tonimakes.com`，生产 `/contact` 已验证可见。
-- `/contact` 和 `/feedback` 也支持读取 `NEXT_PUBLIC_SITE_OPERATOR_NAME` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 展示公开运营主体；真实广告上线前生产预检会要求主体名称。
+- `/contact` 和 `/feedback` 也支持读取 `NEXT_PUBLIC_SITE_OPERATOR_NAME` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 展示公开运营主体；当前 Vercel Production/Preview 已配置 `Toni Liu` / `Australia`，生产 `/contact` 已验证可见。
 - 内测期间也可以继续通过组织者已知的私下渠道收集补充反馈。
 - 站内表单后续可接入独立的用户反馈管理系统；公开邮箱继续作为兜底联系渠道。
 

@@ -15,7 +15,7 @@
 | `DATABASE_MIGRATION_URL`                 | 否   | Drizzle migration、`db:setup`                         | `postgres://user:password@host:5432/dbname` | migration 专用直连 Postgres 连接串。不设置时使用 `DATABASE_URL`。Neon pooled host 含 `-pooler`，migration 建议使用 direct host。                   |
 | `APP_BASE_URL`                           | 否   | Web API、`deployment:config`                          | `https://schedule.tonimakes.com`            | 生成 `shareUrl`、`ownerUrl` 和 `editUrl` 时使用的正式站点地址。不设置时按请求 Host 推断。                                                          |
 | `NEXT_PUBLIC_SUPPORT_EMAIL`              | 否   | Web 页面                                              | `support@example.com`                       | 公开联系、反馈和删除请求邮箱。会进入前端 bundle；只填写准备公开展示的支持邮箱，不要填写私人邮箱或内部密钥。                                        |
-| `NEXT_PUBLIC_SITE_OPERATOR_NAME`         | 否   | Web 页面、`deployment:config`                         | `Toni Makes`                                | 公开运营主体名称。会显示在 About、Privacy、Terms 和 Contact 页面；真实广告上线前生产预检要求配置。                                                 |
+| `NEXT_PUBLIC_SITE_OPERATOR_NAME`         | 否   | Web 页面、`deployment:config`                         | `Toni Liu`                                  | 公开运营主体名称。会显示在 About、Privacy、Terms 和 Contact 页面；真实广告上线前生产预检要求配置。                                                 |
 | `NEXT_PUBLIC_SITE_OPERATOR_REGION`       | 否   | Web 页面                                              | `Australia`                                 | 公开运营主体所在国家或地区。用于帮助访客和广告审核理解运营归属；不应填写证件号、税号或内部注册地址截图。                                           |
 | `CRON_SECRET`                            | 是   | Vercel Cron、Web API、`deployment:config`             | `random-long-secret`                        | 保护 `/api/maintenance/cleanup-expired-schedules`。Vercel Cron 会用 `Authorization: Bearer <CRON_SECRET>` 调用；生产和 Preview 需要设置。          |
 | `SCHEDULE_HARD_DELETE_GRACE_DAYS`        | 否   | Web API、`deployment:config`                          | `30`                                        | 已归档日程在 `expires_at` 后继续保留多少天再硬删除。默认 30，允许 1 到 365。                                                                       |
@@ -175,9 +175,9 @@ AI_IMAGE_IMPORT_RELEASE_MODE=off
 正式公开测试前建议额外设置：
 
 ```text
-NEXT_PUBLIC_SUPPORT_EMAIL=support@example.com
-NEXT_PUBLIC_SITE_OPERATOR_NAME=<public person or company name>
-NEXT_PUBLIC_SITE_OPERATOR_REGION=<country or region>
+NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com
+NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu
+NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia
 ```
 
 `OPENAI_API_KEY` 不是当前公开生产必填项。可以先只配置到本地或 Preview 调优；如果已经配置到

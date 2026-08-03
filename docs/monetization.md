@@ -105,7 +105,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 
 - 生产域名、HTTPS 和基础导航已经稳定。当前正式域名可以作为审核入口。
 - 首页不能只有空表单，要有可被搜索引擎和广告审核理解的原创内容：这个工具解决什么问题、适合谁、如何处理时区、隐私如何保护、用户如何反馈。
-- 已提供稳定可访问的 `/about`、`/privacy`、`/contact`、`/feedback` 和 `/terms` 基础页面；`/contact` 已通过 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com` 显示公开支持邮箱；公开运营主体支持通过 `NEXT_PUBLIC_SITE_OPERATOR_NAME` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION` 配置。正式开放广告前仍需要做法律和广告政策审阅。
+- 已提供稳定可访问的 `/about`、`/privacy`、`/contact`、`/feedback` 和 `/terms` 基础页面；`/contact` 已通过 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com` 显示公开支持邮箱；Vercel Production/Preview 已配置 `NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia`，生产 `/contact`、`/about`、`/privacy`、`/terms` 和 `/zh/contact` 已验证能显示公开运营主体。正式开放广告前仍需要做法律和广告政策审阅。
 - 动态日程页属于用户生成内容和临时链接，不应作为广告审核的主要内容来源；审核重点放在公开首页、说明页、隐私页和真实可用的创建入口。
 - 隐私说明已补充广告 cookie、第三方广告技术、广告请求可能包含的设备/网络/页面信息、无效流量防护和 AI 图片识别处理边界。真实广告前仍需补实际 Google 或其他第三方广告供应商、个性化广告退出方式、地区化 consent 和正式法律审阅。
 - `/ads.txt` 路由已接入；拿到 publisher ID 后设置 `ADS_TXT_PUBLISHER_ID` 并确认根域可抓取。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
@@ -133,9 +133,9 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 
 广告审核前需要确认这些公开资产：
 
-- `/about`：已接入基础产品定位、适合人群、核心功能说明和可配置运营主体展示；正式上线前在 Vercel 填写实际公开运营主体。
+- `/about`：已接入基础产品定位、适合人群、核心功能说明和公开运营主体展示；当前生产显示 `Toni Liu` / `Australia`，后续如改公司主体需同步更新。
 - `/privacy`：已接入隐私说明基础版，并补充广告 cookie、第三方广告技术和 AI 图片识别处理边界；真实广告前继续补实际第三方广告供应商、个性化广告退出和 consent。
-- `/contact`：已接入公开联系、反馈、删除请求说明和可配置运营主体展示；Vercel Production/Preview 已配置 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com`，生产页已验证能显示该邮箱。旧 `/feedback` 继续作为兼容说明页，后续可再接入站内表单。
+- `/contact`：已接入公开联系、反馈、删除请求说明和公开运营主体展示；Vercel Production/Preview 已配置 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com`、`NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia`，生产页已验证能显示邮箱和主体信息。旧 `/feedback` 继续作为兼容说明页，后续可再接入站内表单。
 - `/terms`：已接入基础使用条款草案；正式上线前做法律审阅。
 - `/`、`/new`、`/about`、`/privacy`、`/contact`、`/feedback` 和 `/terms`：已作为英文默认公开说明页、公开联系页和英文创建页，用于海外用户理解产品、进入核心创建流程，并给广告审核提供英文可读内容；中文公开页迁移到 `/zh/...`；旧 `/en/...` 保留兼容重定向。`/s/:publicId` 已覆盖公开日程的开放网格手动填写、图片/文本/CSV/ICS/模板预填、基础结果热力图、候选投票填写和候选投票结果面板，`/s/:publicId/edit/:participantId` 已覆盖参与者修改普通可用时间、图片/文本/CSV/ICS/模板预填和候选投票，`/s/:publicId/manage` 已覆盖组织者管理、分享链接、结果摘要、导出、复制和最终时间确认；语言切换会写入本地语言偏好，当前 API 错误码已有中英文兜底。动态日程页仍不作为广告审核主要内容，AI 图片识别公开入口仍默认关闭，完整文案字典、深层组件文案和更广生产 smoke 仍需继续补。
 - `/ads.txt`：路由已接入；拿到 AdSense publisher ID 后配置生产环境变量。
@@ -469,7 +469,7 @@ AI 额度和激励广告：
 ## 分阶段落地
 
 1. 文档阶段：明确成本、广告、隐私、数据模型和 API 计划，不改现有可用主链路。
-2. 审核准备阶段：基础 `/about`、`/terms`、`/privacy`、`/contact`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已接入；广告/AI 基础披露、公开支持邮箱 `hello@tonimakes.com` 和可配置运营主体展示已补充；继续补法律审阅、实际运营主体配置、实际广告供应商、publisher / slot ID、生产域名白名单和地区化 consent。
+2. 审核准备阶段：基础 `/about`、`/terms`、`/privacy`、`/contact`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已接入；广告/AI 基础披露、公开支持邮箱 `hello@tonimakes.com` 和公开运营主体 `Toni Liu` / `Australia` 已配置并在生产验证；继续补法律审阅、实际广告供应商、publisher / slot ID、生产域名白名单和地区化 consent。
 3. 常驻广告试水阶段：默认全站外围广告框架已接入且关闭。真实广告开启时，核心操作页只启用顶部、底部、桌面 rail 或移动 anchor；结果页、提交成功页和说明页可以增加内容间广告。带 `?key=` 页面只允许 `off` 或 `internal`。
 4. 密钥安全阶段：如果要在管理/编辑页展示第三方广告，先把 URL 密钥迁移到不暴露给第三方脚本的机制，并增加第三方脚本检查。
 5. 免费额度阶段：做本机或匿名 session 的少量免费图片识别额度和全站限额，不接 rewarded ad。
