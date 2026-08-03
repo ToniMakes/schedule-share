@@ -13,10 +13,13 @@
 - `/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`/robots.txt`、`/sitemap.xml` 和 `/ads.txt` 已有公开路由。
 - 带 `?key=` 的管理页和编辑页不会加载第三方广告脚本。
 - `deployment:config` 已把真实 AdSense 开启前置条件变成硬闸门。
+- AdSense 当前按根域 `tonimakes.com` 提交站点审核；真实投放目标仍是日程应用 `schedule.tonimakes.com`。`schedule.tonimakes.com` 不能作为 AdSense 新站点单独添加，但后续可以作为真实广告脚本允许加载的生产子域。
+- 2026-08-03 线上检查：`https://tonimakes.com/ads.txt` 已返回 `google.com, pub-1161635953139243, DIRECT, f08c47fec0942fa0`，根域首页已包含 AdSense 验证 meta；`https://schedule.tonimakes.com/ads.txt` 当前仍返回未配置注释，需要 Vercel 设置 `ADS_TXT_PUBLISHER_ID=pub-1161635953139243` 后才会输出同一记录。
 
 ## Phase 1：公开资产准备
 
 - 确认生产域名 `https://schedule.tonimakes.com` 可访问。
+- 确认根域 `https://tonimakes.com` 可访问，并已经放置 AdSense 站点验证所需的 meta 或脚本；根域的 `/ads.txt` 也需要能被广告平台抓取。
 - 专用公开支持邮箱已使用 `hello@tonimakes.com`，后续站内表单可在用户反馈管理系统稳定后再接入。
 - Vercel Production 和 Preview 已设置 `NEXT_PUBLIC_SUPPORT_EMAIL` 并重新部署。
 - `/contact` 已展示公开联系方式，且页面提示不要公开发送管理密钥、编辑密钥或隐私截图。
@@ -27,17 +30,18 @@
 ## Phase 2：AdSense 申请
 
 - 当前建议按个人主体申请，降低一人零流水公司带来的税务和资料复杂度；如后续改为公司收款，再重新评估账号主体、银行账户和税务资料。
-- 在 AdSense 添加站点 `schedule.tonimakes.com`。
+- 在 AdSense 添加站点 `tonimakes.com`，不要删除该根域站点；日程应用作为该根域下的子域投放。
+- AdSense 后台显示“已请求审核”或“正在准备”时，当前主要外部等待项就是审核结果；审核通过前不要打开真实广告总开关。
 - 只填写广告平台要求的账号、地址、网站和公开政策页面信息。
 - 不在广告后台填写数据库 URL、OpenAI key、Vercel/Neon 凭证或其他密钥。
 - 站点审核期间仍保持真实广告关闭，除非平台要求放置审核代码且代码路径经过检查。
 
 ## Phase 3：ads.txt 和广告配置
 
-- 拿到 publisher ID 后，在 Vercel 设置 `ADS_TXT_PUBLISHER_ID`。
-- 设置 AdSense client 和广告位 slot 环境变量。
+- 拿到 publisher ID 后，先保证根域 `https://tonimakes.com/ads.txt` 返回正式记录；日程应用的 `https://schedule.tonimakes.com/ads.txt` 也可以通过 Vercel 的 `ADS_TXT_PUBLISHER_ID` 返回同一 publisher 记录，作为子域冗余声明。
+- 设置 AdSense client 和广告位 slot 环境变量，但继续保持 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED=false`，直到审核通过、slot 创建完成且小流量计划确认。
 - 设置 `NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS=schedule.tonimakes.com`。
-- 确认 `/ads.txt` 在生产域名返回正式记录。
+- 确认根域 `/ads.txt` 已被 AdSense 识别；如配置了日程应用的 `ADS_TXT_PUBLISHER_ID`，再确认子域 `/ads.txt` 也返回同一正式记录。
 - 只有完成隐私披露、政策审阅和 consent 策略后，才把以下确认项设为 `true`：
   - `ADS_PRIVACY_DISCLOSURE_READY`
   - `ADS_POLICY_REVIEW_READY`

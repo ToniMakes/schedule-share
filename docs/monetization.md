@@ -108,7 +108,8 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 - 已提供稳定可访问的 `/about`、`/privacy`、`/contact`、`/feedback` 和 `/terms` 基础页面；`/contact` 已通过 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com` 显示公开支持邮箱；Vercel Production/Preview 已配置 `NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia`，生产 `/contact`、`/about`、`/privacy`、`/terms` 和 `/zh/contact` 已验证能显示公开运营主体。正式开放广告前仍需要做法律和广告政策审阅。
 - 动态日程页属于用户生成内容和临时链接，不应作为广告审核的主要内容来源；审核重点放在公开首页、说明页、隐私页和真实可用的创建入口。
 - 隐私说明已补充广告 cookie、第三方广告技术、广告请求可能包含的设备/网络/页面信息、无效流量防护和 AI 图片识别处理边界。真实广告前仍需补实际 Google 或其他第三方广告供应商、个性化广告退出方式、地区化 consent 和正式法律审阅。
-- `/ads.txt` 路由已接入；拿到 publisher ID 后设置 `ADS_TXT_PUBLISHER_ID` 并确认根域可抓取。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
+- AdSense 当前按根域 `tonimakes.com` 提交审核；`schedule.tonimakes.com` 是审核通过后允许加载真实广告脚本的生产子域，不作为 AdSense 新站点单独添加。
+- `/ads.txt` 路由已接入；拿到 publisher ID 后，根域 `https://tonimakes.com/ads.txt` 需要返回正式记录。日程应用的 `https://schedule.tonimakes.com/ads.txt` 也可通过 `ADS_TXT_PUBLISHER_ID` 返回同一记录，作为子域冗余声明。它不负责提高产品价值，但能减少“未授权库存”导致的广告投放问题。
 - `robots.txt` 和 `sitemap.xml` 已接入，公开说明页可抓取；动态日程页、API 和带密钥 URL 首期不进入 sitemap。
 - 本地、Vercel Preview、自动化测试、站长自测和内部 QA 不加载真实广告，避免无效流量。
 - `deployment:config` 已把真实 AdSense 开启前置条件变成硬闸门：公开支持邮箱、公开运营主体、`ADS_TXT_PUBLISHER_ID`、`ADS_PRIVACY_DISCLOSURE_READY`、`ADS_POLICY_REVIEW_READY`、`ADS_CONSENT_STRATEGY_READY`、client ID、slot ID、生产域名白名单和非 test mode 缺一不可。
@@ -121,7 +122,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 
 1. 公开资产准备阶段：只维护站点内容，不提交个人/公司身份资料；确认英文默认入口 `/`、`/new`、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms` 和中文入口 `/zh`、`/zh/new`、`/zh/about`、`/zh/privacy`、`/zh/contact`、`/zh/feedback`、`/zh/terms` 可从生产域名访问；旧 `/en/...` 只作为兼容跳转。
 2. 申请 AdSense 前：先决定收款主体是个人还是公司。个人路径通常更简单；公司路径更适合把广告收入、域名、服务器、工具和后续支出纳入公司账，但会牵涉公司名称、地址、税号或注册资料、公司银行账户和后续申报。
-3. 站点审核提交时：按广告平台要求填写账号所在地、收款人或公司名称、地址、联系方式、网站域名和公开政策页面。不要填写临时邮箱、私人密钥、数据库 URL、OpenAI key 或 Vercel/Neon 凭证。
+3. 站点审核提交时：按广告平台要求填写账号所在地、收款人或公司名称、地址、联系方式、根域 `tonimakes.com` 和公开政策页面。不要填写 `schedule.tonimakes.com` 作为新站点，不要填写临时邮箱、私人密钥、数据库 URL、OpenAI key 或 Vercel/Neon 凭证。
 4. 收款门槛接近时：再处理身份验证、地址验证、税务信息和银行账户。银行账户名称应和广告平台的付款资料主体一致，避免后续打款失败或税务记录混乱。
 
 原则：
@@ -138,7 +139,7 @@ AdSense 更像“网站内容和流量审核”，不是接上代码就能长期
 - `/contact`：已接入公开联系、反馈、删除请求说明和公开运营主体展示；Vercel Production/Preview 已配置 `NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com`、`NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu` 和 `NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia`，生产页已验证能显示邮箱和主体信息。旧 `/feedback` 继续作为兼容说明页，后续可再接入站内表单。
 - `/terms`：已接入基础使用条款草案；正式上线前做法律审阅。
 - `/`、`/new`、`/about`、`/privacy`、`/contact`、`/feedback` 和 `/terms`：已作为英文默认公开说明页、公开联系页和英文创建页，用于海外用户理解产品、进入核心创建流程，并给广告审核提供英文可读内容；中文公开页迁移到 `/zh/...`；旧 `/en/...` 保留兼容重定向。`/s/:publicId` 已覆盖公开日程的开放网格手动填写、图片/文本/CSV/ICS/模板预填、基础结果热力图、候选投票填写和候选投票结果面板，`/s/:publicId/edit/:participantId` 已覆盖参与者修改普通可用时间、图片/文本/CSV/ICS/模板预填和候选投票，`/s/:publicId/manage` 已覆盖组织者管理、分享链接、结果摘要、导出、复制和最终时间确认；语言切换会写入本地语言偏好，当前 API 错误码已有中英文兜底。动态日程页仍不作为广告审核主要内容，AI 图片识别公开入口仍默认关闭，完整文案字典、深层组件文案和更广生产 smoke 仍需继续补。
-- `/ads.txt`：路由已接入；拿到 AdSense publisher ID 后配置生产环境变量。
+- `/ads.txt`：路由已接入；根域 `tonimakes.com` 已作为 AdSense 审核站点，拿到 AdSense publisher ID 后优先保证根域 `/ads.txt` 返回正式记录，再在日程应用 Vercel 环境变量里配置同一 publisher ID。
 - `robots.txt` 和 `sitemap.xml`：已接入；继续避免密钥页进入索引。
 
 ## 密钥 URL 与第三方广告脚本
@@ -469,7 +470,7 @@ AI 额度和激励广告：
 ## 分阶段落地
 
 1. 文档阶段：明确成本、广告、隐私、数据模型和 API 计划，不改现有可用主链路。
-2. 审核准备阶段：基础 `/about`、`/terms`、`/privacy`、`/contact`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已接入；广告/AI 基础披露、公开支持邮箱 `hello@tonimakes.com` 和公开运营主体 `Toni Liu` / `Australia` 已配置并在生产验证；继续补法律审阅、实际广告供应商、publisher / slot ID、生产域名白名单和地区化 consent。
+2. 审核准备阶段：基础 `/about`、`/terms`、`/privacy`、`/contact`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已接入；广告/AI 基础披露、公开支持邮箱 `hello@tonimakes.com` 和公开运营主体 `Toni Liu` / `Australia` 已配置并在生产验证；AdSense 当前按根域 `tonimakes.com` 审核，日程应用作为 `schedule.tonimakes.com` 子域投放；继续补法律审阅、实际广告供应商、publisher / slot ID、生产域名白名单和地区化 consent。
 3. 常驻广告试水阶段：默认全站外围广告框架已接入且关闭。真实广告开启时，核心操作页只启用顶部、底部、桌面 rail 或移动 anchor；结果页、提交成功页和说明页可以增加内容间广告。带 `?key=` 页面只允许 `off` 或 `internal`。
 4. 密钥安全阶段：如果要在管理/编辑页展示第三方广告，先把 URL 密钥迁移到不暴露给第三方脚本的机制，并增加第三方脚本检查。
 5. 免费额度阶段：做本机或匿名 session 的少量免费图片识别额度和全站限额，不接 rewarded ad。
@@ -482,7 +483,7 @@ AI 额度和激励广告：
 公开开放常驻广告前，至少需要满足：
 
 - 广告平台账号、站点审核、广告位置和政策要求已经确认。
-- 公开首页、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已能从生产根域访问；拿到 publisher ID 后 `/ads.txt` 返回正式记录。
+- 公开首页、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`robots.txt`、`sitemap.xml` 和 `/ads.txt` 已能从生产域名访问；AdSense 根域 `tonimakes.com` 审核通过，拿到 publisher ID 后根域 `/ads.txt` 返回正式记录，日程应用子域可返回同一冗余记录。
 - 生产环境有 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED`、`NEXT_PUBLIC_DISPLAY_ADS_PROVIDER`、`NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS`、`NEXT_PUBLIC_DISPLAY_ADS_KEYED_URL_MODE`、`NEXT_PUBLIC_DISPLAY_ADS_TEST_MODE=false`、`NEXT_PUBLIC_SUPPORT_EMAIL`、`NEXT_PUBLIC_SITE_OPERATOR_NAME`、`ADS_TXT_PUBLISHER_ID`、`ADS_PRIVACY_DISCLOSURE_READY=true`、`ADS_POLICY_REVIEW_READY=true`、`ADS_CONSENT_STRATEGY_READY=true` 和必要的 AdSense client / slot ID；`deployment:config` 不报错。
 - 创建、填写、编辑、上传预览和密钥页面可以有外围广告，但不会被广告遮挡、诱导误触或泄露完整密钥 URL；带 `?key=` 页面不加载第三方广告脚本。
 - 隐私说明已经补充广告请求数据、广告 cookie、第三方广告技术、AI 图片识别处理边界和不诱导点击广告规则；真实广告前还需补实际广告平台、个性化广告退出方式和用户同意/拒绝规则。

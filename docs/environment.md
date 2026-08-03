@@ -51,7 +51,7 @@
 
 ## 常驻展示广告变量
 
-常驻展示广告框架已经接入页面和配置检查，但默认关闭，不会加载真实第三方广告脚本。上线真实广告前仍需要通过广告平台审核、补充公开说明页、完善广告版隐私披露，并确认 `deployment:config` 通过。
+常驻展示广告框架已经接入页面和配置检查，但默认关闭，不会加载真实第三方广告脚本。上线真实广告前仍需要通过广告平台审核、补充公开说明页、完善广告版隐私披露，并确认 `deployment:config` 通过。当前 AdSense 站点审核按根域 `tonimakes.com` 提交；`schedule.tonimakes.com` 是审核通过后允许加载真实广告脚本的生产子域。
 
 这些变量里 `NEXT_PUBLIC_*` 会进入前端 bundle，不要写任何 secret；AdSense client / slot ID 不是密钥，但仍建议只在正式准备启用时配置。
 
@@ -71,7 +71,7 @@
 | `NEXT_PUBLIC_ADSENSE_SLOT_POST_SUBMIT`    | 否   | 空            | 提交成功后的广告位 ID。                                                                                            |
 | `NEXT_PUBLIC_ADSENSE_SLOT_DESKTOP_RAIL`   | 否   | 空            | 桌面左右侧栏广告位 ID。                                                                                            |
 | `NEXT_PUBLIC_ADSENSE_SLOT_MOBILE_ANCHOR`  | 否   | 空            | 移动端可关闭底部 anchor 广告位 ID。                                                                                |
-| `ADS_TXT_PUBLISHER_ID`                    | 否   | 空            | 生成 `/ads.txt` 的 publisher ID。不设置时 `/ads.txt` 返回未配置注释。                                              |
+| `ADS_TXT_PUBLISHER_ID`                    | 否   | 空            | 生成日程应用 `/ads.txt` 的 publisher ID。不设置时 `/ads.txt` 返回未配置注释。根域 `tonimakes.com/ads.txt` 仍是 AdSense 审核和授权库存的优先检查点；子域可返回同一记录作为冗余声明。 |
 | `ADS_PRIVACY_DISCLOSURE_READY`            | 否   | `false`       | 真实广告上线确认项。只有公开隐私页写明实际广告供应商、cookie/广告请求数据、退出方式和 AI 处理边界后才设为 `true`。 |
 | `ADS_POLICY_REVIEW_READY`                 | 否   | `false`       | 真实广告上线确认项。只有完成广告平台政策、无效流量、广告位置和测试计划审阅后才设为 `true`。                        |
 | `ADS_CONSENT_STRATEGY_READY`              | 否   | `false`       | 真实广告上线确认项。只有明确目标地区 cookie/consent、拒绝、退出或撤回策略后才设为 `true`。                         |
@@ -178,7 +178,10 @@ AI_IMAGE_IMPORT_RELEASE_MODE=off
 NEXT_PUBLIC_SUPPORT_EMAIL=hello@tonimakes.com
 NEXT_PUBLIC_SITE_OPERATOR_NAME=Toni Liu
 NEXT_PUBLIC_SITE_OPERATOR_REGION=Australia
+ADS_TXT_PUBLISHER_ID=pub-1161635953139243
 ```
+
+`ADS_TXT_PUBLISHER_ID` 不是密钥；它只会让 `https://schedule.tonimakes.com/ads.txt` 返回广告发布商授权记录。真实广告仍要等 AdSense 对 `tonimakes.com` 审核通过、slot ID 创建完成、隐私和 consent 确认项通过后再启用。
 
 `OPENAI_API_KEY` 不是当前公开生产必填项。可以先只配置到本地或 Preview 调优；如果已经配置到
 Production，也必须保持 `AI_IMAGE_IMPORT_ENABLED=false` 或 `AI_IMAGE_IMPORT_RELEASE_MODE=off`，避免图片识别公开调用
