@@ -30,6 +30,13 @@ const usageItems = [
   "让组织者查看结果、导出 CSV、锁定或归档日程。"
 ];
 
+const storageItems = [
+  "核心日程填写流程不需要账号 cookie，当前 MVP 也不会为了自己的日程功能设置第一方 cookie。",
+  "网站会使用浏览器 localStorage 记住语言偏好、创建日程默认值、最近使用的显示名称、同一浏览器里的编辑链接和本机每周模板。",
+  "localStorage 保留在当前浏览器里，不像 cookie 那样随每次请求自动发送给服务器。用户可以在浏览器设置里清除，也可以使用无痕窗口避免保留。",
+  "未来如果启用第三方广告、登录 session，或把管理链接改成更安全的非 URL 密钥机制，可能需要 cookie 或 consent 控制。真实广告会在供应商、地区化同意策略和隐私披露准备好之后才开放。"
+];
+
 const plannedAdItems = [
   "真实展示广告当前默认关闭；开启前会先配置广告平台账号、广告位、生产域名白名单和广告平台要求的 consent 或隐私消息。",
   "第三方广告供应商未来可能通过广告请求、cookie、web beacon、IP 地址、设备信息、浏览器信息、页面 URL、广告展示和互动数据来投放、衡量或防止无效流量。",
@@ -88,6 +95,15 @@ export default function PrivacyPage() {
               ))}
             </ul>
             <p>当前 MVP 不会把核心填写流程中的数据用于广告定向、第三方营销或训练模型。</p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>Cookie 与浏览器本地存储</h2>
+            <ul>
+              {storageItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </section>
 
           <DisplayAd pageContext="privacy" placement="inline-results" />

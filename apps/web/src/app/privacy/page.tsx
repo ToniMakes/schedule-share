@@ -28,6 +28,13 @@ const usageItems = [
   "Let organizers review, lock, archive, export, or confirm a final time."
 ];
 
+const storageItems = [
+  "Core scheduling works without account cookies, and the current MVP does not set first-party cookies for its own scheduling flow.",
+  "The site uses browser local storage to remember language preference, create-schedule defaults, a recently used display name, same-browser edit links, and local weekly templates.",
+  "Local storage stays in the current browser and is not automatically sent with every request like cookies. Users can clear it through their browser settings or use a private browsing session.",
+  "Future third-party ads, login sessions, or safer management-link handling may require cookies or consent controls. Real ads remain disabled until the provider, region-specific consent approach, and privacy disclosures are ready."
+];
+
 const adItems = [
   "Real third-party display ads are off by default. They require production configuration, provider review, allowed hosts, and privacy or consent readiness before launch.",
   "Future ad providers may process ad request data such as page URL, browser, device, network, region, cookies or ad identifiers, web beacons, ad impressions, ad interactions, and invalid-traffic signals.",
@@ -93,6 +100,15 @@ export default function EnglishPrivacyPage() {
               The current MVP does not use core scheduling data for ad targeting, third-party
               marketing, or model training.
             </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>Cookies and Local Storage</h2>
+            <ul>
+              {storageItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </section>
 
           <DisplayAd pageContext="privacy" placement="inline-results" />
