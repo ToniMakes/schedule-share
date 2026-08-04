@@ -169,7 +169,7 @@ docs/
 默认会让图片识别保持关闭，公开模式当前也被代码层阻断，前端图片入口默认隐藏。不可用时图片预填会返回
 `IMPORT_PROVIDER_UNAVAILABLE`，文本粘贴、CSV、ICS 和手动填写仍可使用。当前代码已经读取静态成本闸门变量：
 单次估算成本、单次成本上限、每日请求上限和每日预算必须相互匹配，否则不会创建图片识别 provider；它还不能替代后续额度账本。
-常驻展示广告框架已经接入但默认关闭：页面外围广告位、提交后广告位、桌面 rail、移动 anchor、`/about`、`/terms`、`/robots.txt`、`/sitemap.xml` 和 `/ads.txt` 路由已有基础代码；真实 AdSense 仍需要广告审核、正式联系邮箱、publisher / slot ID、生产域名白名单和部署预检通过后再打开。`deployment:config` 会在真实 AdSense 开启时阻断缺少支持邮箱、`/ads.txt` publisher ID、隐私披露确认、广告政策审阅确认、consent 策略确认或生产域名白名单的配置。隐私页已补充广告 cookie、第三方广告技术和 AI 图片识别处理边界的基础披露；带管理/编辑密钥的页面在完成 URL 密钥迁移前不加载第三方广告脚本；通过激励广告换取图片识别额度时，广告位、成本、额度、隐私和风控方案见 `docs/monetization.md`。
+常驻展示广告框架已经接入但默认关闭：页面外围广告位、提交后广告位、桌面 rail、移动 anchor、`/about`、`/terms`、`/robots.txt`、`/sitemap.xml` 和 `/ads.txt` 路由已有基础代码；真实 AdSense 仍需要广告审核通过、slot ID、生产域名白名单、隐私/consent 确认和部署预检通过后再打开。`deployment:config` 会在真实 AdSense 开启时阻断缺少支持邮箱、`/ads.txt` publisher ID、隐私披露确认、广告政策审阅确认、consent 策略确认或生产域名白名单的配置。隐私页已补充广告 cookie、第三方广告技术和 AI 图片识别处理边界的基础披露；带管理/编辑密钥的页面在完成 URL 密钥迁移前不加载第三方广告脚本；通过激励广告换取图片识别额度时，广告位、成本、额度、隐私和风控方案见 `docs/monetization.md`。
 
 ## 下一步
 

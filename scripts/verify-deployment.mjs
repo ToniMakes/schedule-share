@@ -59,6 +59,7 @@ async function main() {
   await run("corepack", ["pnpm", "db:check"]);
   await checkHealth(baseUrl);
   await checkPublicPages(baseUrl);
+  await checkAdsTxt(baseUrl);
   await run("corepack", ["pnpm", "smoke:api"], {
     env: {
       ...process.env,
@@ -112,6 +113,31 @@ async function checkPublicPage(baseUrl, page) {
   }
 
   log(`${page.path} check passed.`);
+}
+
+async function checkAdsTxt(baseUrl) {
+  log("Checking /ads.txt");
+
+  const response = await fetch(new URL("/ads.txt", baseUrl));
+  const body = await response.text();
+
+  if (response.status !== 200) {
+    throw new Error(`/ads.txt expected 200, got ${response.status}.`);
+  }
+
+  const publisherId = process.env.ADS_TXT_PUBLISHER_ID?.trim();
+
+  if (publisherId !== undefined && publisherId.length > 0) {
+    const expectedRecord = `google.com, ${publisherId}, DIRECT, f08c47fec0942fa0`;
+
+    if (!body.includes(expectedRecord)) {
+      throw new Error(`/ads.txt did not include expected publisher record: ${expectedRecord}`);
+    }
+  } else if (!body.includes("# ads.txt is not configured yet.")) {
+    throw new Error("/ads.txt did not include the unconfigured placeholder.");
+  }
+
+  log("/ads.txt check passed.");
 }
 
 function readRequiredEnv(key) {

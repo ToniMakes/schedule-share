@@ -1,6 +1,6 @@
 # 真实广告上线清单
 
-更新日期：2026-08-03
+更新日期：2026-08-04
 
 本清单只覆盖常驻展示广告从“准备审核”到“小流量上线”的执行步骤。激励广告换 AI 图片识别额度属于后续单独链路，不能用普通展示广告替代。
 
@@ -14,7 +14,7 @@
 - 带 `?key=` 的管理页和编辑页不会加载第三方广告脚本。
 - `deployment:config` 已把真实 AdSense 开启前置条件变成硬闸门。
 - AdSense 当前按根域 `tonimakes.com` 提交站点审核；真实投放目标仍是日程应用 `schedule.tonimakes.com`。`schedule.tonimakes.com` 不能作为 AdSense 新站点单独添加，但后续可以作为真实广告脚本允许加载的生产子域。
-- 2026-08-03 线上检查：`https://tonimakes.com/ads.txt` 已返回 `google.com, pub-1161635953139243, DIRECT, f08c47fec0942fa0`，根域首页已包含 AdSense 验证 meta；`https://schedule.tonimakes.com/ads.txt` 当前仍返回未配置注释，需要 Vercel 设置 `ADS_TXT_PUBLISHER_ID=pub-1161635953139243` 后才会输出同一记录。
+- 2026-08-04 线上检查：`https://tonimakes.com/ads.txt` 和 `https://schedule.tonimakes.com/ads.txt` 均已返回 `google.com, pub-1161635953139243, DIRECT, f08c47fec0942fa0`；根域首页已包含 AdSense 验证 meta；日程应用首页仍未加载真实 AdSense 脚本。
 
 ## Phase 1：公开资产准备
 
@@ -38,10 +38,10 @@
 
 ## Phase 3：ads.txt 和广告配置
 
-- 拿到 publisher ID 后，先保证根域 `https://tonimakes.com/ads.txt` 返回正式记录；日程应用的 `https://schedule.tonimakes.com/ads.txt` 也可以通过 Vercel 的 `ADS_TXT_PUBLISHER_ID` 返回同一 publisher 记录，作为子域冗余声明。
+- Publisher ID 已取得并配置。根域 `https://tonimakes.com/ads.txt` 和日程应用 `https://schedule.tonimakes.com/ads.txt` 均应返回同一 publisher 记录，作为根域审核和子域投放的授权声明。
 - 设置 AdSense client 和广告位 slot 环境变量，但继续保持 `NEXT_PUBLIC_DISPLAY_ADS_ENABLED=false`，直到审核通过、slot 创建完成且小流量计划确认。
 - 设置 `NEXT_PUBLIC_DISPLAY_ADS_ALLOWED_HOSTS=schedule.tonimakes.com`。
-- 确认根域 `/ads.txt` 已被 AdSense 识别；如配置了日程应用的 `ADS_TXT_PUBLISHER_ID`，再确认子域 `/ads.txt` 也返回同一正式记录。
+- 等 AdSense 后台识别根域 `/ads.txt`；当前线上根域和日程子域 `/ads.txt` 都已可直接访问。`verify:deployment` 现在会在设置 `ADS_TXT_PUBLISHER_ID` 时自动检查日程应用 `/ads.txt` 是否返回匹配记录。
 - 只有完成隐私披露、政策审阅和 consent 策略后，才把以下确认项设为 `true`：
   - `ADS_PRIVACY_DISCLOSURE_READY`
   - `ADS_POLICY_REVIEW_READY`
