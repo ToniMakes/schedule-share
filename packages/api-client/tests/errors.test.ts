@@ -30,7 +30,10 @@ describe("apiErrorCodes", () => {
 });
 
 function readApiDocErrorCodes() {
-  const apiDoc = readFileSync(resolve(import.meta.dirname, "../../../docs/api.md"), "utf8");
+  const apiDoc = readFileSync(
+    resolve(import.meta.dirname, "../../../docs/api.md"),
+    "utf8"
+  ).replaceAll("\r\n", "\n");
   const match = apiDoc.match(/常见错误码：\n\n(?<list>(?:- `[^`]+`\n?)+)/u);
 
   if (match?.groups?.list === undefined) {

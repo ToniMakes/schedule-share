@@ -19,6 +19,8 @@
 
 微信小程序和国内部署作为后续阶段处理。
 
+移动端 MVP 的代码已完成：[Expo + React Native 客户端](apps/mobile/README.md) 复用现有 core 与 API，支持加入日程、填写或更新回应并查看共享结果。Android bundle、Expo Doctor、Firestore 规则模拟器和仓库检查均已通过；客户端尚未完成 Expo Go 真机上的时区/手势验收，也未配置实际 Firebase 项目，因此不代表已发布或已完成作品集验收。
+
 当前已完成：
 
 - TypeScript monorepo 骨架。
@@ -66,6 +68,9 @@
 - 管理页结果摘要复制入口和开放网格单个较优时间槽复制入口，可把关键结果或某个备选时间复制到群聊或邮件，且不会包含管理密钥。
 
 ## 文档
+
+- `apps/mobile/README.md`：Expo 客户端运行、Firebase 可选配置、检查命令和当前限制。
+- `docs/adr/0010-mobile-client.md`：移动端技术决策、数据边界和验证状态。
 
 - `docs/product.md`：产品定位、MVP 范围和成功标准。
 - `docs/availability-entry-methods.md`：手动拖拽、图片/文本导入、长期模板、候选时间投票和文件轻导入的产品规格。
