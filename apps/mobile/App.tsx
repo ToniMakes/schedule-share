@@ -168,7 +168,9 @@ export default function App() {
         setSelection(new Set(initialSelection.map((slot) => slot.startUtc)));
         setCandidateResponses(initialCandidateResponses);
         setShareInput(publicId);
-        setEditCredential(previousRoom ?? null);
+        setEditCredential(
+          previousRoom?.participantId && previousRoom.editKey ? previousRoom : null
+        );
         setMessage("");
         await rememberRoom({
           publicId,
