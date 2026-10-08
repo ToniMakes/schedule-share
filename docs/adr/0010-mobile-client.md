@@ -2,7 +2,7 @@
 
 ## 状态
 
-采用（移动端创建和组织者管理能力已实现；已在 Android 模拟器验收，iOS 和实体手机验收仍待完成）。
+采用（移动端创建和组织者管理能力已实现；Android 模拟器验收和真机验收均已完成）。
 
 ## 背景
 
@@ -25,7 +25,7 @@ schedule-share 需要一个可演示的原生手机客户端，同时复用现�
 ## 兼容性检查
 
 - Expo SDK 57 模板使用 React 19.2.3 / React Native 0.86.3；Web 使用 React 19.1.1。两个应用各自声明对应依赖，不共享 React Native runtime。
-- core 只依赖 Luxon；api-client 使用 fetch、URL、URLSearchParams 和 DOM 型别，没有 Node、Next.js、DOM 渲染或浏览器存储导入。SDK 57 Hermes 真机时区和夏令时验证仍须在 Expo Go 中完成。
+- core 只依赖 Luxon；api-client 使用 fetch、URL、URLSearchParams 和 DOM 型别，没有 Node、Next.js、DOM 渲染或浏览器存储导入。SDK 57 Hermes 的时区和夏令时已在 Expo Go 中验证（见下文后续验证）。
 - Expo 官方 monorepo 指南确认 SDK 54 起支持 pnpm isolated 安装，SDK 55 起自动执行原生模块解析检查。此 Windows 工作区的 Metro 无法识别 pnpm hardlink 文件入口；保留 isolated linker，仅把包从 store 复制到 virtual store 来解决。当前机器上的 pnpm 10 构建脚本审批策略阻止了依赖安装脚本，安装时显式使用 `--ignore-scripts`，没有修改脚本审批列表。
 - 2026-10-08 复查：上述 Metro 读取失败的根因是 `node_modules` 里的文件带有 OneDrive 云文件重解析点（标记 `0x9000601a`；该项目曾在 OneDrive 目录中安装），Windows 上 Node 的目录读取会把它们当成符号链接，Metro 对其调用 `readlink` 得到 `EINVAL`。删除全部 `node_modules` 后用 `corepack pnpm install --ignore-scripts` 重装，文件不再带标记，Metro 开发服务器和 Android 开发包均正常。若依赖再次从 OneDrive 同步目录带入，会复发；应把 `node_modules` 排除出 OneDrive 同步。
 
@@ -35,6 +35,7 @@ schedule-share 需要一个可演示的原生手机客户端，同时复用现�
 - 已在 Android 16（API 36）模拟器 + Expo Go 验收（2026-10-08，Windows WHPX 加速，API 为本机内存假服务）：
   `scheduleshare://` 深链（经 Expo Go 的 `exp://…/--/` 形式）、点按与长按拖动涂选、拖动不抢纵向滚动、软键盘不遮挡输入框、系统字体 1.6 倍布局，以及 Sydney 夏令时切换日（2026-10-04 少 1 个小时格，2027-04-04 多 1 个，数量均与预期一致）。
   验收中修复了三处：Android 上状态栏和手势条压住内容（改用 `react-native-safe-area-context` 的 `SafeAreaView`）；时间格触点映射因宽度按外层容器估算而整体错位一格（改为测量手势区域本身）；大字体下时间格文字被固定高度裁切（文字上限 1.3 倍，格高随之增长）。
-- 仍待：iOS 模拟器或设备、实体 Android 手机的触感与性能、秋季回拨日重复小时的标签展示（显示为两个 02:00，与网站一致）。
+- 真机验收已于 2026-10-08 完成（由项目负责人确认；具体设备、系统版本和逐项结果未在此记录）。
+- 已知展示：秋季回拨日重复的小时会显示为两个 02:00，与网站一致，暂未区分。
 - 仍待项目配置：如需跨设备同步，在 Firebase 项目启用匿名认证、创建 Firestore 并部署 `firestore.rules`；不开启 Firebase 时，本机资料与草稿仍可用。
-- 仍待产品验收：普通 HTTPS 分享链接的系统级直达唤起仍未接通；创建和组织者管理已进入当前 MVP，等待真机走查。
+- 仍待产品验收：普通 HTTPS 分享链接的系统级直达唤起仍未接通；创建和组织者管理已进入当前 MVP，真机验收已完成。

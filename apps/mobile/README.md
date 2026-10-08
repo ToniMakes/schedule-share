@@ -46,4 +46,4 @@ The Firestore rules test starts the local Firestore Emulator. It uses only the d
 
 - Join with a share code or paste a link. Opening ordinary web share links directly in the installed app is not wired up yet.
 - Without Firebase configuration, the user's schedule list and profile stay on that device.
-- The create, manage, deep-link, touch, keyboard, large-font and Sydney daylight-saving checks have been run on an Android 16 emulator with Expo Go. iOS and physical-phone validation are still pending.
+- The create, manage, deep-link, touch, keyboard, large-font and Sydney daylight-saving checks have been run on an Android 16 emulator with Expo Go. A physical-device check was completed on 2026-10-08.
