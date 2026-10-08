@@ -27,6 +27,7 @@ schedule-share 需要一个可演示的原生手机客户端，同时复用现�
 - Expo SDK 57 模板使用 React 19.2.3 / React Native 0.86.3；Web 使用 React 19.1.1。两个应用各自声明对应依赖，不共享 React Native runtime。
 - core 只依赖 Luxon；api-client 使用 fetch、URL、URLSearchParams 和 DOM 型别，没有 Node、Next.js、DOM 渲染或浏览器存储导入。SDK 57 Hermes 真机时区和夏令时验证仍须在 Expo Go 中完成。
 - Expo 官方 monorepo 指南确认 SDK 54 起支持 pnpm isolated 安装，SDK 55 起自动执行原生模块解析检查。此 Windows 工作区的 Metro 无法识别 pnpm hardlink 文件入口；保留 isolated linker，仅把包从 store 复制到 virtual store 来解决。当前机器上的 pnpm 10 构建脚本审批策略阻止了依赖安装脚本，安装时显式使用 `--ignore-scripts`，没有修改脚本审批列表。
+- 2026-10-08 复查：上述 Metro 读取失败的根因是 `node_modules` 里的文件带有 OneDrive 云文件重解析点（标记 `0x9000601a`；该项目曾在 OneDrive 目录中安装），Windows 上 Node 的目录读取会把它们当成符号链接，Metro 对其调用 `readlink` 得到 `EINVAL`。删除全部 `node_modules` 后用 `corepack pnpm install --ignore-scripts` 重装，文件不再带标记，Metro 开发服务器和 Android 开发包均正常。若依赖再次从 OneDrive 同步目录带入，会复发；应把 `node_modules` 排除出 OneDrive 同步。
 
 ## 后续验证
 
