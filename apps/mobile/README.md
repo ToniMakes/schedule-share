@@ -20,6 +20,20 @@ Open the QR code with Expo Go. For a physical device connecting to a local API, 
 
 `EXPO_PUBLIC_API_BASE_URL` defaults to the live schedule-share service when the example file is copied. The client requires a base URL for native API requests.
 
+## Deep links
+
+The app registers the `scheduleshare://` scheme. These links open the schedule directly:
+
+- `scheduleshare://s/<code>` opens a schedule for responding.
+- `scheduleshare://s/<code>/manage?key=<ownerKey>` opens it and stores the organizer key in the device's secure storage, which unlocks the organizer tools. Treat this link like a password.
+
+Pasting a web link (`https://…/s/<code>` or `…/manage?key=…`) into the join field behaves the same way. In Expo Go the custom scheme is not registered, so use the `exp://<host>:<port>/--/s/<code>` form instead. Opening ordinary `https` links straight into the installed app needs domain association files and is not set up.
+
+## Troubleshooting
+
+- **Metro crashes with `EINVAL: readlink` on Windows.** Files in `node_modules` carrying OneDrive cloud-file reparse points look like symbolic links to Node. Delete every `node_modules` folder and reinstall with `corepack pnpm install --ignore-scripts`; keep `node_modules` out of OneDrive sync. See ADR 0010.
+- **Android emulator.** Any x86_64 Google APIs system image works with `expo start --android`; the emulator reaches the host machine at `10.0.2.2`, so point `EXPO_PUBLIC_API_BASE_URL` there for a local API.
+
 ## Firebase (optional)
 
 The app works without Firebase. Local profile, room list and drafts use AsyncStorage. If you want cloud sync for those user-side records:
