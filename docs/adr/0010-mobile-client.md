@@ -16,6 +16,8 @@ schedule-share 需要一个可演示的原生手机客户端，同时复用现�
 - `apps/mobile` 通过 API 的公开日程 ID 读取日程，使用已有参与者接口提交和编辑。服务端仍是共享日程和可用时间的唯一权威来源。
 - 手机端可创建开放网格或候选时间日程；持有组织者密钥时可锁定、归档和确认最终时间，权限继续由现有 API 校验。
 - 手机端接受分享码或粘贴的网页分享/管理链接。普通 HTTPS 链接直接唤起 App 的系统级关联尚未配置；不将自定义 scheme 解析等同于已发布域名关联。
+- 自定义 scheme `scheduleshare://s/<id>`（及 `…/manage?key=`）经 `src/app/+native-intent.tsx` 转给首页，与粘贴链接共用 `src/share-link.ts` 的解析；组织者链接里的密钥只在 `/manage` 路径下读取。
+- 组织者密钥与参与者编辑密钥一样只存设备 SecureStore（Web 预览退回 AsyncStorage），不写入 Firestore，也不进入 `SavedRoom` 的云端副本。
 - Firebase Auth 匿名身份和 Firestore 只用于手机用户资料与最近加入日程列表。规则只允许认证用户访问 `users/{uid}` 和其 `rooms` 子集合。API 返回的参与者编辑密钥只存设备 SecureStore，不同步到 Firestore。
 - AsyncStorage 保存资料、最近日程列表和未提交草稿；Firebase 未配置或不可用时，客户端核心 API 流程继续工作。
 - 时间格支持点按；长按 300ms 后进入连续涂选。涂选从时间格区域开始，以释放滚动为优先的单一手势方案；时间计算仍交由 core。
