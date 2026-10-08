@@ -35,6 +35,15 @@ const storageItems = [
   "Future third-party ads, login sessions, or safer management-link handling may require cookies or consent controls. Real ads remain disabled until the provider, region-specific consent approach, and privacy disclosures are ready."
 ];
 
+const mobileItems = [
+  "The mobile app does not require an account. It uses the same schedule service, and the same share, edit, and management links and keys, as the web version.",
+  "On the device, the app remembers your display name, time zone, language choice, a list of recently opened schedules (code, title, and last-opened time), and drafts of selections you have not submitted yet.",
+  "Edit keys for your own responses and management keys for schedules you created or opened with a management link are kept in the device's secure storage (Keychain on iOS, Keystore on Android).",
+  "Optional cloud sync is off unless a build is configured for it. When it is on, the app uses Google Firebase to keep an anonymous Firebase Authentication identifier and a record of your display name, time zone, and recent-schedule list. Shared schedules, availability, vote responses, edit keys, and management keys are never written there.",
+  "The app does not contain advertising.",
+  "Uninstalling the app or clearing its data removes what it keeps on the device. Data on the schedule service follows the same retention and deletion process as the web version, and cloud-sync records can be removed on request through the contact page."
+];
+
 const adItems = [
   "Real third-party display ads are off by default. They require production configuration, provider review, allowed hosts, and privacy or consent readiness before launch.",
   "Future ad providers may process ad request data such as page URL, browser, device, network, region, cookies or ad identifiers, web beacons, ad impressions, ad interactions, and invalid-traffic signals.",
@@ -106,6 +115,16 @@ export default function EnglishPrivacyPage() {
             <h2>Cookies and Local Storage</h2>
             <ul>
               {storageItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className={styles.section}>
+            <h2>Mobile App</h2>
+            <p>The native mobile app handles data as follows.</p>
+            <ul>
+              {mobileItems.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
