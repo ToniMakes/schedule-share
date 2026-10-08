@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   headingText: { color: palette.ink, fontSize: 17, lineHeight: 23, fontWeight: "800" },
-  headingDetail: { color: palette.muted, fontSize: 12, fontWeight: "600" },
+  headingDetail: { color: palette.muted, fontSize: 12, fontWeight: "600", flexShrink: 1 },
   languageSwitch: {
     flexDirection: "row",
     borderWidth: 1,

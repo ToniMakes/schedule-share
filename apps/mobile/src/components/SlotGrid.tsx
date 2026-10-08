@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  PixelRatio,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-worklets";
 import type { TimeSlot } from "@schedule-share/core";
@@ -8,6 +17,11 @@ import { getSlotGridMetrics, getSlotIndexAtPoint } from "../grid-geometry";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { palette } from "../theme";
 import { formatLocalDate } from "../date-format";
+
+// Tile text grows with the system font size up to this cap; tile height grows with it so the
+// touch-to-slot math in grid-geometry keeps matching what is drawn.
+const MAX_TILE_FONT_SCALE = 1.3;
+const BASE_TILE_HEIGHT = 52;
 
 let activePaintValue = false;
 
@@ -27,7 +41,8 @@ export function SlotGrid({
   const [width, setWidth] = useState(300);
   const [activeDate, setActiveDate] = useState("");
   const reduceMotion = useReducedMotion();
-  const metrics = getSlotGridMetrics(width);
+  const tileScale = Math.min(PixelRatio.getFontScale(), MAX_TILE_FONT_SCALE);
+  const metrics = getSlotGridMetrics(width, 66, Math.round(BASE_TILE_HEIGHT * tileScale));
   const byDate = useMemo(() => {
     const groups = new Map<string, TimeSlot[]>();
     for (const slot of slots) {
@@ -61,10 +76,7 @@ export function SlotGrid({
     .onUpdate((event) => runOnJS(continuePaint)(event.x, event.y));
 
   return (
-    <View
-      style={styles.grid}
-      onLayout={(event) => setWidth(Math.max(66, event.nativeEvent.layout.width - 24))}
-    >
+    <View style={styles.grid}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -101,7 +113,11 @@ export function SlotGrid({
         <View style={styles.dayGroup}>
           <Text style={styles.dayHeading}>{formatLocalDate(visibleDate, language)}</Text>
           <GestureDetector gesture={pan}>
-            <View style={styles.slotRow}>
+            <View
+              style={styles.slotRow}
+              // Measure the touch surface itself so the column math matches what actually wraps.
+              onLayout={(event) => setWidth(Math.max(66, event.nativeEvent.layout.width))}
+            >
               {daySlots.map((slot) => {
                 const isSelected = selected.has(slot.startUtc);
                 return (
@@ -119,10 +135,16 @@ export function SlotGrid({
                     ]}
                   >
                     {isSelected ? <AnimatedCheckmark reduceMotion={reduceMotion} /> : null}
-                    <Text style={[styles.slotTime, isSelected && styles.selectedText]}>
+                    <Text
+                      maxFontSizeMultiplier={MAX_TILE_FONT_SCALE}
+                      style={[styles.slotTime, isSelected && styles.selectedText]}
+                    >
                       {slot.localStartTime}
                     </Text>
-                    <Text style={[styles.slotEnd, isSelected && styles.selectedText]}>
+                    <Text
+                      maxFontSizeMultiplier={MAX_TILE_FONT_SCALE}
+                      style={[styles.slotEnd, isSelected && styles.selectedText]}
+                    >
                       –{slot.localEndTime}
                     </Text>
                   </Pressable>
