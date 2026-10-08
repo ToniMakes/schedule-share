@@ -73,7 +73,12 @@ export const userDataStore: UserDataStore = {
   async saveRoom(room) {
     const uid = await identityReady;
     if (!uid || !firestore) return;
-    const { editKey: _editKey, participantId: _participantId, ...safeRoom } = room;
+    const {
+      editKey: _editKey,
+      ownerKey: _ownerKey,
+      participantId: _participantId,
+      ...safeRoom
+    } = room;
     await setDoc(doc(firestore, "users", uid, "rooms", room.publicId), safeRoom, { merge: true });
   }
 };

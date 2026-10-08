@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -6,12 +6,14 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
   View
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { router, useLocalSearchParams } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   createAvailabilityDraftFromAvailableSlots,
@@ -23,12 +25,18 @@ import {
   type TimeSlotConfig
 } from "@schedule-share/core";
 import {
+  ApiClientError,
+  archiveSchedule,
+  confirmFinalTime,
   createParticipantAvailability,
+  createSchedule,
   getSchedule,
+  lockSchedule,
   getParticipantAvailability,
   updateParticipantAvailability,
   type CandidateVoteInput,
   type CandidateVoteResponse,
+  type CreateScheduleRequest,
   type GetScheduleResponse
 } from "@schedule-share/api-client";
 import {
@@ -43,7 +51,7 @@ import {
   saveRoom,
   type SavedRoom
 } from "./src/storage";
-import { translate, type AppLanguage } from "./src/i18n";
+import { translate, type AppLanguage, type MessageKey } from "./src/i18n";
 import { userDataStore } from "./src/user-data-store";
 import { restoreCloudData } from "./src/user-data-store";
 import { LanguageSwitch, SectionHeading, StatusBadge, Surface } from "./src/components/ui";
@@ -53,6 +61,9 @@ import { formatLocalDate } from "./src/date-format";
 import { palette } from "./src/theme";
 import { FeedbackNotice } from "./src/components/FeedbackNotice";
 import { CandidateOption } from "./src/components/CandidateOption";
+import { CreateSchedule } from "./src/components/CreateSchedule";
+import { ManagePanel, type FinalTimeOption } from "./src/components/ManagePanel";
+import { parseShareLink } from "./src/share-link";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim() ?? "";
 const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -80,6 +91,12 @@ export default function App() {
   const [candidateValidationError, setCandidateValidationError] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const [editCredential, setEditCredential] = useState<SavedRoom | null>(null);
+  const [view, setView] = useState<"home" | "create">("home");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [storageReady, setStorageReady] = useState(false);
+  const { link } = useLocalSearchParams<{ link?: string }>();
+  const handledLink = useRef<string | null>(null);
   useEffect(() => {
     void Promise.all([loadProfile(), loadRooms(), loadLanguage()]).then(
       ([profile, savedRooms, savedLanguage]) => {
@@ -89,6 +106,7 @@ export default function App() {
           setTimezone(profile.timezone);
         }
         setRooms(savedRooms);
+        setStorageReady(true);
         void restoreCloudData()
           .then(async (cloud) => {
             if (cloud.profile) {
@@ -143,13 +161,14 @@ export default function App() {
   }, []);
 
   const openRoom = useCallback(
-    async (value = shareInput) => {
+    async (value = shareInput, ownerKeyOverride?: string) => {
       if (!API_BASE_URL) {
         setMessageTone("error");
         setMessage(translate(language, "missingApi"));
         return;
       }
-      const publicId = parsePublicId(value);
+      const parsedLink = parseShareLink(value);
+      const publicId = parsedLink?.publicId;
       if (!publicId) {
         setMessageTone("error");
         setMessage(translate(language, "invalidShare"));
@@ -164,6 +183,7 @@ export default function App() {
             ? generateTimeSlots(toCoreTimeSlotConfig(response.schedule))
             : response.schedule.candidateWindows.map(toCoreTimeSlot);
         const previousRoom = rooms.find((room) => room.publicId === publicId);
+        const ownerKey = ownerKeyOverride ?? parsedLink.ownerKey ?? previousRoom?.ownerKey;
         let initialSelection: readonly AvailabilitySlot[] = [];
         let initialCandidateResponses: Record<string, CandidateVoteResponse> = {};
         if (previousRoom?.participantId && previousRoom.editKey) {
@@ -206,7 +226,8 @@ export default function App() {
           alias: previousRoom?.alias ?? response.schedule.title,
           lastVisitedAt: new Date().toISOString(),
           ...(previousRoom?.participantId ? { participantId: previousRoom.participantId } : {}),
-          ...(previousRoom?.editKey ? { editKey: previousRoom.editKey } : {})
+          ...(previousRoom?.editKey ? { editKey: previousRoom.editKey } : {}),
+          ...(ownerKey ? { ownerKey } : {})
         });
       } catch (error) {
         setMessageTone("error");
@@ -349,7 +370,100 @@ export default function App() {
     timezone
   ]);
 
+  useEffect(() => {
+    if (!link) {
+      handledLink.current = null;
+      return;
+    }
+    if (!storageReady || handledLink.current === link) return;
+    handledLink.current = link;
+    setView("home");
+    setShareInput(link);
+    void openRoom(link);
+    router.setParams({ link: undefined });
+  }, [link, openRoom, storageReady]);
+
+  const ownerKey = displayId
+    ? rooms.find((room) => room.publicId === displayId)?.ownerKey
+    : undefined;
+  const scheduleStatus = loaded?.response.schedule.status ?? "open";
+  const closed = scheduleStatus !== "open";
+  const finalTime = loaded?.response.schedule.finalTime ?? null;
+  const finalTimeOptions: readonly FinalTimeOption[] = loaded
+    ? candidatePoll
+      ? loaded.response.schedule.candidateWindows
+      : loaded.response.results.everyoneAvailableBlocks
+    : [];
+
+  const createNew = useCallback(
+    async (request: CreateScheduleRequest) => {
+      if (!API_BASE_URL) {
+        setCreateError(translate(language, "missingApi"));
+        return;
+      }
+      setCreating(true);
+      setCreateError("");
+      try {
+        const result = await createSchedule(request, apiOptions());
+        const createdOwnerKey = new URL(result.ownerUrl).searchParams.get("key") ?? "";
+        await rememberRoom({
+          publicId: result.schedule.publicId,
+          title: result.schedule.title,
+          alias: result.schedule.title,
+          lastVisitedAt: new Date().toISOString(),
+          ...(createdOwnerKey ? { ownerKey: createdOwnerKey } : {})
+        });
+        setView("home");
+        await openRoom(result.schedule.publicId, createdOwnerKey || undefined);
+        setMessageTone("success");
+        setMessage(translate(language, "createdNotice"));
+      } catch (error) {
+        setCreateError(getReadableError(error, language));
+      } finally {
+        setCreating(false);
+      }
+    },
+    [language, openRoom, rememberRoom]
+  );
+
+  const runOwnerAction = useCallback(
+    async (action: (key: string) => Promise<unknown>, successKey: MessageKey) => {
+      if (!displayId || !ownerKey) return;
+      setBusy(true);
+      setMessage("");
+      try {
+        await action(ownerKey);
+        const refreshed = await getSchedule(displayId, apiOptions());
+        setLoaded((current) => (current ? { ...current, response: refreshed } : current));
+        setMessageTone("success");
+        setMessage(translate(language, successKey));
+      } catch (error) {
+        setMessageTone("error");
+        setMessage(
+          error instanceof ApiClientError && error.code === "INVALID_OWNER_KEY"
+            ? translate(language, "manageForbidden")
+            : getReadableError(error, language)
+        );
+      } finally {
+        setBusy(false);
+      }
+    },
+    [displayId, language, ownerKey]
+  );
+
+  const shareSchedule = useCallback(async () => {
+    if (!loaded || !displayId) return;
+    try {
+      const url = new URL(`/s/${encodeURIComponent(displayId)}`, API_BASE_URL).toString();
+      await Share.share({ message: `${loaded.response.schedule.title}\n${url}` });
+    } catch {
+      setMessageTone("error");
+      setMessage(translate(language, "shareFailed"));
+    }
+  }, [displayId, language, loaded]);
+
   const startNew = () => {
+    setView("home");
     setLoaded(null);
     setSelection(new Set());
     setCandidateResponses({});
@@ -380,7 +494,9 @@ export default function App() {
               <LanguageSwitch language={language} onChange={changeLanguage} />
             </View>
             <Text style={styles.title}>
-              {loaded ? loaded.response.schedule.title : translate(language, "homeTitle")}
+              {loaded
+                ? loaded.response.schedule.title
+                : translate(language, view === "create" ? "createSchedule" : "homeTitle")}
             </Text>
             <Text style={styles.subtitle}>
               {loaded
@@ -406,12 +522,14 @@ export default function App() {
                 <Surface style={styles.scheduleCard}>
                   <View style={styles.scheduleCardTop}>
                     <Text style={styles.eyebrow}>{translate(language, "scheduleDetails")}</Text>
-                    <StatusBadge
-                      tone={loaded.response.schedule.status === "open" ? "positive" : "neutral"}
-                    >
+                    <StatusBadge tone={closed ? "neutral" : "positive"}>
                       {translate(
                         language,
-                        loaded.response.schedule.status === "open" ? "statusOpen" : "statusClosed"
+                        scheduleStatus === "open"
+                          ? "statusOpen"
+                          : scheduleStatus === "archived"
+                            ? "statusArchived"
+                            : "statusClosed"
                       )}
                     </StatusBadge>
                   </View>
@@ -423,7 +541,47 @@ export default function App() {
                         loaded.response.participants.length === 1 ? "participant" : "participants"
                     })}
                   </Text>
+                  {finalTime ? (
+                    <Text style={styles.finalTimeText}>
+                      {translate(language, "manageFinalTime")}:{" "}
+                      {formatLocalDate(finalTime.localStartDate, language)} ·{" "}
+                      {finalTime.localStartTime}–{finalTime.localEndTime}
+                    </Text>
+                  ) : null}
                 </Surface>
+                {ownerKey && displayId ? (
+                  <ManagePanel
+                    language={language}
+                    status={scheduleStatus}
+                    finalTime={finalTime}
+                    options={finalTimeOptions}
+                    busy={busy}
+                    onShare={() => void shareSchedule()}
+                    onLock={() =>
+                      void runOwnerAction(
+                        (key) => lockSchedule(displayId, { ownerKey: key }, apiOptions()),
+                        "manageLocked"
+                      )
+                    }
+                    onArchive={() =>
+                      void runOwnerAction(
+                        (key) => archiveSchedule(displayId, { ownerKey: key }, apiOptions()),
+                        "manageArchived"
+                      )
+                    }
+                    onConfirmFinalTime={(option) =>
+                      void runOwnerAction(
+                        (key) =>
+                          confirmFinalTime(
+                            displayId,
+                            { ownerKey: key, startUtc: option.startUtc, endUtc: option.endUtc },
+                            apiOptions()
+                          ),
+                        "manageFinalTimeSet"
+                      )
+                    }
+                  />
+                ) : null}
                 <Surface style={styles.formCard}>
                   <SectionHeading language={language} label="yourInfo" />
                   <TextInput
@@ -543,6 +701,15 @@ export default function App() {
                   )}
                 </Surface>
               </>
+            ) : view === "create" ? (
+              <CreateSchedule
+                language={language}
+                defaultTimezone={timezone}
+                busy={creating}
+                serverError={createError}
+                onBack={() => setView("home")}
+                onSubmit={(request) => void createNew(request)}
+              />
             ) : (
               <JoinDashboard
                 language={language}
@@ -551,6 +718,11 @@ export default function App() {
                 busy={busy}
                 onChangeShareInput={setShareInput}
                 onOpenRoom={(value) => void openRoom(value)}
+                onCreate={() => {
+                  setMessage("");
+                  setCreateError("");
+                  setView("create");
+                }}
               />
             )}
             {message && !loaded ? (
@@ -565,6 +737,11 @@ export default function App() {
           </ScrollView>
           {loaded ? (
             <View style={styles.stickyAction}>
+              {closed ? (
+                <Text style={styles.closedNotice}>
+                  {translate(language, "scheduleClosedNotice")}
+                </Text>
+              ) : null}
               {message ? (
                 <FeedbackNotice language={language} message={message} tone={messageTone} />
               ) : null}
@@ -583,11 +760,11 @@ export default function App() {
               </View>
               <Pressable
                 accessibilityRole="button"
-                disabled={busy}
+                disabled={busy || closed}
                 onPress={() => void submit()}
                 style={({ pressed }) => [
                   styles.primaryButton,
-                  busy && styles.disabled,
+                  (busy || closed) && styles.disabled,
                   pressed && styles.pressed
                 ]}
               >
@@ -614,14 +791,6 @@ export default function App() {
       </SafeAreaView>
     </GestureHandlerRootView>
   );
-}
-
-function parsePublicId(input: string): string | null {
-  const value = input.trim();
-  if (!value) return null;
-  const pathMatch = value.match(/(?:\/s\/|schedule=)([A-Za-z0-9_-]+)/i);
-  const raw = pathMatch?.[1] ?? value;
-  return /^[A-Za-z0-9_-]{3,120}$/.test(raw) ? raw : null;
 }
 
 function buildCandidateVotes(
@@ -737,6 +906,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8
   },
+  finalTimeText: { color: palette.accentStrong, fontSize: 13, fontWeight: "700" },
+  closedNotice: { color: palette.danger, fontSize: 12, lineHeight: 18, marginBottom: 7 },
   scheduleMeta: { color: "#596d85", fontSize: 13, lineHeight: 19, fontWeight: "600" },
   backButton: { minHeight: 36, justifyContent: "center", alignSelf: "flex-start" },
   formCard: { gap: 10 },

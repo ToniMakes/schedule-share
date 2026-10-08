@@ -14,7 +14,7 @@ The web app supports open availability grids, three-state voting on proposed tim
 
 ## Mobile app
 
-The native Expo app is an MVP for joining an existing schedule, submitting or updating a response, and viewing shared results. It does not create schedules or provide organizer management yet. Opening shared links directly and device-specific time-zone, daylight-saving, and touch behavior still need physical-device validation. See [apps/mobile/README.md](apps/mobile/README.md) for setup and current limits.
+The native Expo app supports joining schedules, submitting or updating responses, viewing results, creating schedules, and organizer actions such as locking, archiving, and confirming a final time. Join with a schedule code or paste a share link; opening ordinary web links directly in the installed app is not wired up yet. Physical-device validation for time zones, daylight saving, touch behavior, and create/manage flows is still in progress. See [apps/mobile/README.md](apps/mobile/README.md) for setup and current limits.
 
 ## Run locally
 

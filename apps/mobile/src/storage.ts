@@ -28,6 +28,8 @@ export interface SavedRoom {
   readonly lastVisitedAt: string;
   readonly participantId?: string;
   readonly editKey?: string;
+  /** Organizer credential for schedules created or claimed on this device; never synced. */
+  readonly ownerKey?: string;
 }
 
 export async function loadProfile(): Promise<UserProfile | null> {
@@ -72,16 +74,23 @@ export async function clearDraft(publicId: string): Promise<void> {
 
 export async function loadRooms(): Promise<SavedRoom[]> {
   const raw = await AsyncStorage.getItem(ROOMS_KEY);
-  let rooms: Omit<SavedRoom, "editKey">[] = [];
+  let rooms: Omit<SavedRoom, "editKey" | "ownerKey">[] = [];
   try {
-    rooms = raw ? (JSON.parse(raw) as Omit<SavedRoom, "editKey">[]) : [];
+    rooms = raw ? (JSON.parse(raw) as Omit<SavedRoom, "editKey" | "ownerKey">[]) : [];
   } catch {
     rooms = [];
   }
   return Promise.all(
     rooms.map(async (room) => {
-      const editKey = await getEditKey(room.publicId);
-      return { ...room, ...(editKey ? { editKey } : {}) };
+      const [editKey, ownerKey] = await Promise.all([
+        getSecret(editKeyName(room.publicId)),
+        getSecret(ownerKeyName(room.publicId))
+      ]);
+      return {
+        ...room,
+        ...(editKey ? { editKey } : {}),
+        ...(ownerKey ? { ownerKey } : {})
+      };
     })
   );
 }
@@ -89,15 +98,12 @@ export async function loadRooms(): Promise<SavedRoom[]> {
 export async function saveRoom(room: SavedRoom): Promise<SavedRoom[]> {
   const existing = await loadRooms();
   const previous = existing.find((item) => item.publicId === room.publicId);
-  const mergedRoom = {
-    ...previous,
-    ...room,
-    ...(room.editKey || !previous?.editKey ? {} : { editKey: previous.editKey })
-  };
+  const mergedRoom = { ...previous, ...room };
   const withoutDuplicate = existing.filter((item) => item.publicId !== room.publicId);
   const next = [mergedRoom, ...withoutDuplicate].slice(0, 30);
-  if (mergedRoom.editKey) await setEditKey(room.publicId, mergedRoom.editKey);
-  const metadata = next.map(({ editKey: _editKey, ...item }) => item);
+  if (mergedRoom.editKey) await setSecret(editKeyName(room.publicId), mergedRoom.editKey);
+  if (mergedRoom.ownerKey) await setSecret(ownerKeyName(room.publicId), mergedRoom.ownerKey);
+  const metadata = next.map(({ editKey: _editKey, ownerKey: _ownerKey, ...item }) => item);
   await AsyncStorage.setItem(ROOMS_KEY, JSON.stringify(metadata));
   return next;
 }
@@ -106,20 +112,22 @@ function editKeyName(publicId: string): string {
   return `schedule-share.edit.${publicId}`;
 }
 
-async function getEditKey(publicId: string): Promise<string | null> {
-  const key = editKeyName(publicId);
-  // SecureStore is native-only; web storage is for local preview/development.
-  return Platform.OS === "web" ? AsyncStorage.getItem(key) : SecureStore.getItemAsync(key);
+function ownerKeyName(publicId: string): string {
+  return `schedule-share.owner.${publicId}`;
 }
 
-async function setEditKey(publicId: string, editKey: string): Promise<void> {
-  const key = editKeyName(publicId);
+async function getSecret(name: string): Promise<string | null> {
+  // SecureStore is native-only; web storage is for local preview/development.
+  return Platform.OS === "web" ? AsyncStorage.getItem(name) : SecureStore.getItemAsync(name);
+}
+
+async function setSecret(name: string, value: string): Promise<void> {
   // Keep production iOS/Android credentials in the OS keychain/keystore.
   if (Platform.OS === "web") {
-    await AsyncStorage.setItem(key, editKey);
+    await AsyncStorage.setItem(name, value);
     return;
   }
-  await SecureStore.setItemAsync(key, editKey);
+  await SecureStore.setItemAsync(name, value);
 }
 
 function draftKey(publicId: string): string {

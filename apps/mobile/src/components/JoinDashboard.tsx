@@ -18,7 +18,8 @@ export function JoinDashboard({
   shareInput,
   busy,
   onChangeShareInput,
-  onOpenRoom
+  onOpenRoom,
+  onCreate
 }: {
   language: AppLanguage;
   rooms: readonly SavedRoom[];
@@ -26,6 +27,7 @@ export function JoinDashboard({
   busy: boolean;
   onChangeShareInput: (value: string) => void;
   onOpenRoom: (value?: string) => void;
+  onCreate: () => void;
 }) {
   return (
     <>
@@ -60,6 +62,13 @@ export function JoinDashboard({
           )}
         </Pressable>
       </Surface>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onCreate}
+        style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
+      >
+        <Text style={styles.secondaryText}>{translate(language, "createSchedule")}</Text>
+      </Pressable>
       <View style={styles.roomsSection}>
         <SectionHeading language={language} label="mySchedules" detail={`${rooms.length}`} />
         <Text style={styles.cardDescription}>{translate(language, "mySchedulesDescription")}</Text>
@@ -127,6 +136,16 @@ const styles = StyleSheet.create({
     marginTop: 5
   },
   primaryText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  secondaryButton: {
+    minHeight: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: palette.accent,
+    backgroundColor: palette.accentSoft,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  secondaryText: { color: palette.accentStrong, fontSize: 15, fontWeight: "700" },
   disabled: { opacity: 0.55 },
   pressed: { opacity: 0.78 },
   roomsSection: { gap: 8 },

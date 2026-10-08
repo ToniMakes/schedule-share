@@ -1,4 +1,5 @@
 import { CalendarPlus } from "lucide-react";
+import Image from "next/image";
 import type { Metadata } from "next";
 
 import { AdPageChrome, DisplayAd } from "./ads/display-ad";
@@ -24,6 +25,40 @@ const workflowSteps = [
   {
     title: "Compare and decide",
     description: "See where your group's availability overlaps, then confirm a time."
+  }
+];
+
+const mobileHighlights = [
+  {
+    title: "Create and manage on the go",
+    description: "Set up a schedule, review responses, and keep your event moving from your phone."
+  },
+  {
+    title: "Join from a shared link",
+    description: "Paste an invitation link or enter a schedule code to open a schedule in the app."
+  },
+  {
+    title: "Find the time that works",
+    description:
+      "Tap or drag across time slots, compare the overlap, and return to recent schedules."
+  }
+];
+
+const mobileScreens = [
+  {
+    src: "/mobile/availability-grid.png",
+    alt: "Schedule Share mobile screen with selected availability time slots",
+    title: "Mark your availability"
+  },
+  {
+    src: "/mobile/common-free-results.png",
+    alt: "Schedule Share mobile screen showing common free times",
+    title: "Compare common free times"
+  },
+  {
+    src: "/mobile/my-schedules.png",
+    alt: "Schedule Share mobile screen with a recent schedule ready to open",
+    title: "Pick up where you left off"
   }
 ];
 
@@ -56,6 +91,35 @@ export default function EnglishHomePage() {
                 <p>{step.description}</p>
               </article>
             ))}
+          </section>
+
+          <section className={styles.mobileShowcase} aria-labelledby="mobile-title">
+            <div className={styles.mobileIntro}>
+              <p className={styles.eyebrow}>Schedule Share for mobile</p>
+              <h2 id="mobile-title">Your group schedule, wherever you are</h2>
+              <p>
+                Create and manage schedules on your phone, join with a shared link or schedule code,
+                and find a time that works wherever you are.
+              </p>
+              <ul className={styles.mobileHighlights}>
+                {mobileHighlights.map((item) => (
+                  <li key={item.title}>
+                    <strong>{item.title}</strong>
+                    <span>{item.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className={styles.mobileScreens}>
+              {mobileScreens.map((screen) => (
+                <figure className={styles.mobileScreen} key={screen.src}>
+                  <div className={styles.mobileScreenImage}>
+                    <Image src={screen.src} alt={screen.alt} width={1170} height={2370} />
+                  </div>
+                  <figcaption>{screen.title}</figcaption>
+                </figure>
+              ))}
+            </div>
           </section>
 
           <DisplayAd pageContext="home" placement="inline-results" />

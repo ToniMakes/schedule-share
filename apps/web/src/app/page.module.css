@@ -102,6 +102,91 @@
   line-height: 1.6;
 }
 
+.mobileShowcase {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 40px;
+  margin-top: 72px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 32px;
+  overflow: hidden;
+}
+
+.mobileIntro h2 {
+  max-width: 440px;
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.mobileIntro > p:not(.eyebrow) {
+  margin: 16px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.mobileHighlights {
+  display: grid;
+  gap: 18px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mobileHighlights li {
+  display: grid;
+  gap: 4px;
+  line-height: 1.5;
+}
+
+.mobileHighlights strong {
+  color: var(--foreground);
+}
+
+.mobileHighlights span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mobileScreens {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+.mobileScreen {
+  min-width: 0;
+  margin: 0;
+}
+
+.mobileScreenImage {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #f3f6fb;
+  box-shadow: 0 12px 28px rgb(18 38 63 / 9%);
+}
+
+.mobileScreen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mobileScreen figcaption {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .footer {
   border-top: 1px solid var(--border);
   display: flex;
@@ -131,5 +216,32 @@
   .workflow {
     grid-template-columns: 1fr;
     margin-top: 40px;
+  }
+
+  .mobileShowcase {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-top: 48px;
+    padding: 24px 18px;
+  }
+
+  .mobileScreens {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+    overflow-x: auto;
+    gap: 10px;
+    padding: 0 2px 8px;
+    scroll-snap-type: x proximity;
+  }
+
+  .mobileScreen {
+    scroll-snap-align: start;
+  }
+
+  .mobileScreenImage {
+    border-radius: 12px;
+  }
+
+  .mobileScreen figcaption {
+    font-size: 11px;
   }
 }

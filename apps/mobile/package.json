@@ -42,7 +42,7 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run src/grid-geometry.test.ts",
+    "test": "vitest run src/grid-geometry.test.ts src/share-link.test.ts src/schedule-form.test.ts",
     "test:rules": "firebase emulators:exec --project demo-schedule-share --only firestore \"corepack pnpm exec vitest run tests/firestore.rules.test.ts\""
   },
   "private": true
