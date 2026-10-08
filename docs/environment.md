@@ -38,6 +38,20 @@
 | `AI_IMAGE_COST_GUARDRAIL_ENABLED`        | 否   | Web API                                               | `false`                                     | 公开开放图片识别前的成本护栏确认。当前仅作为硬闸门条件之一，实际全站成本上限和紧急关闭实现前保持 false。                                           |
 | `SMOKE_BASE_URL`                         | 否   | `smoke:api`、`deployment:config`、`verify:deployment` | `https://schedule.tonimakes.com`            | 要验证的站点地址。不设置时 `smoke:api` 默认访问 `http://localhost:3000`；部署验证必须显式设置为远程站点。                                          |
 
+## 手机端变量
+
+手机端（`apps/mobile`）的变量写在 `apps/mobile/.env`（已被 Git 忽略，模板见 `apps/mobile/.env.example`）。所有 `EXPO_PUBLIC_` 变量会被打包进应用，只能放公开配置，不能放密钥。
+
+| 变量                               | 必填 | 说明                                                                                                                               |
+| ---------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_API_BASE_URL`         | 是   | 日程服务地址，线上为 `https://schedule.tonimakes.com`。真机连本机服务时用电脑的局域网地址；Android 模拟器访问宿主机用 `10.0.2.2`。 |
+| `EXPO_PUBLIC_FIREBASE_API_KEY`     | 否   | Firebase Web 应用的公开配置，用于可选的云端同步。                                                                                  |
+| `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN` | 否   | 同上。                                                                                                                             |
+| `EXPO_PUBLIC_FIREBASE_PROJECT_ID`  | 否   | 同上。                                                                                                                             |
+| `EXPO_PUBLIC_FIREBASE_APP_ID`      | 否   | 同上。                                                                                                                             |
+
+四个 Firebase 变量必须全部有值才会启用云端同步，任何一个为空都按未启用处理，应用仍可正常使用。当前 Firebase 项目的配置状态见 `docs/adr/0010-mobile-client.md`。改动后需要重启 Expo。
+
 ## 日程清理变量
 
 `vercel.json` 已配置每日调用 `/api/maintenance/cleanup-expired-schedules`。该接口只接受带 `Authorization: Bearer <CRON_SECRET>` 的请求；未配置或传错 secret 时不会清理数据。
