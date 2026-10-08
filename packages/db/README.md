@@ -1,40 +1,24 @@
-# DB Package
+# Database package
 
-`packages/db` 存放数据库 schema、migration 和数据库访问基础封装。
+`packages/db` contains the PostgreSQL schema, migrations, and data-access foundations.
 
-## 边界
+## Boundaries
 
-- 负责表结构定义。
-- 负责 migration。
-- 负责基础 repository。
-- 不重复实现排期算法。
-- 不直接暴露数据库内部字段给 UI。
+- Own table definitions, migrations, database types, and base repositories.
+- Keep UI behavior and scheduling algorithms out of this package.
+- Do not expose database-only fields directly in API responses.
 
-## 已选方案
+The package uses Drizzle, Postgres, the `postgres` driver, and `drizzle-kit` migrations.
 
-- ORM：Drizzle。
-- 数据库：Postgres。
-- 驱动：`postgres`。
-- Migration：`drizzle-kit` + `migrations/` SQL 文件。
+## Commands
 
-## 命令
+```sh
+corepack pnpm --filter @schedule-share/db db:generate
+corepack pnpm --filter @schedule-share/db db:migrate
+corepack pnpm --filter @schedule-share/db db:check
+corepack pnpm --filter @schedule-share/db db:studio
+```
 
-- `corepack pnpm --filter @schedule-share/db db:generate`
-- `corepack pnpm --filter @schedule-share/db db:migrate`
-- `corepack pnpm --filter @schedule-share/db db:check`
-- `corepack pnpm --filter @schedule-share/db db:studio`
+These commands need `DATABASE_URL`. With a Neon pooled connection string, set `DATABASE_MIGRATION_URL` to a direct connection string for migrations. Scripts load the root `.env.local` and `.env`; see [docs/environment.md](../../docs/environment.md).
 
-这些命令需要 `DATABASE_URL`。如果使用 Neon pooled 连接串，migration 建议额外设置
-`DATABASE_MIGRATION_URL` 为 direct 连接串。脚本会自动读取项目根目录的 `.env.local` 和 `.env`，环境变量说明见
-`docs/environment.md`。
-
-项目根目录还提供 `corepack pnpm db:setup`，用于按顺序运行环境检查、migration 和 schema 自检。
-
-项目根目录提供本地 Docker Postgres 辅助命令：
-
-- `corepack pnpm db:up`
-- `corepack pnpm db:check`
-- `corepack pnpm db:migrate:local`
-- `corepack pnpm db:down`
-
-`db:migrate:local` 会在没有显式 `DATABASE_URL` 时使用根目录 `.env.example` 中的默认本地连接串。
+The root `corepack pnpm db:setup` command runs environment checks, migrations, and a schema check. For local Docker Postgres, use `corepack pnpm db:up`, `corepack pnpm db:migrate:local`, and `corepack pnpm db:down`.

@@ -40,6 +40,7 @@ export function CandidateVoteList({
   onPreferenceReorder,
   preferenceRanksBySlotKey,
   responsesBySlotKey,
+  showIncomplete = false,
   slots,
   totalParticipantCount
 }: {
@@ -53,6 +54,7 @@ export function CandidateVoteList({
   ) => void;
   readonly preferenceRanksBySlotKey?: ReadonlyMap<string, number>;
   readonly responsesBySlotKey: ReadonlyMap<string, CandidateVoteResponse>;
+  readonly showIncomplete?: boolean;
   readonly slots: readonly CandidateVoteSlot[];
   readonly totalParticipantCount?: number;
 }) {
@@ -194,12 +196,13 @@ export function CandidateVoteList({
     <div aria-label={ariaLabel} className={styles.candidateVoteList} role="group">
       {orderedSlots.map(({ index, slot }) => {
         const key = slotKey(slot);
-        const response = responsesBySlotKey.get(key) ?? "unavailable";
+        const response = responsesBySlotKey.get(key);
         const preferenceRank = preferenceRanksBySlotKey?.get(key);
         const maybeCount = slot.maybeParticipantCount ?? 0;
         const slotLabel = slot.label ?? copy.candidateFallback(index);
         const isDraggablePreference =
           onPreferenceReorder !== undefined &&
+          response !== undefined &&
           response !== "unavailable" &&
           preferenceRank !== undefined;
 
@@ -207,7 +210,9 @@ export function CandidateVoteList({
           <article
             className={`${styles.candidateVoteItem} ${
               isDraggablePreference ? styles.candidateVoteItemDraggable : ""
-            } ${draggedPreferenceKey === key ? styles.candidateVoteItemDragging : ""}`}
+            } ${draggedPreferenceKey === key ? styles.candidateVoteItemDragging : ""} ${
+              showIncomplete && response === undefined ? styles.candidateVoteItemInvalid : ""
+            }`}
             data-candidate-slot-key={key}
             draggable={isDraggablePreference}
             key={key}
@@ -233,7 +238,12 @@ export function CandidateVoteList({
                 </p>
               )}
             </div>
-            <div className={styles.candidateVoteChoiceGroup}>
+            <div
+              aria-invalid={showIncomplete && response === undefined ? true : undefined}
+              aria-label={copy.responseGroupAria(slotLabel)}
+              className={styles.candidateVoteChoiceGroup}
+              role="radiogroup"
+            >
               <CandidateVoteChoice
                 checked={response === "available"}
                 label={copy.available}
@@ -256,7 +266,9 @@ export function CandidateVoteList({
                 value="unavailable"
               />
             </div>
-            {onPreferenceMove === undefined || response === "unavailable" ? null : (
+            {onPreferenceMove === undefined ||
+            response === undefined ||
+            response === "unavailable" ? null : (
               <div className={styles.candidatePreferenceControls}>
                 <span>
                   {preferenceRank === undefined

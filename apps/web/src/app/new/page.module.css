@@ -180,7 +180,7 @@
 
 .dayToggle span,
 .segment span,
-.modeChoice span {
+.modeChoice > span {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -201,6 +201,10 @@
   color: var(--accent-strong);
 }
 
+.modeChoice input:checked + span small {
+  color: var(--muted);
+}
+
 .dayToggle input:focus-visible + span,
 .segment input:focus-visible + span,
 .modeChoice input:focus-visible + span {
@@ -212,6 +216,29 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.modeChoice > span {
+  min-height: 92px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 12px;
+  gap: 8px;
+}
+
+.modeChoiceTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.modeChoice small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
 }
 
 .segmented {

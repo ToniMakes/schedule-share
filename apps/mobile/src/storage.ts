@@ -2,9 +2,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import type { CandidateVoteResponse } from "@schedule-share/api-client";
+import type { AppLanguage } from "./i18n";
 
 const PROFILE_KEY = "schedule-share.mobile.profile.v1";
 const ROOMS_KEY = "schedule-share.mobile.rooms.v1";
+const LANGUAGE_KEY = "schedule-share.mobile.language.v1";
+
+export async function loadLanguage(): Promise<AppLanguage> {
+  return (await AsyncStorage.getItem(LANGUAGE_KEY)) === "zh" ? "zh" : "en";
+}
+
+export async function saveLanguage(language: AppLanguage): Promise<void> {
+  await AsyncStorage.setItem(LANGUAGE_KEY, language);
+}
 
 export interface UserProfile {
   readonly displayName: string;
@@ -99,9 +109,7 @@ function editKeyName(publicId: string): string {
 async function getEditKey(publicId: string): Promise<string | null> {
   const key = editKeyName(publicId);
   // SecureStore is native-only; web storage is for local preview/development.
-  return Platform.OS === "web"
-    ? AsyncStorage.getItem(key)
-    : SecureStore.getItemAsync(key);
+  return Platform.OS === "web" ? AsyncStorage.getItem(key) : SecureStore.getItemAsync(key);
 }
 
 async function setEditKey(publicId: string, editKey: string): Promise<void> {

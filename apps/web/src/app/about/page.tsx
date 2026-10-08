@@ -8,31 +8,31 @@ import { formatPublicOperator, getPublicSiteInfo } from "../site/public-site-inf
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "About Schedule Share | Cross-time-zone scheduling",
+  title: "About Schedule Share | Group scheduling across time zones",
   description:
-    "Learn how Schedule Share helps groups collect availability, compare overlap, vote on candidate times, and export calendar files."
+    "Learn how Schedule Share helps groups collect availability, compare times, and choose a time together."
 };
 
 const featureItems = [
   {
-    title: "Cross-time-zone planning",
+    title: "Plan across time zones",
     description:
       "Organizers choose the event time zone, while participants fill one shared schedule. Results stay aligned to the same time grid."
   },
   {
-    title: "Multiple entry methods",
+    title: "Choose how to respond",
     description:
-      "The current MVP supports manual availability grids, candidate time voting, text import, CSV import, ICS import, and a guarded image-import preview path."
+      "Mark your availability on a grid, vote on proposed times, or prefill from pasted text, a CSV or ICS file, or a weekly template. Review suggested times before submitting."
   },
   {
-    title: "Best-time recommendations",
+    title: "Compare available times",
     description:
-      "The results page highlights full-group overlap first, then lists the best partial matches when no time works for everyone."
+      "See times that work for everyone first, followed by options that work for the most people."
   },
   {
     title: "Lightweight sharing",
     description:
-      "Participants do not need an account. Organizers use a private management link to review results, export calendars, or confirm the final time."
+      "Participants do not need an account. Organizers use a separate link to review results, export calendars, or confirm a time."
   }
 ];
 
@@ -70,10 +70,10 @@ export default function EnglishAboutPage() {
             <div className={styles.actions}>
               <a className={styles.primary} href="/new">
                 <CalendarPlus aria-hidden="true" size={17} />
-                Create Schedule
+                Create a schedule
               </a>
               <a className={styles.secondary} href="/privacy">
-                View Privacy
+                View privacy
               </a>
             </div>
           </header>
@@ -81,11 +81,11 @@ export default function EnglishAboutPage() {
           <DisplayAd pageContext="about" placement="top-banner" />
 
           <section className={styles.section}>
-            <h2>What problem does it solve?</h2>
+            <h2>Find a time without the back-and-forth</h2>
             <p>
-              Group chats often turn into a messy stream of screenshots, time-zone conversions, and
-              tentative answers. Schedule Share turns that into one shared page: participants submit
-              availability, and organizers see a clear overlap summary.
+              Group chats can fill up with screenshots, time-zone conversions, and tentative
+              answers. Schedule Share gathers responses on one page so organizers can compare the
+              overlap.
             </p>
             <div className={styles.featureGrid}>
               {featureItems.map((item) => (
@@ -109,23 +109,17 @@ export default function EnglishAboutPage() {
           </section>
 
           <section className={styles.section}>
-            <h2>Advertising and AI status</h2>
+            <h2>Privacy and optional imports</h2>
             <p>
-              The site has a reserved display-ad framework and an <code>/ads.txt</code> route, but
-              real ads are off by default. Future display ads should stay outside form fields, time
-              grids, upload previews, submit buttons, and URLs that contain management or edit keys.
-            </p>
-            <p>
-              Image schedule recognition is treated as a cost-sensitive advanced feature. It remains
-              behind feature flags, release-mode checks, cost guardrails, and future credit or
-              rewarded-ad validation. Manual entry, text import, CSV import, and ICS import remain
-              available as non-AI paths.
+              Ads are currently off. Optional prefill tools create a preview for you to review
+              before you submit. Read the <a href="/privacy">privacy and data details</a> before
+              sharing schedule information.
             </p>
           </section>
 
           {operatorLine ? (
             <section className={styles.section}>
-              <h2>Operator and Contact</h2>
+              <h2>Contact</h2>
               <p>
                 Public operator: <strong>{operatorLine}</strong>. Feedback, archive requests, and
                 deletion requests can be sent through the <a href="/contact">contact page</a>.

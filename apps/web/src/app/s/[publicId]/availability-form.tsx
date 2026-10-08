@@ -86,6 +86,7 @@ export function AvailabilityForm({
   const [candidatePreferenceRanksBySlotKey, setCandidatePreferenceRanksBySlotKey] = useState<
     Map<string, number>
   >(() => new Map());
+  const [candidateValidationError, setCandidateValidationError] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const isClosed = scheduleStatus !== "open";
@@ -108,6 +109,12 @@ export function AvailabilityForm({
     event.preventDefault();
 
     if (!event.currentTarget.reportValidity()) {
+      return;
+    }
+
+    if (isCandidatePoll && slots.some((slot) => !candidateResponsesBySlotKey.has(slotKey(slot)))) {
+      setCandidateValidationError(true);
+      setSubmitState({ status: "error", message: copy.errorCandidateResponseRequired });
       return;
     }
 
@@ -166,22 +173,29 @@ export function AvailabilityForm({
   }
 
   function setCandidateResponse(slot: CandidateVoteSlot, response: CandidateVoteResponse) {
-    setCandidateResponsesBySlotKey((currentResponses) => {
-      const nextResponses = new Map(currentResponses);
-      nextResponses.set(slotKey(slot), response);
+    const nextResponses = new Map(candidateResponsesBySlotKey);
+    nextResponses.set(slotKey(slot), response);
+    setCandidateResponsesBySlotKey(nextResponses);
 
-      setCandidatePreferenceRanksBySlotKey((currentRanks) => {
-        const activeKeys = selectedCandidatePreferenceKeys(slots, nextResponses);
-        const compactRanks = compactCandidatePreferenceRanks(currentRanks, activeKeys);
+    if (slots.every((candidateSlot) => nextResponses.has(slotKey(candidateSlot)))) {
+      setCandidateValidationError(false);
+      if (
+        submitState.status === "error" &&
+        submitState.message === copy.errorCandidateResponseRequired
+      ) {
+        setSubmitState({ status: "idle" });
+      }
+    }
 
-        if (response === "unavailable" || compactRanks.has(slotKey(slot))) {
-          return compactRanks;
-        }
+    setCandidatePreferenceRanksBySlotKey((currentRanks) => {
+      const activeKeys = selectedCandidatePreferenceKeys(slots, nextResponses);
+      const compactRanks = compactCandidatePreferenceRanks(currentRanks, activeKeys);
 
-        return updateCandidatePreferenceRanks(compactRanks, slot, activeKeys, "append");
-      });
+      if (response === "unavailable" || compactRanks.has(slotKey(slot))) {
+        return compactRanks;
+      }
 
-      return nextResponses;
+      return updateCandidatePreferenceRanks(compactRanks, slot, activeKeys, "append");
     });
   }
 
@@ -329,6 +343,7 @@ export function AvailabilityForm({
                 onPreferenceReorder={reorderCandidatePreference}
                 preferenceRanksBySlotKey={candidatePreferenceRanksBySlotKey}
                 responsesBySlotKey={candidateResponsesBySlotKey}
+                showIncomplete={candidateValidationError}
                 slots={slots}
                 totalParticipantCount={totalParticipantCount}
               />

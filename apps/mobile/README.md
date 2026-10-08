@@ -1,6 +1,10 @@
-# schedule-share Mobile
+# Schedule Share mobile app
 
-Native Expo + React Native client for joining an existing schedule, selecting availability, submitting it to the existing API, and viewing the server's shared results.
+The native Expo app lets participants join an existing schedule, mark their availability or vote on proposed times, submit or update a response, and view the shared results. It uses the same schedule service as the web app.
+
+The app opens in English and includes an English / 中文 switch. The selected language is saved on this device.
+
+The participant flow includes quick date navigation, visible three-state voting, a persistent submit action, local draft recovery, and shared result summaries. Motion feedback respects the device’s reduced-motion setting.
 
 ## Run
 
@@ -40,7 +44,7 @@ The Firestore rules test starts the local Firestore Emulator. It uses only the d
 
 ## Current limits
 
-- Users join by share code or pasted link; opening share links directly is not wired up yet.
+- Join with a share code or paste a link. Opening shared links directly is not wired up yet.
 - The first mobile flow focuses on reading an existing schedule, submitting availability and viewing the existing API results. Schedule creation and organizer management are not part of this MVP.
-- No Firebase configuration means the user's room list and profile stay on that device.
-- Expo Go bundling does not prove device-specific timezone/DST behavior or touch performance. Those require a real phone and must be checked before describing them as verified.
+- Without Firebase configuration, the user's schedule list and profile stay on that device.
+- Device-specific time-zone, daylight-saving, and touch behavior still need validation on a physical phone.

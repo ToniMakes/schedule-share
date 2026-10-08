@@ -17,11 +17,13 @@
 
 中英双语已从“只有导入解析支持部分英文时间表达”推进到“英文作为默认公开入口、中文迁移到 `/zh` 专属入口”的阶段：`/`、`/about`、`/privacy`、`/contact`、`/feedback`、`/terms`、`/new`、`/s/:publicId`、`/s/:publicId/edit/:participantId` 和 `/s/:publicId/manage` 现在是英文主流程；`/zh`、`/zh/new`、`/zh/about`、`/zh/privacy`、`/zh/contact`、`/zh/feedback`、`/zh/terms`、`/zh/s/:publicId`、`/zh/s/:publicId/edit/:participantId` 和 `/zh/s/:publicId/manage` 保留中文入口；旧 `/en/...` 路径会兼容重定向到新的英文根路径。公开日程的开放网格填写、手动涂选、结果热力图、候选投票填写、候选投票结果面板、图片/文本/CSV/ICS/模板预填面板、普通可用时间编辑、候选投票编辑，以及组织者侧分享链接、管理操作、结果摘要、较优时间槽、候选结果、最终时间确认和导出/复制入口已有英文主流程。图片识别入口仍受 `AI_IMAGE_IMPORT_ENABLED` / release mode / 额度闸门控制，公开环境默认不展示；语言切换会写入本地语言偏好，但根路径不再按偏好自动跳转，当前 API 错误码也已有中英文兜底文案。完整 i18n 字典、更多深层组件文案抽离和更广生产 smoke 覆盖仍未完成。
 
-当前本机限制：
+2026-10-08 的交互语言改写已覆盖英文首页和创建流程、公开日程、候选投票、编辑回应、管理结果和主要失败/成功提示；中文同路由也已校正。候选项必须明确选择状态后才能提交，避免把未选择误记成“不方便”。公开 README 已改为英文入口并增加对应中文版本，各 package README 已按职责整理。390px 浏览器手动检查覆盖首页、创建页、公开候选投票页与编辑回应：未选候选项时阻止提交，完整选择后能提交，编辑链接能恢复原回应并保存更新；结果计数的单数英语已修正。生产只读 smoke 检查了 17 个中英文公开页面、健康接口、robots 和 sitemap，全部返回 200；本次未对生产环境运行写入型 smoke。根布局的预交互脚本会在 `/zh` 页面 hydration 前设置 `lang="zh-CN"`，浏览器实测无 hydration 警告。全量 lint、typecheck、workspace tests 已通过。当前仍使用分散的页面级文案表，完整集中式 `en`/`zh-CN` 字典和深层组件文案抽离未完成；Android 模拟器/adb 在本机不可用，不能代替真机确认原生键盘、安全区和拖动手势。
 
-- 本机未安装 Docker。
-- 本机未安装 `psql` 或 `pg_isready`。
-- 本地数据库辅助命令仍不能直接使用，但已经可以通过托管 Neon Postgres 跑通真实数据库写入链路。
+当前本机限制（2026-10-08 复核）：
+
+- Docker Desktop 可用；本轮已启动本地 Postgres，执行 migrations、`db:check`，并通过 Web 健康检查和本地日程/回应流程。
+- Windows PATH 中没有 `psql`、`pg_isready` 和 `adb`；Postgres 可通过 Docker 容器访问，Android 模拟器暂不可用。
+- `db:migrate:local` 在当前 PowerShell/pnpm 调用中未能匹配 workspace 项目；从 `packages/db` 直接运行 Drizzle migration 已成功。应另行修复并验证该跨平台脚本。
 
 ## 已完成能力
 

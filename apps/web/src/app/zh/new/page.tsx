@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AdPageChrome, DisplayAd } from "../../ads/display-ad";
@@ -5,6 +6,11 @@ import { LanguageSwitcher } from "../../i18n/language-switcher";
 import { PageLanguage } from "../../i18n/page-language";
 import styles from "../../new/page.module.css";
 import { NewScheduleForm } from "../../new/schedule-form";
+
+export const metadata: Metadata = {
+  title: "创建日程 | Schedule Share",
+  description: "创建日程，收集大家方便的时间，或投票选择候选时间。"
+};
 
 export default function NewSchedulePage() {
   return (
@@ -18,7 +24,7 @@ export default function NewSchedulePage() {
               返回首页
             </Link>
             <div>
-              <p className={styles.eyebrow}>Create Schedule</p>
+              <p className={styles.eyebrow}>Schedule Share</p>
               <h1 className={styles.title}>创建日程</h1>
             </div>
           </header>

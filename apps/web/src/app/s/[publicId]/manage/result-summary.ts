@@ -279,11 +279,11 @@ function formatCandidateLine(
   const score =
     locale === "en"
       ? maybeCount === 0
-        ? `${result.availableParticipantCount}/${totalParticipantCount} yes, weighted support ${result.decisionPercent}%`
-        : `${result.availableParticipantCount}/${totalParticipantCount} yes, ${maybeCount} maybe, weighted support ${result.decisionPercent}%`
+        ? `${result.availableParticipantCount}/${totalParticipantCount} available, weighted support ${result.decisionPercent}%`
+        : `${result.availableParticipantCount}/${totalParticipantCount} available, ${maybeCount} if needed, weighted support ${result.decisionPercent}%`
       : maybeCount === 0
-        ? `${result.availableParticipantCount}/${totalParticipantCount} 可用，综合支持 ${result.decisionPercent}%`
-        : `${result.availableParticipantCount}/${totalParticipantCount} 可用，${maybeCount} 也许，综合支持 ${result.decisionPercent}%`;
+        ? `${result.availableParticipantCount}/${totalParticipantCount} 人方便，综合支持 ${result.decisionPercent}%`
+        : `${result.availableParticipantCount}/${totalParticipantCount} 人方便，${maybeCount} 人必要时可以，综合支持 ${result.decisionPercent}%`;
   const preferenceSummary =
     result.preferenceRankCount === 0
       ? ""

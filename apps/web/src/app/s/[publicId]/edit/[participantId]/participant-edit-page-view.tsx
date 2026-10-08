@@ -45,11 +45,11 @@ const participantEditPageCopy: Record<SchedulePageLocale, ParticipantEditPageCop
     unableTitle: "无法打开编辑页"
   },
   en: {
-    backSchedule: "Back to Schedule",
+    backSchedule: "Back to schedule",
     editEyebrow: "Edit Availability",
     titleAvailability: "Edit Availability",
     titleCandidate: "Edit Candidate Vote",
-    unableTitle: "Cannot Open Edit Page"
+    unableTitle: "Cannot open edit page"
   }
 };
 

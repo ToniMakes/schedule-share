@@ -61,15 +61,16 @@ const candidatePollResultCopyText: Record<CandidateResultLocale, CandidatePollRe
     detailLabel: "缺口",
     firstPreferenceLabel: "首选",
     labelSeparator: "：",
-    maybeLabel: "也许",
+    maybeLabel: "必要时可以",
     nameSeparator: "、",
-    notAvailableLabel: "不方便/未选",
+    notAvailableLabel: "不方便或未回应",
     preferenceLabel: "偏好",
     preferenceAverage: (firstPreference, averageRank) =>
       `首选 ${firstPreference}，平均顺位 #${averageRank}`,
     scheduleLabel: "日程",
-    scoreAvailable: (available, total) => `${available}/${total} 可用`,
-    scoreAvailableMaybe: (available, total, maybe) => `${available}/${total} 可用 · ${maybe} 也许`,
+    scoreAvailable: (available, total) => `${available}/${total} 方便`,
+    scoreAvailableMaybe: (available, total, maybe) =>
+      `${available}/${total} 方便 · ${maybe} 必要时可以`,
     scoreWaiting: "等待参与者",
     scoreSupportSeparator: "，",
     supportLabel: (percent) => `综合支持 ${percent}%`,
@@ -79,7 +80,7 @@ const candidatePollResultCopyText: Record<CandidateResultLocale, CandidatePollRe
     voteLabel: "投票"
   },
   en: {
-    availableLabel: "Yes",
+    availableLabel: "Available",
     candidateFallback: (candidateNumber) => `Option ${candidateNumber}`,
     comparisonLabel: "Compared with best",
     dateSeparator: " to ",
@@ -87,22 +88,23 @@ const candidatePollResultCopyText: Record<CandidateResultLocale, CandidatePollRe
     detailLabel: "Gaps",
     firstPreferenceLabel: "First choice",
     labelSeparator: ": ",
-    maybeLabel: "Maybe",
+    maybeLabel: "If needed",
     nameSeparator: ", ",
-    notAvailableLabel: "No/not selected",
+    notAvailableLabel: "Not available or unanswered",
     preferenceLabel: "Preference",
     preferenceAverage: (firstPreference, averageRank) =>
       `${firstPreference} first-choice, avg rank #${averageRank}`,
     scheduleLabel: "Schedule",
-    scoreAvailable: (available, total) => `${available}/${total} yes`,
-    scoreAvailableMaybe: (available, total, maybe) => `${available}/${total} yes · ${maybe} maybe`,
+    scoreAvailable: (available, total) => `${available}/${total} available`,
+    scoreAvailableMaybe: (available, total, maybe) =>
+      `${available}/${total} available · ${maybe} if needed`,
     scoreWaiting: "Waiting for participants",
     scoreSupportSeparator: ", ",
-    supportLabel: (percent) => `Weighted support ${percent}%`,
+    supportLabel: (percent) => `Weighted support score ${percent}%`,
     timeLabel: "Time",
     titleLabel: "Option",
     unknownParticipant: "Unknown participant",
-    voteLabel: "Votes"
+    voteLabel: "Responses"
   }
 };
 

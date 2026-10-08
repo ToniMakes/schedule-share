@@ -7,25 +7,23 @@ import { PageLanguage } from "./i18n/page-language";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "Schedule Share | Cross-time-zone availability planner",
+  title: "Schedule Share | Find a time that works for your group",
   description:
-    "Create a shared scheduling page, collect availability across time zones, vote on candidate times, and export the final time to a calendar."
+    "Share a schedule, collect your group's availability, compare overlapping times, and choose a time together."
 };
 
 const workflowSteps = [
   {
-    title: "Create",
-    description: "Set the date range, time zone, daily time window, and slot length."
+    title: "Create a schedule",
+    description: "Choose an availability grid or suggest a few time options."
   },
   {
-    title: "Share",
-    description:
-      "Invite people with a link. Participants can fill in availability without an account."
+    title: "Share the link",
+    description: "Participants can respond without creating an account."
   },
   {
-    title: "Decide",
-    description:
-      "See overlapping availability, best partial matches, candidate votes, and calendar exports."
+    title: "Compare and decide",
+    description: "See where your group's availability overlaps, then confirm a time."
   }
 ];
 
@@ -37,21 +35,20 @@ export default function EnglishHomePage() {
         <div className={styles.shell}>
           <LanguageSwitcher chineseHref="/zh" current="en" englishHref="/" />
           <p className={styles.eyebrow}>Schedule Share</p>
-          <h1 className={styles.title}>Find the time everyone can make</h1>
+          <h1 className={styles.title}>Find a time that works for your group</h1>
           <p className={styles.intro}>
-            A lightweight shared scheduling tool for cross-time-zone groups. Create a schedule,
-            collect availability, compare the group overlap, and export the final time.
+            Share a schedule, collect everyone's availability, and compare the times that work best.
           </p>
           <div className={styles.actions}>
             <a className={styles.primary} href="/new">
               <CalendarPlus aria-hidden="true" size={18} />
-              Create Schedule
+              Create a schedule
             </a>
           </div>
 
           <DisplayAd pageContext="home" placement="top-banner" />
 
-          <section className={styles.workflow} aria-label="Core workflow">
+          <section className={styles.workflow} aria-label="How it works">
             {workflowSteps.map((step, index) => (
               <article className={styles.step} key={step.title}>
                 <span className={styles.stepNumber}>{index + 1}</span>

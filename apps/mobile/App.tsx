@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,8 +12,7 @@ import {
   View
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
-import { runOnJS } from "react-native-worklets";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   createAvailabilityDraftFromAvailableSlots,
   generateTimeSlots,
@@ -35,22 +33,29 @@ import {
 } from "@schedule-share/api-client";
 import {
   clearDraft,
+  loadLanguage,
   loadDraft,
   loadProfile,
   loadRooms,
   saveDraft,
+  saveLanguage,
   saveProfile,
   saveRoom,
   type SavedRoom
 } from "./src/storage";
+import { translate, type AppLanguage } from "./src/i18n";
 import { userDataStore } from "./src/user-data-store";
 import { restoreCloudData } from "./src/user-data-store";
-import { getSlotGridMetrics, getSlotIndexAtPoint } from "./src/grid-geometry";
+import { LanguageSwitch, SectionHeading, StatusBadge, Surface } from "./src/components/ui";
+import { JoinDashboard } from "./src/components/JoinDashboard";
+import { SlotGrid } from "./src/components/SlotGrid";
+import { formatLocalDate } from "./src/date-format";
+import { palette } from "./src/theme";
+import { FeedbackNotice } from "./src/components/FeedbackNotice";
+import { CandidateOption } from "./src/components/CandidateOption";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim() ?? "";
 const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-let activePaintValue = false;
-
 interface LoadedSchedule {
   readonly response: GetScheduleResponse;
   readonly slots: readonly TimeSlot[];
@@ -59,6 +64,7 @@ interface LoadedSchedule {
 }
 
 export default function App() {
+  const [language, setLanguage] = useState<AppLanguage>("en");
   const [shareInput, setShareInput] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
@@ -70,29 +76,39 @@ export default function App() {
   >({});
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error">("error");
+  const [candidateValidationError, setCandidateValidationError] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const [editCredential, setEditCredential] = useState<SavedRoom | null>(null);
-
   useEffect(() => {
-    void Promise.all([loadProfile(), loadRooms()]).then(([profile, savedRooms]) => {
-      if (profile) {
-        setDisplayName(profile.displayName);
-        setTimezone(profile.timezone);
+    void Promise.all([loadProfile(), loadRooms(), loadLanguage()]).then(
+      ([profile, savedRooms, savedLanguage]) => {
+        setLanguage(savedLanguage);
+        if (profile) {
+          setDisplayName(profile.displayName);
+          setTimezone(profile.timezone);
+        }
+        setRooms(savedRooms);
+        void restoreCloudData()
+          .then(async (cloud) => {
+            if (cloud.profile) {
+              setDisplayName(cloud.profile.displayName);
+              setTimezone(cloud.profile.timezone);
+              await saveProfile(cloud.profile);
+            }
+            if (cloud.rooms.length) {
+              for (const room of cloud.rooms) await saveRoom(room);
+              setRooms(await loadRooms());
+            }
+          })
+          .catch(() => undefined);
       }
-      setRooms(savedRooms);
-      void restoreCloudData()
-        .then(async (cloud) => {
-          if (cloud.profile) {
-            setDisplayName(cloud.profile.displayName);
-            setTimezone(cloud.profile.timezone);
-            await saveProfile(cloud.profile);
-          }
-          if (cloud.rooms.length) {
-            for (const room of cloud.rooms) await saveRoom(room);
-            setRooms(await loadRooms());
-          }
-        })
-        .catch(() => undefined);
-    });
+    );
+  }, []);
+
+  const changeLanguage = useCallback((nextLanguage: AppLanguage) => {
+    setLanguage(nextLanguage);
+    void saveLanguage(nextLanguage).catch(() => undefined);
   }, []);
 
   const displayId = loaded?.response.schedule.publicId;
@@ -102,6 +118,14 @@ export default function App() {
     () => selectableSlots.filter((slot) => selection.has(slot.startUtc)),
     [selectableSlots, selection]
   );
+  const unansweredCandidateCount =
+    candidatePoll && loaded
+      ? loaded.slots.filter(
+          (slot) =>
+            !slot.candidateTimeOptionId ||
+            candidateResponses[slot.candidateTimeOptionId] === undefined
+        ).length
+      : 0;
 
   useEffect(() => {
     if (!displayId) return;
@@ -121,12 +145,14 @@ export default function App() {
   const openRoom = useCallback(
     async (value = shareInput) => {
       if (!API_BASE_URL) {
-        setMessage("请先在 apps/mobile/.env 中设置 EXPO_PUBLIC_API_BASE_URL，然后重启 Expo。");
+        setMessageTone("error");
+        setMessage(translate(language, "missingApi"));
         return;
       }
       const publicId = parsePublicId(value);
       if (!publicId) {
-        setMessage("请输入有效的日程分享码或 schedule-share 分享链接。");
+        setMessageTone("error");
+        setMessage(translate(language, "invalidShare"));
         return;
       }
       setBusy(true);
@@ -160,11 +186,13 @@ export default function App() {
           }
         }
         const draft = await loadDraft(publicId);
+        setDraftRestored(Boolean(draft));
         if (draft) {
           initialSelection = draft.availableSlots;
           initialCandidateResponses = { ...initialCandidateResponses, ...draft.candidateVotes };
         }
         setLoaded({ response, slots, initialSelection, initialCandidateResponses });
+        setCandidateValidationError(false);
         setSelection(new Set(initialSelection.map((slot) => slot.startUtc)));
         setCandidateResponses(initialCandidateResponses);
         setShareInput(publicId);
@@ -181,12 +209,13 @@ export default function App() {
           ...(previousRoom?.editKey ? { editKey: previousRoom.editKey } : {})
         });
       } catch (error) {
-        setMessage(getReadableError(error));
+        setMessageTone("error");
+        setMessage(getReadableError(error, language));
       } finally {
         setBusy(false);
       }
     },
-    [rememberRoom, rooms, shareInput]
+    [language, rememberRoom, rooms, shareInput]
   );
 
   const toggleSlot = useCallback((slot: TimeSlot) => {
@@ -198,18 +227,22 @@ export default function App() {
     });
   }, []);
 
-  const toggleCandidate = useCallback(
-    (slot: TimeSlot) => {
+  const setCandidate = useCallback(
+    (slot: TimeSlot, next: CandidateVoteResponse) => {
       const optionId = slot.candidateTimeOptionId;
       if (!optionId) return;
-      const previous = candidateResponses[optionId] ?? "unavailable";
-      const next: CandidateVoteResponse =
-        previous === "unavailable"
-          ? "available"
-          : previous === "available"
-            ? "maybe"
-            : "unavailable";
-      setCandidateResponses((current) => ({ ...current, [optionId]: next }));
+      const updatedResponses = { ...candidateResponses, [optionId]: next };
+      setCandidateResponses(updatedResponses);
+      if (
+        loaded?.slots.every(
+          (candidateSlot) =>
+            candidateSlot.candidateTimeOptionId !== undefined &&
+            updatedResponses[candidateSlot.candidateTimeOptionId] !== undefined
+        )
+      ) {
+        setCandidateValidationError(false);
+        setMessage("");
+      }
       setSelection((current) => {
         const nextSelection = new Set(current);
         if (next === "available") nextSelection.add(slot.startUtc);
@@ -217,15 +250,23 @@ export default function App() {
         return nextSelection;
       });
     },
-    [candidateResponses]
+    [candidateResponses, loaded]
   );
 
   const submit = useCallback(async () => {
     if (!loaded || !displayId) return;
     if (!displayName.trim()) {
-      setMessage("请填写显示名称。");
+      setMessageTone("error");
+      setMessage(translate(language, "nameRequired"));
       return;
     }
+    if (candidatePoll && unansweredCandidateCount > 0) {
+      setCandidateValidationError(true);
+      setMessageTone("error");
+      setMessage(translate(language, "candidateResponseRequired"));
+      return;
+    }
+    setCandidateValidationError(false);
     setBusy(true);
     setMessage("");
     try {
@@ -251,7 +292,8 @@ export default function App() {
           },
           apiOptions()
         );
-        setMessage("已更新你的可用时间。");
+        setMessageTone("success");
+        setMessage(translate(language, "availabilityUpdated"));
       } else {
         const result = await createParticipantAvailability(
           displayId,
@@ -276,26 +318,31 @@ export default function App() {
         };
         setEditCredential(room);
         await rememberRoom(room);
-        setMessage("提交成功。你的日程结果已更新。");
+        setMessageTone("success");
+        setMessage(translate(language, "availabilitySubmitted"));
       }
       await saveProfile({ displayName: displayName.trim(), timezone });
       await userDataStore
         .saveProfile({ displayName: displayName.trim(), timezone })
         .catch(() => undefined);
       await clearDraft(displayId);
+      setDraftRestored(false);
       const refreshed = await getSchedule(displayId, apiOptions());
       setLoaded((current) => (current ? { ...current, response: refreshed } : current));
     } catch (error) {
-      setMessage(getReadableError(error));
+      setMessageTone("error");
+      setMessage(getReadableError(error, language));
     } finally {
       setBusy(false);
     }
   }, [
     candidatePoll,
+    unansweredCandidateCount,
     candidateResponses,
     displayId,
     displayName,
     editCredential,
+    language,
     loaded,
     rememberRoom,
     selectedSlots,
@@ -308,6 +355,7 @@ export default function App() {
     setCandidateResponses({});
     setEditCredential(null);
     setMessage("");
+    setDraftRestored(false);
   };
 
   return (
@@ -318,94 +366,125 @@ export default function App() {
           style={styles.fill}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-            <Text style={styles.eyebrow}>SCHEDULE SHARE · MOBILE</Text>
+          <ScrollView
+            style={styles.fill}
+            contentContainerStyle={styles.page}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          >
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.eyebrow}>SCHEDULE SHARE</Text>
+                <Text style={styles.headerCaption}>{translate(language, "brandTagline")}</Text>
+              </View>
+              <LanguageSwitch language={language} onChange={changeLanguage} />
+            </View>
             <Text style={styles.title}>
-              {loaded ? loaded.response.schedule.title : "Find a time that works."}
+              {loaded ? loaded.response.schedule.title : translate(language, "homeTitle")}
             </Text>
             <Text style={styles.subtitle}>
               {loaded
-                ? `${loaded.response.schedule.timezone} · ${loaded.response.participants.length} 位参与者`
-                : "加入一个日程，标记你方便的时间。"}
+                ? translate(language, "participants", {
+                    timezone: loaded.response.schedule.timezone,
+                    count: loaded.response.participants.length,
+                    participantLabel:
+                      loaded.response.participants.length === 1 ? "participant" : "participants"
+                  })
+                : translate(language, "subtitleHome")}
             </Text>
 
             {loaded ? (
               <>
-                <View style={styles.toolbar}>
-                  <Pressable onPress={startNew}>
-                    <Text style={styles.link}>‹ 我的日程 / 加入其他日程</Text>
-                  </Pressable>
-                  <Text style={styles.mode}>
-                    {loaded.response.schedule.status === "open" ? "开放中" : "已结束"}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={translate(language, "backToSchedules")}
+                  onPress={startNew}
+                  style={styles.backButton}
+                >
+                  <Text style={styles.link}>{translate(language, "backToSchedules")}</Text>
+                </Pressable>
+                <Surface style={styles.scheduleCard}>
+                  <View style={styles.scheduleCardTop}>
+                    <Text style={styles.eyebrow}>{translate(language, "scheduleDetails")}</Text>
+                    <StatusBadge
+                      tone={loaded.response.schedule.status === "open" ? "positive" : "neutral"}
+                    >
+                      {translate(
+                        language,
+                        loaded.response.schedule.status === "open" ? "statusOpen" : "statusClosed"
+                      )}
+                    </StatusBadge>
+                  </View>
+                  <Text style={styles.scheduleMeta}>
+                    {translate(language, "participants", {
+                      timezone: loaded.response.schedule.timezone,
+                      count: loaded.response.participants.length,
+                      participantLabel:
+                        loaded.response.participants.length === 1 ? "participant" : "participants"
+                    })}
                   </Text>
-                </View>
-                <Text style={styles.sectionTitle}>你的信息</Text>
-                <TextInput
-                  style={styles.input}
-                  value={displayName}
-                  onChangeText={setDisplayName}
-                  placeholder="显示名称"
-                  maxLength={80}
-                  accessibilityLabel="显示名称"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={timezone}
-                  onChangeText={setTimezone}
-                  placeholder="时区，例如 Australia/Sydney"
-                  autoCapitalize="none"
-                  accessibilityLabel="时区"
-                />
+                </Surface>
+                <Surface style={styles.formCard}>
+                  <SectionHeading language={language} label="yourInfo" />
+                  <TextInput
+                    style={styles.input}
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                    placeholder={translate(language, "displayName")}
+                    maxLength={80}
+                    accessibilityLabel={translate(language, "displayName")}
+                    returnKeyType="next"
+                  />
+                  <TextInput
+                    style={[styles.input, styles.lastInput]}
+                    value={timezone}
+                    onChangeText={setTimezone}
+                    placeholder={translate(language, "timezone")}
+                    autoCapitalize="none"
+                    accessibilityLabel={translate(language, "timezone")}
+                  />
+                  {draftRestored ? (
+                    <Text style={styles.savedHint}>{translate(language, "draftRestored")}</Text>
+                  ) : editCredential ? (
+                    <Text style={styles.savedHint}>{translate(language, "responseEditing")}</Text>
+                  ) : (
+                    <Text style={styles.savedHint}>{translate(language, "responseSaved")}</Text>
+                  )}
+                </Surface>
                 <Text style={styles.sectionTitle}>
-                  {candidatePoll ? "选择候选时间" : "标记你方便的时间"}
+                  {translate(language, candidatePoll ? "chooseCandidate" : "markAvailability")}
                 </Text>
                 <Text style={styles.helper}>
-                  {candidatePoll
-                    ? "点按候选项切换方便、也许和不方便。"
-                    : "点按切换单格，长按 0.3 秒后拖动可连续涂选。"}{" "}
-                  日程时区：{loaded.response.schedule.timezone}
+                  {translate(
+                    language,
+                    candidatePoll ? "candidateInstructions" : "gridInstructions"
+                  )}{" "}
+                  {translate(language, "scheduleTimezone", {
+                    timezone: loaded.response.schedule.timezone
+                  })}
                 </Text>
                 {candidatePoll ? (
                   <View style={styles.candidateList}>
-                    {loaded.slots.map((slot) => (
-                      <Pressable
-                        key={slot.startUtc}
-                        onPress={() => toggleCandidate(slot)}
-                        style={[
-                          styles.candidate,
-                          candidateResponses[slot.candidateTimeOptionId ?? ""] === "available" &&
-                            styles.selectedCandidate,
-                          candidateResponses[slot.candidateTimeOptionId ?? ""] === "maybe" &&
-                            styles.maybeCandidate
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.candidateTitle,
-                            candidateResponses[slot.candidateTimeOptionId ?? ""] === "available" &&
-                              styles.selectedText
-                          ]}
-                        >
-                          {slot.label ??
-                            `${slot.localStartDate} · ${slot.localStartTime}–${slot.localEndTime}`}
-                        </Text>
-                        <Text style={styles.voteStatus}>
-                          {candidateResponses[slot.candidateTimeOptionId ?? ""] === "available"
-                            ? "方便"
-                            : candidateResponses[slot.candidateTimeOptionId ?? ""] === "maybe"
-                              ? "也许"
-                              : "不方便"}
-                        </Text>
-                        <Text style={styles.helper}>
-                          {slot.localStartDate} {slot.localStartTime}–{slot.localEndTime}
-                        </Text>
-                      </Pressable>
-                    ))}
+                    {loaded.slots.map((slot) => {
+                      const optionId = slot.candidateTimeOptionId ?? "";
+                      return (
+                        <CandidateOption
+                          key={slot.startUtc}
+                          slot={slot}
+                          response={candidateResponses[optionId]}
+                          language={language}
+                          timezone={loaded.response.schedule.timezone}
+                          invalid={candidateValidationError && !candidateResponses[optionId]}
+                          onSelect={(response) => setCandidate(slot, response)}
+                        />
+                      );
+                    })}
                   </View>
                 ) : (
                   <SlotGrid
                     slots={loaded.slots}
                     selected={selection}
+                    language={language}
                     onToggle={toggleSlot}
                     onSet={(slot, value) =>
                       setSelection((current) => {
@@ -418,31 +497,40 @@ export default function App() {
                     }
                   />
                 )}
-                <Text style={styles.helper}>{selection.size} 个时间格已选中</Text>
-                <Pressable
-                  disabled={busy}
-                  onPress={() => void submit()}
-                  style={[styles.primaryButton, busy && styles.disabled]}
-                >
-                  {busy ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.primaryText}>
-                      {editCredential ? "更新我的时间" : "提交可用时间"}
+                <Surface style={styles.selectionCard}>
+                  <View style={styles.selectionHeading}>
+                    <Text style={styles.selectionTitle}>
+                      {translate(language, "selectionSummary")}
                     </Text>
-                  )}
-                </Pressable>
-                <Text style={styles.sectionTitle}>共同空闲</Text>
-                <Text style={styles.helper}>
-                  结果由 schedule-share API 汇总，和网站使用同一份数据。
-                </Text>
-                <View style={styles.results}>
+                    <Text style={styles.selectionCount}>
+                      {candidatePoll
+                        ? translate(language, "candidateResponsesCount", {
+                            count: Object.keys(candidateResponses).length,
+                            total: loaded.slots.length
+                          })
+                        : translate(language, "selectedSlots", { count: selection.size })}
+                    </Text>
+                  </View>
+                </Surface>
+                <View style={styles.resultsHeader}>
+                  <SectionHeading
+                    language={language}
+                    label="commonFree"
+                    detail={translate(language, "resultCount", {
+                      count: loaded.response.results.everyoneAvailableBlocks.length
+                    })}
+                  />
+                  <Text style={styles.resultsNote}>{translate(language, "resultsPending")}</Text>
+                </View>
+                <Surface style={styles.results}>
                   {loaded.response.results.everyoneAvailableBlocks.length === 0 ? (
-                    <Text style={styles.empty}>目前还没有全员都方便的连续时段。</Text>
+                    <Text style={styles.empty}>{translate(language, "noCommonFree")}</Text>
                   ) : (
                     loaded.response.results.everyoneAvailableBlocks.slice(0, 8).map((block) => (
                       <View key={`${block.startUtc}-${block.endUtc}`} style={styles.resultRow}>
-                        <Text style={styles.resultDate}>{block.localStartDate}</Text>
+                        <Text style={styles.resultDate}>
+                          {formatLocalDate(block.localStartDate, language)}
+                        </Text>
                         <Text style={styles.resultTime}>
                           {block.localStartTime}–{block.localEndTime}
                         </Text>
@@ -453,145 +541,78 @@ export default function App() {
                       </View>
                     ))
                   )}
-                </View>
+                </Surface>
               </>
             ) : (
-              <>
-                <Text style={styles.sectionTitle}>加入日程</Text>
-                <TextInput
-                  style={styles.input}
-                  value={shareInput}
-                  onChangeText={setShareInput}
-                  placeholder="粘贴分享链接或输入分享码"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  accessibilityLabel="分享链接或分享码"
-                />
-                <Pressable
-                  disabled={busy}
-                  onPress={() => void openRoom()}
-                  style={[styles.primaryButton, busy && styles.disabled]}
-                >
-                  {busy ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.primaryText}>打开日程</Text>
-                  )}
-                </Pressable>
-                <Text style={styles.sectionTitle}>我的日程</Text>
-                {rooms.length === 0 ? (
-                  <Text style={styles.empty}>加入的日程会出现在这里。</Text>
-                ) : (
-                  <FlatList
-                    data={rooms}
-                    scrollEnabled={false}
-                    keyExtractor={(item) => item.publicId}
-                    renderItem={({ item }) => (
-                      <Pressable
-                        style={styles.roomRow}
-                        onPress={() => void openRoom(item.publicId)}
-                      >
-                        <View style={styles.roomText}>
-                          <Text style={styles.roomTitle}>{item.alias || item.title}</Text>
-                          <Text style={styles.helper}>{item.publicId}</Text>
-                        </View>
-                        <Text style={styles.link}>打开 ›</Text>
-                      </Pressable>
-                    )}
-                  />
-                )}
-              </>
+              <JoinDashboard
+                language={language}
+                rooms={rooms}
+                shareInput={shareInput}
+                busy={busy}
+                onChangeShareInput={setShareInput}
+                onOpenRoom={(value) => void openRoom(value)}
+              />
             )}
-            {!!message && (
-              <Text accessibilityRole="alert" style={styles.message}>
-                {message}
-              </Text>
-            )}
-            <Text style={styles.footer}>
-              共享日程保存在 schedule-share 服务端。Firebase 仅用于同步此设备的个人资料和日程列表。
-            </Text>
+            {message && !loaded ? (
+              <FeedbackNotice
+                language={language}
+                message={message}
+                tone={messageTone}
+                onRetry={!loaded && shareInput.trim() ? () => void openRoom() : undefined}
+              />
+            ) : null}
+            <Text style={styles.footer}>{translate(language, "footer")}</Text>
           </ScrollView>
+          {loaded ? (
+            <View style={styles.stickyAction}>
+              {message ? (
+                <FeedbackNotice language={language} message={message} tone={messageTone} />
+              ) : null}
+              <View style={styles.stickySummary}>
+                <Text style={styles.stickySummaryTitle}>
+                  {translate(language, "selectionSummary")}
+                </Text>
+                <Text style={styles.stickySummaryCount}>
+                  {candidatePoll
+                    ? translate(language, "candidateResponsesCount", {
+                        count: Object.keys(candidateResponses).length,
+                        total: loaded.slots.length
+                      })
+                    : translate(language, "selectedSlots", { count: selection.size })}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={() => void submit()}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  busy && styles.disabled,
+                  pressed && styles.pressed
+                ]}
+              >
+                {busy ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.primaryText}>
+                    {translate(
+                      language,
+                      candidatePoll
+                        ? editCredential
+                          ? "updateVote"
+                          : "submitVote"
+                        : editCredential
+                          ? "updateAvailability"
+                          : "submitAvailability"
+                    )}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          ) : null}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </GestureHandlerRootView>
-  );
-}
-
-function SlotGrid({
-  slots,
-  selected,
-  onToggle,
-  onSet
-}: {
-  slots: readonly TimeSlot[];
-  selected: ReadonlySet<string>;
-  onToggle: (slot: TimeSlot) => void;
-  onSet: (slot: TimeSlot, value: boolean) => void;
-}) {
-  const [width, setWidth] = useState(300);
-  const metrics = getSlotGridMetrics(width);
-  const byDate = useMemo(() => {
-    const groups = new Map<string, TimeSlot[]>();
-    for (const slot of slots)
-      groups.set(slot.localStartDate, [...(groups.get(slot.localStartDate) ?? []), slot]);
-    return Array.from(groups.entries());
-  }, [slots]);
-  return (
-    <View
-      style={styles.grid}
-      onLayout={(event) => setWidth(Math.max(66, event.nativeEvent.layout.width - 24))}
-    >
-      {byDate.map(([date, daySlots]) => {
-        const beginPaint = (x: number, y: number) => {
-          const index = getSlotIndexAtPoint(x, y, daySlots.length, metrics);
-          const slot = index === null ? undefined : daySlots[index];
-          if (!slot) return;
-          activePaintValue = !selected.has(slot.startUtc);
-          onSet(slot, activePaintValue);
-        };
-        const continuePaint = (x: number, y: number) => {
-          const index = getSlotIndexAtPoint(x, y, daySlots.length, metrics);
-          const slot = index === null ? undefined : daySlots[index];
-          if (slot) onSet(slot, activePaintValue);
-        };
-        const pan = Gesture.Pan()
-          .activateAfterLongPress(300)
-          .onStart((event) => runOnJS(beginPaint)(event.x, event.y))
-          .onUpdate((event) => runOnJS(continuePaint)(event.x, event.y));
-        return (
-          <View key={date} style={styles.dayGroup}>
-            <Text style={styles.dayHeading}>{formatDate(date)}</Text>
-            <GestureDetector gesture={pan}>
-              <View style={styles.slotRow}>
-                {daySlots.map((slot) => {
-                  const isSelected = selected.has(slot.startUtc);
-                  return (
-                    <Pressable
-                      key={slot.startUtc}
-                      onPress={() => onToggle(slot)}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: isSelected }}
-                      style={[
-                        styles.slot,
-                        { width: metrics.tileWidth, height: metrics.tileHeight },
-                        isSelected && styles.slotSelected
-                      ]}
-                    >
-                      <Text style={[styles.slotTime, isSelected && styles.selectedText]}>
-                        {slot.localStartTime}
-                      </Text>
-                      <Text style={[styles.slotEnd, isSelected && styles.selectedText]}>
-                        –{slot.localEndTime}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </GestureDetector>
-          </View>
-        );
-      })}
-    </View>
   );
 }
 
@@ -647,13 +668,11 @@ function toCoreTimeSlot(
   };
 }
 
-function formatDate(date: string): string {
-  return date;
-}
-
-function getReadableError(error: unknown): string {
-  if (error instanceof Error) return `无法完成请求：${error.message}`;
-  return "无法连接日程服务，请检查网络和 API 地址。";
+function getReadableError(error: unknown, language: AppLanguage): string {
+  if (error instanceof Error && error.message === "Request timed out")
+    return translate(language, "timedOut");
+  if (error instanceof Error) return translate(language, "requestFailed");
+  return translate(language, "networkFailed");
 }
 
 function apiOptions() {
@@ -669,8 +688,7 @@ async function fetchWithTimeout(
   try {
     return await fetch(input, { ...init, signal: controller.signal });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError")
-      throw new Error("请求超时，请检查网络后重试。");
+    if (error instanceof Error && error.name === "AbortError") throw new Error("Request timed out");
     throw error;
   } finally {
     clearTimeout(timeout);
@@ -678,12 +696,25 @@ async function fetchWithTimeout(
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#f4f7fb" },
+  safe: { flex: 1, backgroundColor: palette.page },
   fill: { flex: 1 },
-  page: { padding: 22, paddingTop: 18, paddingBottom: 44 },
-  eyebrow: { color: "#52677f", fontSize: 11, fontWeight: "800", letterSpacing: 1.4 },
-  title: { color: "#13243a", fontSize: 30, lineHeight: 36, fontWeight: "800", marginTop: 9 },
-  subtitle: { color: "#65758a", fontSize: 15, lineHeight: 22, marginTop: 6, marginBottom: 22 },
+  page: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 30, gap: 18 },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 2
+  },
+  eyebrow: { color: "#4b6079", fontSize: 11, fontWeight: "900", letterSpacing: 1.6 },
+  headerCaption: {
+    color: "#98a5b5",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.8,
+    marginTop: 3
+  },
+  title: { color: "#13243a", fontSize: 29, lineHeight: 35, fontWeight: "800", marginTop: -8 },
+  subtitle: { color: "#65758a", fontSize: 14, lineHeight: 21, marginTop: -14, marginBottom: -2 },
   sectionTitle: {
     color: "#1b2f49",
     fontSize: 18,
@@ -692,27 +723,48 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   helper: { color: "#718198", fontSize: 12, lineHeight: 18, marginBottom: 10 },
+  cardDescription: {
+    color: "#718198",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 7,
+    marginBottom: 14
+  },
+  scheduleCard: { gap: 10, backgroundColor: palette.surfaceTint },
+  scheduleCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8
+  },
+  scheduleMeta: { color: "#596d85", fontSize: 13, lineHeight: 19, fontWeight: "600" },
+  backButton: { minHeight: 36, justifyContent: "center", alignSelf: "flex-start" },
+  formCard: { gap: 10 },
+  savedHint: { color: "#74859a", fontSize: 11, lineHeight: 16, marginTop: -2 },
+  lastInput: { marginBottom: 0 },
+  link: { color: "#2764c5", fontWeight: "700", fontSize: 13 },
   input: {
-    minHeight: 50,
-    borderRadius: 12,
+    minHeight: 52,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#d9e1eb",
     backgroundColor: "#fff",
     paddingHorizontal: 14,
-    marginBottom: 11,
+    marginBottom: 2,
     color: "#1b2f49",
     fontSize: 15
   },
   primaryButton: {
     minHeight: 52,
     borderRadius: 14,
-    backgroundColor: "#2764c5",
+    backgroundColor: palette.accent,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 3
+    marginTop: 5
   },
   primaryText: { color: "#fff", fontSize: 15, fontWeight: "700" },
   disabled: { opacity: 0.55 },
+  pressed: { opacity: 0.78 },
   empty: {
     color: "#78879a",
     backgroundColor: "#fff",
@@ -720,64 +772,36 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     lineHeight: 20
   },
-  roomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 13,
-    padding: 15,
-    marginBottom: 9
+  stickyAction: {
+    paddingHorizontal: 18,
+    paddingTop: 11,
+    paddingBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+    backgroundColor: "rgba(255,255,255,0.98)"
   },
-  roomText: { flex: 1 },
-  roomTitle: { color: "#1b2f49", fontWeight: "700", fontSize: 15 },
-  link: { color: "#2764c5", fontWeight: "700", fontSize: 13 },
-  toolbar: {
+  stickySummary: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 8
+    gap: 8,
+    marginBottom: 7
   },
-  mode: {
-    color: "#24764f",
-    backgroundColor: "#e5f5ed",
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    fontSize: 11,
-    fontWeight: "700"
-  },
-  grid: { gap: 14 },
-  dayGroup: { backgroundColor: "#fff", borderRadius: 14, padding: 12 },
-  dayHeading: { color: "#2f425b", fontWeight: "700", fontSize: 13, marginBottom: 9 },
-  slotRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
-  slot: {
-    width: "23%",
-    minWidth: 66,
-    minHeight: 52,
-    borderWidth: 1,
-    borderColor: "#dce4ee",
-    borderRadius: 9,
+  stickySummaryTitle: { color: palette.ink, fontWeight: "800", fontSize: 12 },
+  stickySummaryCount: { color: "#647790", fontWeight: "700", fontSize: 11 },
+  resultsHeader: { gap: 6, marginTop: 2 },
+  resultsNote: { color: "#718198", fontSize: 12, lineHeight: 18 },
+  selectionCard: { gap: 11, backgroundColor: "#fafdff" },
+  selectionHeading: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f9fbfd"
+    gap: 8
   },
-  slotSelected: { backgroundColor: "#2764c5", borderColor: "#2764c5" },
-  slotTime: { color: "#2d4057", fontWeight: "700", fontSize: 12 },
-  slotEnd: { color: "#8795a6", fontSize: 10, marginTop: 2 },
-  selectedText: { color: "#fff" },
+  selectionTitle: { color: "#243a55", fontWeight: "800", fontSize: 14 },
+  selectionCount: { color: "#647790", fontWeight: "700", fontSize: 12 },
   candidateList: { gap: 8 },
-  candidate: {
-    backgroundColor: "#fff",
-    borderColor: "#dce4ee",
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14
-  },
-  selectedCandidate: { backgroundColor: "#2764c5", borderColor: "#2764c5" },
-  maybeCandidate: { backgroundColor: "#fff4d6", borderColor: "#e3b341" },
-  candidateTitle: { color: "#2d4057", fontWeight: "700", marginBottom: 4 },
-  voteStatus: { color: "#4a5d73", fontWeight: "700", fontSize: 12, marginBottom: 4 },
-  results: { backgroundColor: "#fff", borderRadius: 13, marginTop: 6, paddingHorizontal: 14 },
+  results: { marginTop: 0, paddingHorizontal: 14, paddingVertical: 6 },
   resultRow: {
     minHeight: 49,
     flexDirection: "row",
@@ -789,6 +813,5 @@ const styles = StyleSheet.create({
   resultDate: { color: "#61728a", width: 91, fontSize: 12 },
   resultTime: { color: "#203752", flex: 1, fontWeight: "700", fontSize: 14 },
   resultCount: { color: "#718198", fontSize: 11 },
-  message: { color: "#a43b34", marginTop: 16, fontSize: 13, lineHeight: 20 },
-  footer: { color: "#94a0af", fontSize: 11, lineHeight: 16, marginTop: 28, textAlign: "center" }
+  footer: { color: "#94a0af", fontSize: 11, lineHeight: 16, marginTop: 2, textAlign: "center" }
 });

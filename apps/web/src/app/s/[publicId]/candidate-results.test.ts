@@ -217,13 +217,13 @@ describe("buildCandidatePollResultCopyText", () => {
         "日程：Team dinner",
         "候选：Option B",
         "时间：2026-08-03 18:00-18:30",
-        "投票：1/3 可用 · 1 也许，综合支持 50%",
+        "投票：1/3 方便 · 1 必要时可以，综合支持 50%",
         "偏好：首选 1，平均顺位 #1.5",
-        "缺口：1 人不方便/未选；还差 2 人确定方便；1 人也许；1 人首选",
+        "缺口：1 人不方便或未回应；还需要 2 人方便；1 人必要时可以；1 人首选",
         "方便：Ada",
         "首选：Ada",
-        "也许：Grace",
-        "不方便/未选：Lin"
+        "必要时可以：Grace",
+        "不方便或未回应：Lin"
       ].join("\n")
     );
   });
@@ -280,10 +280,12 @@ describe("buildCandidatePollResultCopyText", () => {
     });
 
     expect(text).toContain("Schedule: Team dinner");
-    expect(text).toContain("Votes: 1/3 yes · 1 maybe, Weighted support 50%");
+    expect(text).toContain("Responses: 1/3 available · 1 if needed, Weighted support score 50%");
     expect(text).toContain("Preference: 1 first-choice, avg rank #1.5");
-    expect(text).toContain("Gaps: 1 no/not selected; 2 more yes needed; 1 maybe; 1 first-choice");
-    expect(text).toContain("No/not selected: Lin");
+    expect(text).toContain(
+      "Gaps: 1 unavailable or unanswered; 2 more available needed; 1 if needed; 1 first-choice"
+    );
+    expect(text).toContain("Not available or unanswered: Lin");
   });
 
   it("includes comparison details when a lead candidate is provided", () => {
@@ -299,7 +301,7 @@ describe("buildCandidatePollResultCopyText", () => {
         totalParticipantCount: participants.length
       })
     ).toContain(
-      "对比最佳：综合支持少 16 个百分点；新增方便：Lin；流失方便：Grace；首选转入：Ada；首选落后：Grace"
+      "对比最佳：综合支持少 16 个百分点；新增方便：Lin；此候选不方便：Grace；首选转入：Ada；首选落后：Grace"
     );
   });
 });
@@ -457,9 +459,9 @@ describe("buildCandidateResultDetails", () => {
     });
 
     expect(buildCandidateResultDetails(result!, participants.length)).toEqual([
-      { label: "1 人不方便/未选", tone: "warning" },
-      { label: "还差 2 人确定方便", tone: "neutral" },
-      { label: "1 人也许", tone: "neutral" },
+      { label: "1 人不方便或未回应", tone: "warning" },
+      { label: "还需要 2 人方便", tone: "neutral" },
+      { label: "1 人必要时可以", tone: "neutral" },
       { label: "1 人首选", tone: "success" }
     ]);
   });
@@ -495,8 +497,8 @@ describe("buildCandidateResultDetails", () => {
     ]);
     expect(buildCandidateResultDetails(allAccepted!, participants.length)).toEqual([
       { label: "全员至少可接受", tone: "success" },
-      { label: "还差 2 人确定方便", tone: "neutral" },
-      { label: "2 人也许", tone: "neutral" }
+      { label: "还需要 2 人方便", tone: "neutral" },
+      { label: "2 人必要时可以", tone: "neutral" }
     ]);
   });
 });
@@ -510,7 +512,7 @@ describe("buildCandidateResultComparisonDetails", () => {
     expect(buildCandidateResultComparisonDetails(comparedResult, leadResult)).toEqual([
       { label: "综合支持少 16 个百分点", tone: "warning" },
       { label: "新增方便：Lin", tone: "success" },
-      { label: "流失方便：Grace", tone: "warning" },
+      { label: "此候选不方便：Grace", tone: "warning" },
       { label: "首选转入：Ada", tone: "success" },
       { label: "首选落后：Grace", tone: "warning" }
     ]);
@@ -538,7 +540,7 @@ describe("describeCandidateResultInsight", () => {
     });
 
     expect(describeCandidateResultInsight(result!, participants.length)).toBe(
-      "洞察：所有参与者都确定方便"
+      "结果：所有参与者都方便"
     );
   });
 
@@ -558,7 +560,7 @@ describe("describeCandidateResultInsight", () => {
     });
 
     expect(describeCandidateResultInsight(result!, participants.length)).toBe(
-      "洞察：所有参与者至少可接受（1 方便 · 2 也许）"
+      "结果：所有参与者都能接受（1 人方便 · 2 人必要时可以）"
     );
   });
 
@@ -580,7 +582,7 @@ describe("describeCandidateResultInsight", () => {
     });
 
     expect(describeCandidateResultInsight(result!, participants.length)).toBe(
-      "洞察：2 人首选，但还有 1 人不方便或未选"
+      "回应：2 人将此项列为首选；另有 1 人不方便或未回应"
     );
   });
 
@@ -600,7 +602,7 @@ describe("describeCandidateResultInsight", () => {
     });
 
     expect(describeCandidateResultInsight(result!, participants.length)).toBe(
-      "洞察：暂无确定方便，1 人也许，2 人不方便或未选"
+      "回应：暂时没有人选择方便，1 人必要时可以，2 人不方便或未回应"
     );
   });
 });

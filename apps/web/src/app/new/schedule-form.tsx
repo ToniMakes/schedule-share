@@ -361,8 +361,11 @@ export function NewScheduleForm({ locale = "zh-CN" }: { readonly locale?: NewSch
               value="availability_grid"
             />
             <span>
-              <Grid3X3 aria-hidden="true" size={18} />
-              {copy.gridMode}
+              <span className={styles.modeChoiceTitle}>
+                <Grid3X3 aria-hidden="true" size={18} />
+                {copy.gridMode}
+              </span>
+              <small>{copy.gridModeDescription}</small>
             </span>
           </label>
           <label className={styles.modeChoice}>
@@ -374,8 +377,11 @@ export function NewScheduleForm({ locale = "zh-CN" }: { readonly locale?: NewSch
               value="candidate_poll"
             />
             <span>
-              <ListChecks aria-hidden="true" size={18} />
-              {copy.candidatePoll}
+              <span className={styles.modeChoiceTitle}>
+                <ListChecks aria-hidden="true" size={18} />
+                {copy.candidatePoll}
+              </span>
+              <small>{copy.candidatePollDescription}</small>
             </span>
           </label>
         </div>

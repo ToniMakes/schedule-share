@@ -8,9 +8,8 @@ import styles from "./page.module.css";
 import { NewScheduleForm } from "./schedule-form";
 
 export const metadata: Metadata = {
-  title: "Create Schedule | Schedule Share",
-  description:
-    "Create a shared scheduling page with an open availability grid or candidate time voting."
+  title: "Create a schedule | Schedule Share",
+  description: "Create a schedule to collect availability or vote on proposed times."
 };
 
 export default function EnglishNewSchedulePage() {
@@ -22,11 +21,11 @@ export default function EnglishNewSchedulePage() {
           <LanguageSwitcher chineseHref="/zh/new" current="en" englishHref="/new" />
           <header className={styles.header}>
             <Link className={styles.backLink} href="/">
-              Back Home
+              Home
             </Link>
             <div>
-              <p className={styles.eyebrow}>Create Schedule</p>
-              <h1 className={styles.title}>Create Schedule</h1>
+              <p className={styles.eyebrow}>Schedule Share</p>
+              <h1 className={styles.title}>Create a schedule</h1>
             </div>
           </header>
 

@@ -530,6 +530,11 @@
   opacity: 0.68;
 }
 
+.candidateVoteItemInvalid {
+  border-color: #b42318;
+  box-shadow: 0 0 0 1px #b42318;
+}
+
 .candidateVoteInfo {
   min-width: 0;
   display: grid;

@@ -8,29 +8,27 @@ import { formatPublicOperator, getPublicSiteInfo } from "../../site/public-site-
 import styles from "../../about/page.module.css";
 
 export const metadata: Metadata = {
-  title: "关于日程表共享 | 日程表共享",
-  description: "了解日程表共享如何帮助跨时区团队、同学、社群和朋友快速协调可用时间。"
+  title: "关于 Schedule Share | 跨时区多人日程协调",
+  description: "了解 Schedule Share 如何帮助大家收集可用时间、比较重叠时段并一起确定安排。"
 };
 
 const featureItems = [
   {
-    title: "跨时区共享",
+    title: "跨时区协调",
     description: "组织者设置活动时区，参与者按同一份日程填写，结果用统一时间格汇总，减少来回确认。"
   },
   {
-    title: "多种填写方式",
+    title: "选择回应方式",
     description:
-      "当前支持手动时间格、候选时间投票、文本粘贴、CSV、ICS 和受闸门保护的图片导入预览路径。"
+      "可以在网格中标记方便的时间、投票选择候选时间，或从粘贴文本、CSV/ICS 文件、每周模板预填。提交前可以检查预填结果。"
   },
   {
-    title: "自动推荐时间",
-    description:
-      "系统会优先展示全员可用时间；没有全员共同时间时，也会列出覆盖人数最多的较优时间槽。"
+    title: "比较可用时间",
+    description: "先查看全员都方便的时间；如果没有，再查看多数人方便的时段。"
   },
   {
     title: "轻量分享",
-    description:
-      "参与者不需要注册账号，打开链接即可填写；组织者用管理链接查看结果、导出日历或确认最终时间。"
+    description: "参与者无需注册账号即可回应。组织者通过单独的链接查看结果、导出日历或确认时间。"
   }
 ];
 
@@ -58,9 +56,10 @@ export default function AboutPage() {
 
           <header className={styles.header}>
             <p className={styles.eyebrow}>About</p>
-            <h1>一个轻量的跨时区多人日程共享工具</h1>
+            <h1>一起找出适合大家的时间</h1>
             <p>
-              日程表共享用于快速收集大家的可用时间，并自动找出最适合沟通、见面或协作的时间段。它优先服务一次性排期场景：不用建账号，不用安装应用，把链接发出去就能开始。
+              Schedule Share
+              帮助大家收集可用时间、比较重叠时段，并一起确定安排。无需注册账号，创建日程后分享链接即可开始。
             </p>
             <div className={styles.actions}>
               <a className={styles.primary} href="/zh/new">
@@ -68,7 +67,7 @@ export default function AboutPage() {
                 创建日程
               </a>
               <a className={styles.secondary} href="/zh/privacy">
-                查看隐私说明
+                隐私说明
               </a>
             </div>
           </header>
@@ -76,9 +75,10 @@ export default function AboutPage() {
           <DisplayAd pageContext="about" placement="top-banner" />
 
           <section className={styles.section}>
-            <h2>这个工具解决什么问题</h2>
+            <h2>少一些来回确认</h2>
             <p>
-              群聊里问“大家什么时候有空”很容易变成一串时间、截图和时区换算。这个网站把这些信息收进一个共享页面，参与者只提交自己的可用时间，组织者直接查看重叠结果和推荐时间。
+              在群聊里协调时间，常常会遇到截图、时区换算和反复确认。Schedule Share
+              把大家的回应放在同一页面，组织者可以直接比较时间重叠。
             </p>
             <div className={styles.featureGrid}>
               {featureItems.map((item) => (
@@ -102,22 +102,18 @@ export default function AboutPage() {
           </section>
 
           <section className={styles.section}>
-            <h2>当前商业化状态</h2>
+            <h2>隐私与可选预填</h2>
             <p>
-              网站已经预留常驻广告位框架和 <code>/ads.txt</code>{" "}
-              路由，但真实广告默认关闭。未来如果开放展示广告，也会避开表单、时间格、上传预览、提交按钮和带管理/编辑密钥的敏感页面。
-            </p>
-            <p>
-              图片识别属于可能产生成本的高级入口，目前仍受功能开关、release
-              mode、成本护栏和广告额度方案限制；手动填写、文本、CSV 和 ICS 方式仍保持免费可用。
+              目前未启用广告。可选预填会先生成预览，供你检查后再提交。分享日程信息前，请阅读
+              <a href="/zh/privacy">隐私与数据说明</a>。
             </p>
           </section>
 
           {operatorLine ? (
             <section className={styles.section}>
-              <h2>运营主体与联系</h2>
+              <h2>联系</h2>
               <p>
-                公开运营主体：<strong>{operatorLine}</strong>。 反馈、归档请求和删除请求可以通过
+                公开运营主体：<strong>{operatorLine}</strong>。反馈、归档请求和删除请求可以通过
                 <a href="/zh/contact">联系页面</a>发送。
               </p>
             </section>
