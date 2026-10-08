@@ -1,6 +1,6 @@
 # Schedule Share mobile app
 
-The native Expo app lets participants join an existing schedule, mark their availability or vote on proposed times, submit or update a response, and view the shared results. Organizers can also create schedules, share invitations, lock or archive a schedule, and confirm a final time. It uses the same schedule service as the web app.
+The native Expo app lets participants join an existing schedule, mark their availability or vote on proposed times, submit or update a response, and view the shared results. Organizers can also create schedules, share invitations, stop responses or archive a schedule, and confirm a final time. It uses the same schedule service as the web app.
 
 The app opens in English and includes an English / 中文 switch. The selected language is saved on this device.
 
